@@ -51,6 +51,7 @@ function typo_ru($content, $skip = array()){    $skip = array_merge(array('code
             $content = str_replace($skip[0][$i], '<!--typo_ru['.$i.']-->', $content);
 
     $content = '<span>'.$content.'</span>';
+    $content = preg_replace('/(\d)"/', '\\1&quot;', $content);
     $content = preg_replace('/<(!|\?)(.*?)(\?)?>/ies', "'¬'.base64_encode('<\\1\\2\\3>').'¬*'", $content);
     $content = preg_replace('/<([a-z]+([a-z\.:-]+)?[^>]*)>/ie', "'¬'.base64_encode('<\\1>').'¬*'", $content);
     $content = preg_replace('/(\$|\#|\%)(\w+)?\{(.*)\}/Use', "'¬'.base64_encode('\\1\\2{'.'\\3'.'}').'¬*'", $content);
