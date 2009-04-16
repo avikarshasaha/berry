@@ -1,0 +1,6 @@
+<fieldset class="msg i" if="%b{msg}">
+    <legend>Сообщение <a href="#" onclick="Element.hide(this.parentNode.parentNode); return false;" title="Спрятать">x</a></legend>
+    <loop each="v in %{msg}">
+        <li>%{v}</li>
+    </loop>
+</fieldset>

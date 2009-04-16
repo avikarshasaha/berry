@@ -1,0 +1,29 @@
+<table width="100%">
+    <tr>
+        <th class="content"><b>%{poll.question}</b></th>
+    </tr>
+
+    <tr>
+        <td class="content">
+            <loop each="k, v in %{poll.data}">
+                <div if="!%{v.disabled}">
+                    %{v.answer}
+
+                    <div style="width: 100%; background: #f3f3f3;">
+                        <div style="width: %{v.percent}; height: 17px; background: #ccc;">&nbsp;</div>
+                    </div>
+
+                    <div style="position: relative; top: -15px; width: 100%; font-size: 11px; text-align: center;">
+                        %{v.percent} (<plural int="%{v.votes}" str="балл/балла/баллов" />)
+                    </div>
+                </div>
+            </loop>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="content">
+            <plural int="%{poll.total}" string="Проголосовал/Проголосовало/Проголосовало" noint="noint" /> <plural int="%{poll.total}" string="человек/человека/человеков" />
+        </td>
+    </tr>
+</table>

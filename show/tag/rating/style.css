@@ -1,0 +1,45 @@
+/* http://www.masugadesign.com/the-lab/scripts/unobtrusive-ajax-star-rating-bar/ */
+
+.rating-%img {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    height: %size;
+    position: relative;
+    background: url('~/tag/rating/%img.gif') top left repeat-x;
+}
+
+.rating-%img li {
+    text-indent: -90000px;
+    padding: 0;
+    margin: 0;
+    float: left;
+}
+
+.rating-%img li a {
+    outline: none;
+    display: block;
+    width: %size;
+    height: %size;
+    text-decoration: none;
+    text-indent: -9000px;
+    z-index: 20;
+    position: absolute;
+    padding: 0;
+}
+
+.rating-%img li a:hover {
+    background: url('~/tag/rating/%img.gif') left center;
+    z-index: 2;
+    cursor: hand;
+    left: 0;
+}
+
+.rating-%img li.current {
+    background: url('~/tag/rating/%img.gif') left bottom;
+    position: absolute;
+    height: %size;
+    display: block;
+    text-indent: -9000px;
+    z-index: 1;
+}

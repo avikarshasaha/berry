@@ -1,0 +1,32 @@
+.tab {	width: 100%;}
+
+.tab .menu {
+	margin: 0;
+	padding: 5px;
+	border-left: solid 1px #f3f3f3;
+	font: 11px/14px Verdana,Tahoma,Arial;
+}
+
+.tab .off {
+	border-top: solid 1px #f3f3f3;
+	border-bottom: solid 1px #f3f3f3;
+}
+
+.tab .on {
+	background: #f3f3f3;
+	border-top: solid 1px #f3f3f3;
+	border-bottom: solid 1px #f3f3f3;
+}
+
+.tab .none {
+	border-left: solid 1px #f3f3f3;
+	border-bottom: solid 1px #f3f3f3;
+}
+
+.tab .content {
+	width: 100%;
+	padding: 5px;
+	border: solid 1px #f3f3f3;
+	border-top: none 1px #f3f3f3;
+	font: 11px/14px Verdana,Tahoma,Arial;
+}

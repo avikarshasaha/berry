@@ -1,0 +1,46 @@
+<block id="head">
+    <script>
+        function poll_showhide(id, form){
+            var checked = [1];
+
+            for (var i = 0; i < form.length; i++){
+                if (form[i].checked && (form[i].type == 'checkbox' || form[i].type == 'radio'))
+                    checked.push(1);
+
+                if (form[i].type == 'button')
+                    var button = form[i];
+            }
+
+            button.style.display = (1 in checked ? 'block' : 'none');
+        }
+    </script>
+</block>
+
+<span id="ajax[poll_%{poll.id}]">
+    <form method="post">
+        <table>
+            <tr>
+                <th class="content"><b>%{poll.question}</b></th>
+            </tr>
+            <tr>
+                <td class="content">
+                    <loop each="k, v in %{poll.data}">
+                        <label if="!%{v.disabled}">
+                            <input name="vote[]" onclick="poll_showhide('%{poll.id}', this.form)" type="checkbox" value="%{k}" if="%{poll.multiple}" />
+                            <input name="vote" onclick="poll_showhide('%{poll.id}', this.form)" type="radio" value="%{k}" if="!%{poll.multiple}" />
+                            %{v.answer}<br />
+                        </label>
+                    </loop>
+                </td>
+            </tr>
+            <tr>
+                <td class="content">
+                    <input type="button" value="результаты" ajax:call="poll_ajax" ajax:id="poll_%{poll.id}" ajax:post="{'id': '%{poll.id}', 'order': '%{poll.order}'}" /><br />
+                    <input type="button" value="голосовать" ajax:call="poll_ajax" ajax:id="poll_%{poll.id}" style="display: none;" />
+                    <input name="id" type="hidden" default="%{poll.id}" />
+                    <input name="order" type="hidden" default="%{poll.order}" />
+                </td>
+            </tr>
+        </table>
+    </form>
+</span>
