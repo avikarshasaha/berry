@@ -4,7 +4,7 @@
     <http://berry.goodgirl.ru>                             | ~ )\
                                                            /__/\ \____
     Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    GNU GPL 2 <http://gnu.org/licenses/gpl-2.0.txt>       / <_ ____,_-/\ __
+    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class SQL_build extends SQL_etc {
@@ -51,6 +51,8 @@ class SQL_build extends SQL_etc {
             foreach ($cache[$key] as $k)
                 $cache['#'][$v][] = '`'.$v.'`.'.$k.' as `'.$v.'.'.$k.'`';
 
+        echo "|| $v<br />";
+
         return $cache['#'][$v];
     }
 
@@ -60,12 +62,12 @@ class SQL_build extends SQL_etc {
             $this->_appendJoin($v);
 
             $if = (
-                !stripos($v, " as ") and is_bool(strpos($v, "`")) and
+                !stripos($v, " as ") and is_bool(strpos($v, '`')) and
                 strtolower(substr($v, 0, (b::len($this->table) + 1))) != strtolower($this->table.".")
             );
 
-            if ($v == '*'){                $v = $this->table.'.*';
-            } elseif (strpos($v, '*')){                $v = join(', ', $this->_prepareGetAll(preg_replace('/([\w\.]+)\.\*/', '\\1', $v)));
+            if ($v == '*'){                $v = '`'.$this->table.'`.*';
+            } elseif (strpos($v, '*') and is_bool(strpos($v, '`'))){                $v = join(', ', $this->_prepareGetAll(preg_replace('/([\w\.]+)\.\*/', '\\1', $v)));
             } elseif ($if){
                 $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
             } else {

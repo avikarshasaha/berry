@@ -4,7 +4,7 @@
     <http://berry.goodgirl.ru>                             | ~ )\
                                                            /__/\ \____
     Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    GNU GPL 2 <http://gnu.org/licenses/gpl-2.0.txt>       / <_ ____,_-/\ __
+    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class B {    static $path = array();
@@ -12,12 +12,13 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '016');
+    function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '0.1.6');
         return ($what ? $version[$what] : $version);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function init(){        error_reporting(0);        self::register_autoload();
+    function init(){        $path = realpath(dirname(__file__).'/../../');        self::$path = (isset(self::$path[0]) ? array($path, self::$path[0]) : array($path));
+        error_reporting(0);        self::register_autoload();
 
         debug::timer();
         sql::connect(self::config('site.dsn'));

@@ -4,7 +4,7 @@
     <http://berry.goodgirl.ru>                             | ~ )\
                                                            /__/\ \____
     Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    GNU GPL 2 <http://gnu.org/licenses/gpl-2.0.txt>       / <_ ____,_-/\ __
+    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql;
@@ -46,8 +46,10 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __unset($name){
-        unset($this->values[$name], $this->joinvalues[$name]);
+    function __unset($name){        if (substr($name, -4) == '_ids' and ($rname = substr($name, 0, -4)))
+            unset($this->joinvalues[$rname]);
+        else
+            unset($this->values[$name]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +74,9 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
         }
 
         if (
-            ($relation = $this->relations[$name]) and
+            substr($name, -4) == '_ids' and
+            ($rname = substr($name, 0, -4)) and
+            ($relation = $this->relations[$rname]) and
             $relation['type'] == 'has_and_belongs_to_many' and
             array_key_exists($id, self::$cache) and
             !array_key_exists($name, self::$cache[$id])
@@ -92,12 +96,18 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __set($name, $value){
+    function __set($name, $value){        is_array($value) and sort($value);
+
         if ($value == $this->__get($name) or ($this->where and !$this->__get($this->primary_key)))
             return $value;
 
-        if (($relation = $this->relations[$name]) and $relation['type'] == 'has_and_belongs_to_many'){
-            $this->joinvalues[$name] = $value;
+        if (
+            substr($name, -4) == '_ids' and
+            ($rname = substr($name, 0, -4)) and
+            ($relation = $this->relations[$rname]) and
+            $relation['type'] == 'has_and_belongs_to_many'
+        ){
+            $this->joinvalues[$rname] = $value;
         } else {
             if (is_int($value) and ($value = ($value - $this->__get($name))))
                 $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
@@ -123,7 +133,7 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetGet($offset){
-        if ($class = $this->_getClass($offset))
+        if ($class = $this->_setMultiSave($offset))
             return $class;
 
         return $this->__get($offset);
@@ -132,11 +142,8 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetSet($offset, $value){
-        if (!is_array($value))
+        if (!is_array($value) or (!$class = $this->_setMultiSave($offset)))
             return $this->__set($offset, $value);
-
-        if (!$class = $this->_getClass($offset))
-            return $value;
 
         foreach ($value as $k => $v)
             $class->$k = $v;
@@ -146,11 +153,11 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _getClass($offset){
+    private function _setMultiSave($offset){
         if (is_null($offset))
             return $this->multisave[] = $this->table($this->table);
 
-        if (is_numeric($offset)){
+        if (is_int($offset)){
             if (!isset($this->multisave[$offset]))
                 $this->multisave[$offset] = $this->table($this->table, $offset);
 
