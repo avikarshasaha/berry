@@ -145,5 +145,15 @@ class SQL extends SQL_control {
         return $this;
     }
 
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function having(){
+        $args = func_get_args();
+        $this->having = array_merge($this->having, $args);
+
+        return $this;
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 }

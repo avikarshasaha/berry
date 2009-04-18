@@ -29,8 +29,9 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
     protected $joinvalues = array();
 
     protected $where = array();
-    protected $order_by = array();
     protected $group_by = array();
+    protected $having = array();
+    protected $order_by = array();
     protected $limit = 0;
     protected $offset = 0;
 

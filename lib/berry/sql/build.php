@@ -51,8 +51,6 @@ class SQL_build extends SQL_etc {
             foreach ($cache[$key] as $k)
                 $cache['#'][$v][] = '`'.$v.'`.'.$k.' as `'.$v.'.'.$k.'`';
 
-        echo "|| $v<br />";
-
         return $cache['#'][$v];
     }
 
@@ -92,8 +90,9 @@ class SQL_build extends SQL_etc {
         $this->from = $from;
         $this->join = array_unique($this->join);
         $this->where = array_map(array($this, '_prepareFields'), $this->where);
-        $this->order_by = array_map(array($this, '_prepareFields'), $this->order_by);
         $this->group_by = array_map(array($this, '_prepareFields'), $this->group_by);
+        $this->having = array_map(array($this, '_prepareFields'), $this->having);
+        $this->order_by = array_map(array($this, '_prepareFields'), $this->order_by);
 
         return $this;
     }
@@ -105,10 +104,15 @@ class SQL_build extends SQL_etc {
         $query[] = 'from '.join(', ', $this->from);
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
-        $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
+
+        if (!$subquery = $this->build('getsub')){
+            $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
+            $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
+        }
+
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
 
-        if (!$this->multiple and $this->limit){
+        if (!$subquery and !$this->multiple and $this->limit){
             $query[] = 'limit '.$this->limit;
             $query[] = ($this->offset ? 'offset '.$this->offset : '');
         }
@@ -128,6 +132,7 @@ class SQL_build extends SQL_etc {
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
         $query[] = 'group by '.$this->table.'.'.$this->primary_key;
+        $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
 
         if ($this->limit){
@@ -147,10 +152,8 @@ class SQL_build extends SQL_etc {
         $query[] = 'where ('.join(') and (', $this->where).')';
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
 
-        if ($this->limit){
+        if ($this->limit)
             $query[] = 'limit '.$this->limit;
-            $query[] = ($this->offset ? 'offset '.$this->offset : '');
-        }
 
         return join("\r\n", $query);
     }
@@ -178,10 +181,8 @@ class SQL_build extends SQL_etc {
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
 
-        if ($this->limit){
+        if ($this->limit)
             $query[] = 'limit '.$this->limit;
-            $query[] = ($this->offset ? 'offset '.$this->offset : '');
-        }
 
         return join("\r\n", $query);
     }
