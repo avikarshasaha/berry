@@ -153,12 +153,12 @@ class Str {///////////////////////////////////////////////////////////////////
         if (!$lang){            $pattern = '/lang/ru/*.yaml';
             $files = file::glob(b::$path[0].$pattern, b::$path[1].$pattern);
 
-            if (!$cache = b::cache('lang/ru.php', array('file' => $files))){
+            if (!$cache = cache::get('lang/ru.php', array('file' => $files))){
                 foreach ($files as $k => $v)
                     $lang = arr::merge($lang, array(substr(basename($v), 0, -5) => yaml::load($v)));
 
                 $lang = arr::assoc($lang);
-                b::cache($lang);
+                cache::set($lang);
             } else {
                 $lang = include $cache;
             }

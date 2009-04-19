@@ -132,7 +132,7 @@ class SQL extends SQL_control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function offset($offset){
-        $this->offset = $offset;
+        $this->offset = (int)$offset;
         return $this;
     }
 
@@ -144,7 +144,6 @@ class SQL extends SQL_control {
 
         return $this;
     }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 

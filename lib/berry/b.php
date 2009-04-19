@@ -82,7 +82,7 @@ class B {    static $path = array();
             $pattern = '/data/config/*.yaml';
             $files = file::glob(self::$path[0].$pattern, self::$path[1].$pattern);
 
-            if (!$cache = self::cache('config.php', array('file' => $files))){
+            if (!$cache = cache::get('config.php', array('file' => $files))){
                 foreach ($files as $k => $v){
                     $k = substr(basename($v), 0, -5);
                     $k = explode('.', $k);
@@ -96,7 +96,7 @@ class B {    static $path = array();
                     $config = arr::merge($config, $array);
                 }
 
-                self::cache($config);
+                cache::set($config);
             } else {
                 $config = include $cache;
             }
@@ -247,47 +247,6 @@ class B {    static $path = array();
                 include $_['file'];
             return ob_get_clean();
         }
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function cache(){
-        global $sql;
-        static $file, $md5;
-
-        $args = func_get_args();
-
-        if (func_num_args() == 1){
-            file::mkdir(dirname($file));
-
-            $func = (!is_scalar($args[0]) ? 'arr::export' : 'file_put_contents');
-
-            self::call($func, substr($file, 0, -4), $args[0]);
-            file_put_contents($file, $md5);
-            return $file;
-        }
-
-        if ($args[1]['file'])
-            $time = array_sum(array_map('filemtime', (array)$args[1]['file']));
-
-        if ($args[1]['db'])
-            foreach ((array)$args[1]['db'] as $table)
-                if ($query = sql::getRow('show table status like "?_"', $table))
-                    $time += strtotime($query['Update_time']);
-
-        if ($args[1]['url'])
-            foreach ((array)$args[1]['url'] as $url)
-                if ($headers = get_headers($url, true))
-                    $time += strtotime($headers['Last-Modified']);
-
-        $file = file::path('cache/').$args[0].'.md5';
-        $md5  = md5($time);
-
-        if (
-            is_file($cache = substr($file, 0, -4)) and
-            is_file($file) and file_get_contents($file) == $md5
-        )
-            return $cache;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
