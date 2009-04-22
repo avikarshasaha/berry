@@ -94,8 +94,11 @@ class SQL_control extends SQL_build {
             $args = $this->placeholders;
             array_unshift($args, $query);
 
+            if (!$ids = call_user_method_array('selectCol', self::$sql, $args))
+                return array();
+
             $this->where = array($this->table.'.'.$this->primary_key.' in (?a)');
-            $this->placeholders = array(call_user_method_array('selectCol', self::$sql, $args));
+            $this->placeholders = array($ids);
         }
 
         $args = $this->placeholders;
