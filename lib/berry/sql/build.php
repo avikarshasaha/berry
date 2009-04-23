@@ -37,9 +37,6 @@ class SQL_build extends SQL_etc {
     private function _prepareGetAll($v){
         static $cache = array();
 
-        if (strtolower($v) == strtolower($this->table))
-            return array('`'.$v.'`.*');
-
         $vars = get_class_vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
         $key = ($vars['table'] ? $vars['table'] : $v);
 
@@ -65,7 +62,11 @@ class SQL_build extends SQL_etc {
             );
 
             if ($v == '*'){                $v = '`'.$this->table.'`.*';
-            } elseif (strpos($v, '*') and is_bool(strpos($v, '`'))){                $v = join(', ', $this->_prepareGetAll(preg_replace('/([\w\.]+)\.\*/', '\\1', $v)));
+            } elseif (strpos($v, '*') and is_bool(strpos($v, '`'))){                $tmp = preg_replace('/([\w\.]+)\.\*/', '\\1', $v);
+
+                if (strtolower($tmp) == strtolower($this->table))
+                    $v = '`'.$tmp.'`.*';
+                elseif ($this->relations[$tmp])                    $v = join(', ', $this->_prepareGetAll($tmp));
             } elseif ($if){
                 $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
             } else {

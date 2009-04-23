@@ -148,32 +148,6 @@ class Str {///////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function text($text, $array = array()){        static $lang = array();
-
-        if (!$lang){            $pattern = '/lang/ru/*.yaml';
-            $files = file::glob(b::$path[0].$pattern, b::$path[1].$pattern);
-
-            if (!$cache = cache::get('lang/ru.php', array('file' => $files))){
-                foreach ($files as $k => $v)
-                    $lang = arr::merge($lang, array(substr(basename($v), 0, -5) => yaml::load($v)));
-
-                $lang = arr::assoc($lang);
-                cache::set($lang);
-            } else {
-                $lang = include $cache;
-            }
-        }
-
-        $var = tags::varname($text, '$lang');
-
-        if ($func = create_function('$lang', 'if (isset('.$var.')) return '.$var.';'))
-            $text = $func($lang);
-
-        return (is_array($text) ? $text : self::format($text, $array));
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     function json($json, $assoc = true){
         if (!is_null($result = json_decode($json, $assoc)))
             return $result;

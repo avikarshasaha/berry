@@ -52,7 +52,7 @@ function attr_ajax_call($attr){	$attr = array_merge(array(
         function attr_ajax_call(url, id, loader, that, post){            var id = ($("ajax[" + id + "]") || id);
             var loader = ($("ajax[" + loader + "]") || loader || that.previousSibling);
 
-        	new Ajax.Blueberry("'.b::q(0).'/" + url, {
+        	new Ajax.Berry("'.b::q(0).'/" + url, {
                 onLoading: function(){
                     $(that).disabled = true;
                     $(loader).show();

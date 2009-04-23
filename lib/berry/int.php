@@ -10,7 +10,7 @@
 class int {
 ////////////////////////////////////////////////////////////////////////////////
     // http://cutephp.com
-    function size($file_size, $size = array()){        $size = array_merge(str::text('lib.int.size'), $size);
+    function size($file_size, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
 
         if ($file_size >= 1073741824)
             $file_size = (round($file_size / 1073741824 * 100) / 100).' '.$size['gb'];

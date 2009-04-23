@@ -25,7 +25,7 @@ class Debug {
     }////////////////////////////////////////////////////////////////////////////////
 
     function info($save = false){
-        $file = file::path('cache/log').'/info.log';
+        $file = file::path('cache').'/log/info.log';
 
         if (!$save)
             return file_get_contents($file);
@@ -62,7 +62,7 @@ class Debug {
     function sql($object = null, $string = ''){
         static $fp;
 
-        $file = file::path('cache/log/').'sql.log';
+        $file = file::path('cache').'/log/sql.log';
 
         if (!is_object($object))
             return file_get_contents($file);

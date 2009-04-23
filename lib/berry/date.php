@@ -50,7 +50,7 @@ class date {
     function ago($second, $len = 3, $plural = array()){        if (b::len($second) == 10 or !is_numeric($second))
             $second = (time() - self::time($second));
 
-        $plural = array_merge(str::text('lib.date.ago'), array('separator' => ','), $plural);
+        $plural = array_merge(b::i18n('lib.date.ago'), array('separator' => ','), $plural);
         $period = array(
             'years'   => 31556926,
             'months'  => 2629743,

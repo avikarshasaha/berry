@@ -24,7 +24,7 @@ class B {    static $path = array();
         sql::connect(self::config('site.dsn'));
 
         date_default_timezone_set(self::config('site.timezone'));
-        setlocale(LC_ALL, str::text('site.locale'));
+        setlocale(LC_ALL, b::i18n('site.locale'));
 
         if ($level = (int)self::config('site.debug')){
             error_reporting(self::config('site.debug'));
@@ -112,6 +112,34 @@ class B {    static $path = array();
         } else {
             return $config;
         }
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function i18n($text, $array = array()){
+        static $lang = array();
+
+        if (!$lang){
+            $pattern = '/lang/ru/*.yaml';
+            $files = file::glob(self::$path[0].$pattern, self::$path[1].$pattern);
+
+            if (!$cache = cache::get('lang/ru.php', array('file' => $files))){
+                foreach ($files as $k => $v)
+                    $lang = arr::merge($lang, array(substr(basename($v), 0, -5) => yaml::load($v)));
+
+                $lang = arr::assoc($lang);
+                cache::set($lang);
+            } else {
+                $lang = include $cache;
+            }
+        }
+
+        $var = tags::varname($text, '$lang');
+
+        if ($func = create_function('$lang', 'if (isset('.$var.')) return '.$var.';'))
+            $text = $func($lang);
+
+        return (is_array($text) ? $text : str::format($text, $array));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

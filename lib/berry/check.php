@@ -91,6 +91,22 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function is_valid_get($array = null){
+        if (!is_array($array))
+            $array = b::l('_get'.($array ? '.'.$array : ''));
+
+        if (
+            $array and
+            self::is_valid_session() and
+            !self::$error
+        )
+            return $array;
+
+        return array();
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function is_valid_post($array = null){        if (!is_array($array))
             $array = b::l('_post'.($array ? '.'.$array : ''));
 
@@ -210,7 +226,10 @@ class Check {
     function unique($name, $value, $params){        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
-        return !sql::query('select 1 from ?_ where lower(?#) = ? limit 1', $table, $field, strtolower($value));
+        return !sql::query(
+            'select 1 from ?_ where lower(?#) = ? { and ?} limit 1',
+            $table, $field, strtolower($value), ($params[1] ? sql::raw($params[1]) : sql::SKIP)
+        );
     }
 
 ////////////////////////////////////////////////////////////////////////////////
