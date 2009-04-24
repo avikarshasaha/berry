@@ -37,7 +37,7 @@ function tag_opml($attr){
         }
     }
 
-    return tags::parse_lvars($att, arr::html($array), true);
+    return tags::parse_lvars($att, arr::unhtml($array), true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

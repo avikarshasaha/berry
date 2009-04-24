@@ -35,6 +35,23 @@ class File {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function rmdir($filename){
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($filename),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $file => $iter){
+            self::chmod($file);
+            ($iter->isDir() ? rmdir($file) : unlink($file));
+        }
+
+        self::chmod($filename);
+        return rmdir($filename);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function glob(){
         $args = func_get_args();
         $files = array();
@@ -56,6 +73,19 @@ class File {
             return exec('mklink '.(is_dir($target) ? '/D' : '').' "'.str_replace('/', '\\', $link).'" "'.str_replace('/', '\\', $target).'"');
 
         return link($target, $link);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function chmod($filename){
+        if (is_writable($filename))
+            return true;
+
+        $umask = umask(0);
+        $result = chmod($filename, 0777);
+
+        umask($umask);
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

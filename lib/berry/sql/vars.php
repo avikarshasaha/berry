@@ -7,11 +7,12 @@
     LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql;
+class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
 
     protected $id = array();
     protected $table;
     protected $_table;
+
     protected $primary_key = 'id';
     protected $parent_key;
 
@@ -39,6 +40,8 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;    static $sql
     protected $relations = array();
     protected $placeholders = array();
     protected $multisave = array();
+
+    protected static $sql;
     protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////

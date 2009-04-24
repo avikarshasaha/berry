@@ -12,7 +12,7 @@ function tag_pager($attr){
         'this' => '<b>[%i]</b>',
         'list' => '[%i]',
         'type' => 1,
-        'href' => '?page=%i',
+        'href' => 'page=%i',
         'prev' => '←',
         'next' => '→'
     ), $attr);
@@ -22,6 +22,9 @@ function tag_pager($attr){
 
     if (!$is_offset = (array_key_exists('offset', $attr) and !array_key_exists('page', $attr)))
         $attr['page'] = ($attr['page'] ? $attr['page'] : 1);
+
+    $pattern = str::format(preg_quote($attr['href'], '/'), array('i' => '(\d+)'));
+    $attr['href'] = preg_replace('/'.$pattern.'/', '', $_SERVER['REQUEST_URI']).(strpos($_SERVER['REQUEST_URI'], '?') ? '&' : '?').$attr['href'];
 
     for ($i = 1, $c = (ceil($attr['count'] / $attr['limit']) + 1); $i < $c; $i++){
         if ($attr['type'] == 1 or $attr['type'] == 3)

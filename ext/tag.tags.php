@@ -152,7 +152,7 @@ function tag_show($attr){
 ////////////////////////////////////////////////////////////////////////////////
 
 function tag_open($attr){    $output = file_get_contents($attr['src']);
-    return ($attr['escape'] ? str::html($output) : $output);
+    return ($attr['escape'] ? str::unhtml($output) : $output);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -293,7 +293,7 @@ function tag_js_color_picker($attr){
 tags::skip('code');
 function tag_code($attr){
 	if ($attr['escape'])
-	    $attr['#text'] = str::html($attr['#text']);
+	    $attr['#text'] = str::unhtml($attr['#text']);
 
 	$pre = $attr['pre'];
 	unset($attr['escape'], $attr['pre']);

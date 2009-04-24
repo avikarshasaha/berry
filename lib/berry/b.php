@@ -8,6 +8,7 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class B {    static $path = array();
+    static $lang;
     static $autoload = array();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -23,10 +24,15 @@ class B {    static $path = array();
         debug::timer();
         sql::connect(self::config('site.dsn'));
 
+        self::$lang = self::config('site.lang');
+        $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
+        is_dir(file::path('lang/'.$lang)) and
+        self::$lang = $lang;
+
         date_default_timezone_set(self::config('site.timezone'));
         setlocale(LC_ALL, b::i18n('site.locale'));
 
-        if ($level = (int)self::config('site.debug')){
+        if ($level = self::config('site.debug')){
             error_reporting(self::config('site.debug'));
             sql::logger(array('debug', 'sql'));
         }
@@ -87,12 +93,7 @@ class B {    static $path = array();
                     $k = substr(basename($v), 0, -5);
                     $k = explode('.', $k);
                     $yaml = yaml::load($v);
-
-                    if (self::len($k) == 2)
-                        $array = array($k[0] => array($k[1] => $yaml));
-                    else
-                        $array = array($k[0] => $yaml);
-
+                    $array = array($k[0] => (self::len($k) == 2 ? array($k[1] => $yaml) : $yaml));
                     $config = arr::merge($config, $array);
                 }
 
@@ -119,11 +120,13 @@ class B {    static $path = array();
     function i18n($text, $array = array()){
         static $lang = array();
 
-        if (!$lang){
-            $pattern = '/lang/ru/*.yaml';
+        if (!$lang){            $pattern = '/lang/en/*.yaml';
             $files = file::glob(self::$path[0].$pattern, self::$path[1].$pattern);
+            if (self::$lang != 'en'){                $pattern = '/lang/'.self::$lang.'/*.yaml';
+                $files = array_merge($files, file::glob(self::$path[0].$pattern, self::$path[1].$pattern));
+            }
 
-            if (!$cache = cache::get('lang/ru.php', array('file' => $files))){
+            if (!$cache = cache::get('lang/'.self::$lang.'.php', array('file' => $files))){
                 foreach ($files as $k => $v)
                     $lang = arr::merge($lang, array(substr(basename($v), 0, -5) => yaml::load($v)));
 
@@ -251,7 +254,7 @@ class B {    static $path = array();
 
     function show($string, $_ = array(), $is_main = false){        static $_main;
 
-        if (is_bool($_))
+        if (!is_array($_))
             list($_, $is_main) = array(array(), $_);        else            extract($_);
 
         if ($is_main){

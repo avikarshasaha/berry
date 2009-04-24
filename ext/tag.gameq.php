@@ -29,7 +29,7 @@ function tag_gameq($attr){	static $gameq, $games;
         $data = reset($gameq->requestData());
 
         if ($data['players'])
-            $data['players'] = arr::html($data['players']);
+            $data['players'] = arr::unhtml($data['players']);
 
     	return tags::parse_lvars($attr, $data);
     } catch (GameQ_Exception $e){

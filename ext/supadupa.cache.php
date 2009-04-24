@@ -27,7 +27,7 @@ function supadupa_cache($attr){
               ']-->';
 
     if (
-        is_file($file = p('cache/').$id) and
+        is_file($file = file::path('cache/').$id) and
         filemtime($file) < $lifetime and
         !_cache_update_after($id, $attr)
     )
@@ -47,7 +47,7 @@ function supadupa_cache($attr){
 function output_supadupa_cache($output){
     if (preg_match_all('/<!--supadupa\[cache\]\[([^\]]*)\]\[([^\]]*)\]-->/', $output, $match))
         for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){            parse_str($match[2][$i], $attr);
-            $file = p('cache/').$match[1][$i];
+            $file = file::path('cache/').$match[1][$i];
 
             if (_cache_update_after($match[1][$i], $attr)){                $result = tags::parse(file_get_contents($file.'.html'));
                 $result = tags::parse($result, true);

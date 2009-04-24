@@ -14,11 +14,11 @@ function tag_formatter($attr){
 		break;
 
 		case 'text':
-		    $attr['#text'] = str::html($attr['#text']);
+		    $attr['#text'] = str::unhtml($attr['#text']);
 		break;
 
 		case 'text+br':
-		    $attr['#text'] = str::html($attr['#text']);
+		    $attr['#text'] = str::unhtml($attr['#text']);
 		    $attr['#text'] = nl2br($attr['#text']);
 		break;
 

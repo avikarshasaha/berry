@@ -184,4 +184,40 @@ class SQL_etc extends SQL_vars {
     function raw($raw){        return new SQL_raw($raw);    }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    function children($table, $id = 0){        if (!$table and $this){
+            list($table, $id) = array($this->_table, $table);
+            $primary_key = $this->primary_key;
+            $parent_key = $this->parent_key;
+        } else {
+            $vars = get_class_vars($table);
+            $primary_key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
+            $parent_key = $vars['parent_key'];
+        }
+
+        if (!$parent_key)
+            return array();
+        $array = self::$sql->query('select ?# as array_key, ?# as parent_key from ?_', $primary_key, $parent_key, $table);
+        $array = (self::_children($array, $id));
+        $array[] = -1;
+
+        return $array;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    private function _children($array, $id, $parent = false, $result = array()){
+        foreach ($array as $k => $v){
+            if ($k == $id or $parent){
+                $result[] = $k;
+                $result = self::_children($v['childNodes'], $id, true, $result);
+            } else {
+                $result = self::_children($v['childNodes'], $id, $parent, $result);
+            }
+        }
+
+        return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

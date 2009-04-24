@@ -39,7 +39,7 @@ class SQL extends SQL_control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function from($table){        if (!$this)
-            return new $table;
+            return self::table($table);
 
         $args = func_get_args();
         $this->from = array_merge($this->from, $args);
@@ -118,14 +118,14 @@ class SQL extends SQL_control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function limit($limit){
-        $this->limit = $limit;
+        $this->limit = max(0, $limit);
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function page($page){
-        $this->offset($page * $this->limit - $this->limit);
+        $this->offset(max(0, $page * $this->limit - $this->limit));
         return $this;
     }
 

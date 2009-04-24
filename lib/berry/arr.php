@@ -162,18 +162,12 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function merge(){        $result = array();
+    function merge(){        $args = func_get_args();        $result = array();
 
-        foreach (func_get_args() as $array)
+        foreach (array_reverse($args) as $array)
             $result += self::flat($array);
 
-        return self::assoc($result);
-
-        /*$args = func_get_args();
-        $args = array_map(array('self', 'flat'), $args);
-        $args = call_user_func_array('array_merge', $args);
-
-        return self::assoc($args);*/    }
+        return self::assoc($result);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

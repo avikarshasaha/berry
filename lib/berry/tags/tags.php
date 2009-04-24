@@ -68,7 +68,7 @@ class Tags extends Attr {
             echo '<td style="background: #ccc; padding: 5px;">';
             echo '<a name="'.($i + 1).'"></a>'.$i;
             echo '<td style="background: #'.$bg.'; padding: 5px;">';
-            echo '<pre>'.self::html($v).'</pre>';
+            echo '<pre>'.self::unhtml($v).'</pre>';
         }
 
         exit;
@@ -298,14 +298,14 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unhtml($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars_decode($string, $quote_style);        $string = preg_replace(array('/&#35;(\w+?){/', '/&#36;(\w+?){/', '/&#37;(\w+?){/', '/&#64;(\w+?){/'), array('#\\1{', '$\\1{', '%\\1{', '@\\1{'), $string);
+    function html($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars_decode($string, $quote_style);        $string = preg_replace(array('/&#35;(\w+?){/', '/&#36;(\w+?){/', '/&#37;(\w+?){/', '/&#64;(\w+?){/'), array('#\\1{', '$\\1{', '%\\1{', '@\\1{'), $string);
 
     	return str_replace('&#96;', '`', $string);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function html($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars($string, $quote_style);        $string = preg_replace(array('/#(\w+)?{/', '/\$(\w+)?{/', '/%(\w+)?{/', '/@(\w+)?{/'), array('&#35;\\1{', '&#36;\\1{', '&#37;\\1{', '&#64;\\1{'),$string);
+    function unhtml($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars($string, $quote_style);        $string = preg_replace(array('/#(\w+)?{/', '/\$(\w+)?{/', '/%(\w+)?{/', '/@(\w+)?{/'), array('&#35;\\1{', '&#36;\\1{', '&#37;\\1{', '&#64;\\1{'),$string);
 
     	return str_replace('`', '&#96;', $string);
     }
