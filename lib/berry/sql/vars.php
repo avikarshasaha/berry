@@ -64,17 +64,13 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
 
         $id = '__get'.spl_object_hash($this);
 
-        if (!array_key_exists($id, self::$cache)){
-            $class = $this->table($this->table);
+        if (!array_key_exists($id, self::$cache)){            $class = clone $this;
 
             foreach ($this->schema() as $field => $schema)
                 if (!in_array(substr($schema['type'], -4), array('text', 'blob')))
                     $class->select($this->table.'.'.$field);
 
-            foreach (array_keys($this->where) as $k)
-                $class->where($this->where[$k], $this->placeholders[$k]);
-
-            self::$cache[$id] = $class->getRow();
+            self::$cache[$id] = $class->getArray();
         }
 
         if (
