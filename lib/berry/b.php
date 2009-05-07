@@ -30,10 +30,10 @@ class B {    static $path = array();
         self::$lang = $lang;
 
         date_default_timezone_set(self::config('site.timezone'));
-        setlocale(LC_ALL, b::i18n('site.locale'));
+        setlocale(LC_ALL, self::i18n('site.locale'));
 
         if ($level = self::config('site.debug')){
-            error_reporting(self::config('site.debug'));
+            error_reporting($level);
             sql::logger(array('debug', 'sql'));
         }
     }
