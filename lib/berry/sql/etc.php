@@ -166,7 +166,7 @@ class SQL_etc extends SQL_vars {
     function schema($table = ''){        $table = ((!$table and $this) ? $this->_table : $table);        $schema = array();
         $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
-        foreach (self::$sql->query('desc ['.$table.']') as $info)
+        foreach (self::$sql->query('desc ?_', $table) as $info)
             $schema[$info['Field']] = array(
                 'name' => $info['Field'],
                 'type' => $info['Type'],

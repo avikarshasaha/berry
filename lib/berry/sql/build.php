@@ -273,4 +273,17 @@ class SQL_build extends SQL_etc {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    private function _buildGetCount(){
+        $query[] = 'select count(*)';
+        $query[] = 'from '.join(', ', $this->from);
+
+        $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
+        $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
+        $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
+
+        return join("\r\n", $query);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

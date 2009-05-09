@@ -88,6 +88,10 @@ class SQL_control extends SQL_build {
         }
 
         $method = strtolower($method);
+
+        if (in_array($method, array('array', 'object', 'count')))
+            return $this->{'get'.$method}();
+
         $method = 'select'.(in_array($method, array('cell', 'col', 'row')) ? $method : '');
 
         if ($query = $this->build('getsub')){
@@ -180,6 +184,14 @@ class SQL_control extends SQL_build {
 
         $args = func_get_args();
         return call_user_method_array('selectRow', self::$sql, $args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function getCount(){
+        $args = $this->placeholders;
+        array_unshift($args, $this->build('getcount'));
+        return call_user_method_array('selectCell', self::$sql, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
