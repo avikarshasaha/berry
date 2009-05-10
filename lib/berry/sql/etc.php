@@ -166,7 +166,7 @@ class SQL_etc extends SQL_vars {
     function schema($table = ''){        $table = ((!$table and $this) ? $this->_table : $table);        $schema = array();
         $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
-        foreach (self::$sql->query('desc ?_', $table) as $info)
+        foreach (self::$sql->query($this->_buildSchema(), $table) as $info)
             $schema[$info['Field']] = array(
                 'name' => $info['Field'],
                 'type' => $info['Type'],
@@ -197,7 +197,7 @@ class SQL_etc extends SQL_vars {
 
         if (!$parent_key)
             return array();
-        $array = self::$sql->query('select ?# as array_key, ?# as parent_key from ?_', $primary_key, $parent_key, $table);
+        $array = self::$sql->query($this->_buildChildren(), $primary_key, $parent_key, $table);
         $array = (self::_children($array, $id));
         $array[] = -1;
 

@@ -18,11 +18,11 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function init(){        $path = realpath(dirname(__file__).'/../../');        self::$path = (isset(self::$path[0]) ? array($path, self::$path[0]) : array($path));
-        error_reporting(0);        self::register_autoload();
+    function init($level = 0){        $path = realpath(dirname(__file__).'/../../');        self::$path = (isset(self::$path[0]) ? array($path, self::$path[0]) : array($path));
+        error_reporting($level);        spl_autoload_register(array('self', 'autoload'));
 
         debug::timer();
-        sql::connect(self::config('site.dsn'));
+        sql::connect(self::config('site.db'));
 
         self::$lang = self::config('site.lang');
         $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
@@ -180,11 +180,7 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function register_autoload(){        return spl_autoload_register(array(new self, 'autoload'));    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function autoload($Name){
+    static function autoload($Name){
         static $prev;
 
         $name = strtolower($Name);

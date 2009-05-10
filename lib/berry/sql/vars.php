@@ -153,7 +153,7 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _setMultiSave($offset){
+    protected function _setMultiSave($offset){
         if (is_null($offset))
             return $this->multisave[] = $this->table($this->table);
 

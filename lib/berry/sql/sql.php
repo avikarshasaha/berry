@@ -49,8 +49,7 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function join(){
-        foreach (func_get_args() as $arg){            $arg = strtolower($arg);
+    function join(){        foreach (func_get_args() as $arg){            $arg = strtolower($arg);
 
             if (strpos($arg, '.')){                $args = explode('.', $arg);
                 $table = array_pop($args);
@@ -69,24 +68,7 @@ class SQL extends SQL_control {
                 $relation['foreign']['alias'] = $arg;
                 $this->relations[$relation['foreign']['alias']] = $relation;            }
             $relation = $this->relations[$arg];
-
-            if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
-                $this->join[] = str::format('
-                    [%foreign.table] as `%foreign.alias` on (
-                        `%foreign.alias`.%foreign.field = `%local.alias`.%local.field
-                    )
-                ', $relation);
-
-            if ($relation['type'] == 'has_and_belongs_to_many'){                $this->join[] = str::format('
-                    [%foreign.table1] as `%foreign.alias1` on (
-                        `%foreign.alias1`.%foreign.field1 = `%local.alias`.%local.field
-                    )
-                ', $relation);
-                $this->join[] = str::format('
-                    [%foreign.table2] as `%foreign.alias2` on (
-                        `%foreign.alias2`.%foreign.field2 = `%foreign.alias1`.%foreign.field3
-                    )
-                ', $relation);            }
+            $this->join = array_merge($this->join, $this->_buildJoin($relation));
 
             if (substr($relation['type'], -4) == 'many')
                 $this->multiple[] = ($relation['foreign']['alias2'] ? $relation['foreign']['alias2'] : $relation['foreign']['alias']);

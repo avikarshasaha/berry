@@ -77,7 +77,7 @@ class SQL_connect extends DbSimple_Mysql {
         if (!$m[3]){
             if ($value === null)
                 return 'null';
-            elseif (!is_object($value) and !is_scalar($value))
+            elseif (!self::_is_subclass_of($value) and !is_scalar($value))
                 return 'DBSIMPLE_ERROR_VALUE_NOT_SCALAR';
 
             return (is_object($value) ? (string)$value : $this->escape($value));
@@ -88,12 +88,26 @@ class SQL_connect extends DbSimple_Mysql {
 
         $parts = array();
 
-        foreach ($value as $k => $v){
-            $v = ($v === null ? 'null' : (is_object($v) ? $v : $this->escape($v)));
+        foreach ($value as $k => $v){            if (($tmp = self::_is_subclass_of($v)) === null)
+                $v = ($v === null ? 'null' : $this->escape($v));
+            elseif (!$tmp)
+                continue;
+
             $parts[] = (!is_int($k) ? $this->escape($k, true).' = ' : '').$v;
         }
 
         return join(', ', $parts);
+    }
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _is_subclass_of($mixed){
+        if (!is_object($mixed))
+            return;
+
+        $class = strtolower(get_class($mixed));
+        return ($class == 'sql_raw' or is_subclass_of($class, 'sql_raw'));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
