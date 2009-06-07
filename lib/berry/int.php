@@ -70,18 +70,14 @@ class int {
             return $value;
 
         $value = strtolower($value);
-        $map = array(
-            'k' => 1024,
-            'm' => (1024 * 1024),
-            'g' => (1024 * 1024 * 1024)
-        );
+        $map = array('k' => 1, 'm' => 2, 'g' => 3);
 
-        return ($map[substr($value, -1)] * trim(substr($value, 0, -1)));
+        return (pow(1024, $map[substr($value, -1)]) * substr($value, 0, -1));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function roublerate($currency, $date = ''){
+    function roubleRate($currency, $date = ''){
         $date = date('d.m.Y', date::time($date));
 
         if (!$cache = cache::get('int/roublerate/'.$date.'.php')){

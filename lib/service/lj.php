@@ -18,7 +18,7 @@ class Service_LJ {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _request($method, $params = array()){    	$params = array_merge(array(
+    protected function _request($method, $params = array()){    	$params = array_merge(array(
     	    'username'  => $this->username,
     	    'hpassword' => $this->password,
     	    'ver'       => 1
@@ -51,14 +51,13 @@ class Service_LJ {
     	$params['lineendings'] = 'unix';
     	$params['usejournal'] = $this->journal;
 
-    	$time = (!is_numeric($time) ? strtotime($time) : $time);
-    	$time = ($time > 0 ? $time : time());
+    	$time = date::time($time);
 
-	    $params['year'] = date('Y', $timestamp);
-	    $params['mon']  = date('m', $timestamp);
-	    $params['day']  = date('d', $timestamp);
-	    $params['hour'] = date('H', $timestamp);
-	    $params['min']  = date('i', $timestamp);
+	    $params['year'] = date('Y', $time);
+	    $params['mon']  = date('m', $time);
+	    $params['day']  = date('d', $time);
+	    $params['hour'] = date('H', $time);
+	    $params['min']  = date('i', $time);
 
     	if ($result = $this->_request($method.'event', $params))
     		return ($request['itemid'] * 256 + $request['anum']);

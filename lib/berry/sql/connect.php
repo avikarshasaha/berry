@@ -41,7 +41,7 @@ class SQL_connect extends DbSimple_Mysql {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _toBerry($query, $use_prefix = true){
+    protected function _toBerry($query, $use_prefix = true){
         $withas = (strtolower(substr($query, 0, 6)) == 'select' or strtolower(substr($query, 0, 6)) == 'update');
 
         if (!$use_prefix)

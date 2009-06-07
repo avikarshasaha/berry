@@ -67,7 +67,7 @@ class archive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function __call($method, $args){
+    protected function __call($method, $args){
         if (extension_loaded('mbstring') and ($encoding = mb_internal_encoding()))
             mb_internal_encoding('ASCII');
 

@@ -56,11 +56,10 @@ class Arr {
 ////////////////////////////////////////////////////////////////////////////////
 
     function export($filename, $array, $name = ''){
-        $contents  = "<?\r\n";
+        $contents .= "<?php\r\n";
         $contents .= ($name ? '$'.$name.' =' : 'return').' ';
         $contents .= var_export($array, true);
         $contents .= ";\r\n";
-        $contents .= "\r\n?>";
 
         return file_put_contents($filename, $contents);
     }

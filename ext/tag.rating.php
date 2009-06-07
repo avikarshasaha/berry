@@ -68,7 +68,7 @@ function output_tag_rating($output){
 
         block('head', str::format(html::css($css.$style), array_merge($attr, array('size' => $s.'px'))));
 
-        if (cookie('tag.rating.'.$id) or $attr['static'])
+        if (http::cookie('tag.rating.'.$id) or $attr['static'])
             $result = '
                 <ul class="rating-'.$attr['img'].'" style="width: '.$w.'px;">
                     <li class="current" style="width: '.$r.'px;"></li>

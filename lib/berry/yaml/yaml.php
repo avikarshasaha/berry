@@ -12,7 +12,7 @@ class YAML {//////////////////////////////////////////////////////////////////
     function load($input){
         if (!$input or (is_file($input) and !filesize($input)))
             return array();
-        return Spyc::YAMLload($input);    }
+        return spyc::YAMLload($input);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,7 +20,7 @@ class YAML {//////////////////////////////////////////////////////////////////
         if (!$array or !is_array($array))
             return '';
 
-        return Spyc::YAMLdump($array, $indent, $wordwrap);
+        return spyc::YAMLdump($array, $indent, $wordwrap);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -57,12 +57,21 @@ class HTML {
 
         foreach ($array as $k => $v)
             if (is_array($v)){
-                $attr['#text'] .= '<optgroup label="'.$k.'" />';
+                $attr['#text'] .= tags::fill('optgroup', array('label' => $k));
 
-                foreach ($v as $a => $b)
-                    $attr['#text'] .= '<option value="'.$a.'"'.(in_array($a, $selected) ? ' selected="selected"' : '').'>'.($b !== '' ? $b : $a).'</option>';
-            } else {
-                $attr['#text'] .= '<option value="'.$k.'"'.(in_array($k, $selected) ? ' selected="selected"' : '').'>'.($v !== '' ? $v : $k).'</option>';
+                foreach ($v as $a => $b){                    $array = array('value' => $a, '#text' => ($b !== '' ? $b : $a));
+
+                    if (in_array($a, $selected))
+                        $array['selected'] = 'selected';
+
+                    $attr['#text'] .= tags::fill('option', $array);
+                }
+            } else {                $array = array('value' => $k, '#text' => ($v !== '' ? $v : $k));
+
+                if (in_array($k, $selected))
+                    $array['selected'] = 'selected';
+
+                $attr['#text'] .= tags::fill('option', $array);
             }
 
         return tags::fill('select', $attr);

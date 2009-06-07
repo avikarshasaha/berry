@@ -13,9 +13,8 @@ class date {
     function now(){        return date('Y-m-d H:i:s');    }
 ////////////////////////////////////////////////////////////////////////////////
 
-    function arr($date){
-        if (!is_numeric($date))
-            $date = strtotime($date);
+    function arr($date = 0){
+        $date = self::time($date);
 
         $array['year']   = date('Y', $date);
         $array['month']  = date('m', $date);
@@ -29,8 +28,8 @@ class date {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function date($format, $timestamp = 0){
-        return str::iconv(strftime($format, self::time($timestamp)));
+    function format($format, $timestamp = 0){
+        return strftime($format, self::time($timestamp));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

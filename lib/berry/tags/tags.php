@@ -40,7 +40,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _errors($parser, $output){        $output = str_replace(array('<berry>', '</berry>', '<berry />'), '', $output);
+    protected function _errors($parser, $output){        $output = str_replace(array('<berry>', '</berry>', '<berry />'), '', $output);
         $code = xml_get_error_code($parser);
 
         libxml_use_internal_errors(true);
@@ -131,7 +131,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse_lvars($output, $key, $value, $each = false){        if (is_array($output))            list($output, $key, $value, $each) = array($output['#text'], $output['#tag'], $key, $value);
+    function parse_lvars($output, $key, $value = null, $each = false){        if (is_array($output))            list($output, $key, $value, $each) = array($output['#text'], $output['#tag'], $key, $value);
 
         $output = str_replace('\%', self::char('%'), $output);
 
@@ -158,7 +158,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _values($values, $is_final = false){        $skipit = self::skip();
+    protected function _values($values, $is_final = false){        $skipit = self::skip();
 
         foreach ($values as $it){
             $it['attributes']['#is_final'] = $is_final;
@@ -512,7 +512,7 @@ class Tags extends Attr {
                 'noscript',
                 'object',
                 'ol',
-                'optgroup',
+                //'optgroup',
                 'option',
                 //'p',
                 'plaintext',

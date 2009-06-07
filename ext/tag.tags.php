@@ -401,7 +401,9 @@ function tag_quote($attr){	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote
 
 tags::skip('theme');
 function tag_theme($attr){    if (is_file($file = file::path('show/theme.ini')))
-        return tags::parse_lvars($attr, parse_ini_file($file, true));
+        return tags::parse_lvars($attr, $t = parse_ini_file($file, true));
+
+    echo_r($t);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

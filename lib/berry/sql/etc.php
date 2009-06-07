@@ -206,7 +206,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    private function _children($array, $id, $parent = false, $result = array()){
+    protected function _children($array, $id, $parent = false, $result = array()){
         foreach ($array as $k => $v){
             if ($k == $id or $parent){
                 $result[] = $k;
