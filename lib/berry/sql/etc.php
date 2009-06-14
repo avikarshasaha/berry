@@ -185,7 +185,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function children($table, $id = 0){        if (!$table and $this){
+    function childrens($table, $id = 0){        if (!$table and $this){
             list($table, $id) = array($this->_table, $table);
             $primary_key = $this->primary_key;
             $parent_key = $this->parent_key;
@@ -197,8 +197,8 @@ class SQL_etc extends SQL_vars {
 
         if (!$parent_key)
             return array();
-        $array = self::$sql->query($this->_buildChildren(), $primary_key, $parent_key, $table);
-        $array = (self::_children($array, $id));
+        $array = self::$sql->query($this->_buildChildrens(), $primary_key, $parent_key, $table);
+        $array = (self::_childrens($array, $id));
         $array[] = -1;
 
         return $array;
@@ -206,13 +206,13 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _children($array, $id, $parent = false, $result = array()){
+    protected function _childrens($array, $id, $parent = false, $result = array()){
         foreach ($array as $k => $v){
             if ($k == $id or $parent){
                 $result[] = $k;
-                $result = self::_children($v['childNodes'], $id, true, $result);
+                $result = self::_childrens($v['childNodes'], $id, true, $result);
             } else {
-                $result = self::_children($v['childNodes'], $id, $parent, $result);
+                $result = self::_childrens($v['childNodes'], $id, $parent, $result);
             }
         }
 

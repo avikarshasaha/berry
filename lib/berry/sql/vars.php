@@ -84,7 +84,7 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
             if ($fid = self::$cache[$id][$relation['local']['field']]){
                 $foreign = $relation['foreign'];
                 self::$cache[$id][$name] = self::$sql->selectCol(
-                    'select ?# from ?_ where ?# = ?d',
+                    $this->build('habtmids'),
                     $foreign['field3'], $foreign['table1'], $foreign['field1'], $fid
                 );
             } else {

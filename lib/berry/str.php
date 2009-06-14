@@ -163,4 +163,18 @@ class Str {///////////////////////////////////////////////////////////////////
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    function highlight($search, $output, $case = false){
+        $pattern = array('/', '('.join('|', (array)$search).')', '/u', (!$case ? 'i' : ''));
+        $replace = '<'.base64_encode('span class="highlight"').'>\\1<'.base64_encode('/span').'>';
+
+        $output = preg_replace('/<([^>]*)>/es', "'<'.base64_encode('\\1').'>'", $output);
+        $output = preg_replace(join('', $pattern), $replace, $output);
+        $output = preg_replace('/<([^>]*)>/es', "'<'.base64_decode('\\1').'>'", $output);
+        $output = str_replace('\"', '"', $output);
+
+        return $output;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }
