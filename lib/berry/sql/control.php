@@ -49,7 +49,7 @@ class SQL_control extends SQL_build {
 
     function values(){        $args = func_get_args();
 
-        if (func_num_args() > 1 or !is_array($args[0])){
+        if (!is_array($args[0])){
             $this->values[] = $args;
             return $this;
         }
@@ -76,8 +76,8 @@ class SQL_control extends SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function alter(){        foreach ($this->build('alter') as $query)
-            $result[] = self::$sql->query($query);
+    function alter(){        foreach ($this->build('alter') as $table => $query)
+            $result[$table] = (self::$sql->query($query) !== null);
 
         return $result;
     }

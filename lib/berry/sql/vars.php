@@ -96,7 +96,7 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __set($name, $value){        is_array($value) and sort($value);
+    function __set($name, $value){        is_array($value) and asort($value);
 
         if ($this->where and ($value == $this->__get($name) or !$this->__get($this->primary_key)))
             return $value;
