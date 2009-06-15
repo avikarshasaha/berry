@@ -1,10 +1,10 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class HTTP {
@@ -128,6 +128,21 @@ class HTTP {
             }
 
         return ($result ? $result : array());
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function pingback($url){
+        $headers = get_headers($url, true);
+
+        if (!$to = $headers['X-Pingback']){
+            if (!preg_match('/<link rel="pingback" href="([^"]+)" \/?>/i', file_get_contents($url), $match))
+                return;
+
+            $to = $match[1];
+        }
+
+        return $to;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

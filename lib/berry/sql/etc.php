@@ -1,10 +1,10 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class SQL_etc extends SQL_vars {
@@ -166,7 +166,7 @@ class SQL_etc extends SQL_vars {
     function schema($table = ''){        $table = ((!$table and $this) ? $this->_table : $table);        $schema = array();
         $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
-        foreach (self::$sql->query($this->_buildSchema(), $table) as $info)
+        foreach (self::$sql->query('desc ?_', $table) as $info)
             $schema[$info['Field']] = array(
                 'name' => $info['Field'],
                 'type' => $info['Type'],
@@ -185,8 +185,8 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function childrens($table, $id = 0){        if (!$table and $this){
-            list($table, $id) = array($this->_table, $table);
+    function childrens($table = 0, $id = 0){        if (!$table and $this){
+            list($table, $id) = array($this->_table, ($table ? $table : $this->id));
             $primary_key = $this->primary_key;
             $parent_key = $this->parent_key;
         } else {
@@ -197,7 +197,10 @@ class SQL_etc extends SQL_vars {
 
         if (!$parent_key)
             return array();
-        $array = self::$sql->query($this->_buildChildrens(), $primary_key, $parent_key, $table);
+        $array = self::$sql->query(
+            self::build('childrens'),
+            $primary_key, $parent_key, $table
+        );
         $array = (self::_childrens($array, $id));
         $array[] = -1;
 

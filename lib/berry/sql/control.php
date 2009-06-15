@@ -1,13 +1,13 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_control extends SQL_build {
+class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -15,13 +15,13 @@ class SQL_control extends SQL_build {
 
             return $result;
         }
-        if (!$this->values){            foreach ($this->build('HABTM') as $query)
+        if (!$this->values){            foreach (self::build('HABTM') as $query)
                 self::$sql->query($query);
 
             return 0;
         }
         if ($this->into){            $args = $this->values;
-            array_unshift($args, $this->build('insert'));
+            array_unshift($args, self::build('insert'));
             return call_user_method_array('query', self::$sql, $args);
         }
         if (!$this->where)
@@ -29,9 +29,9 @@ class SQL_control extends SQL_build {
         else
             $args = array_merge(array($this->values), $this->placeholders);
 
-        array_unshift($args, $this->build('save'));
+        array_unshift($args, self::build('save'));
         $result = call_user_method_array('query', self::$sql, $args);
-        foreach ($this->build('HABTM') as $query)
+        foreach (self::build('HABTM') as $query)
             self::$sql->query($query);
 
         return $result;
@@ -63,20 +63,20 @@ class SQL_control extends SQL_build {
 ////////////////////////////////////////////////////////////////////////////////
 
     function delete(){        $args = $this->placeholders;
-        array_unshift($args, $this->build('delete'));
+        array_unshift($args, self::build('delete'));
         return call_user_method_array('query', self::$sql, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function create(){
-        if (self::$sql->query($this->build('create')) !== null)
+        if (self::$sql->query(self::build('create')) !== null)
             return $this->alter();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function alter(){        foreach ($this->build('alter') as $table => $query)
+    function alter(){        foreach (self::build('alter') as $table => $query)
             $result[$table] = (self::$sql->query($query) !== null);
 
         return $result;
@@ -94,7 +94,7 @@ class SQL_control extends SQL_build {
 
         $method = 'select'.(in_array($method, array('cell', 'col', 'row')) ? $method : '');
 
-        if ($query = $this->build('getsub')){
+        if ($query = self::build('getsub')){
             $args = $this->placeholders;
             array_unshift($args, $query);
 
@@ -106,7 +106,7 @@ class SQL_control extends SQL_build {
         }
 
         $args = $this->placeholders;
-        array_unshift($args, $this->build('get'));
+        array_unshift($args, self::build('get'));
         return call_user_method_array($method, self::$sql, $args);
     }
 
@@ -190,7 +190,7 @@ class SQL_control extends SQL_build {
 
     function getCount(){
         $args = $this->placeholders;
-        array_unshift($args, $this->build('getcount'));
+        array_unshift($args, self::build('getcount'));
         return call_user_method_array('selectCell', self::$sql, $args);
     }
 

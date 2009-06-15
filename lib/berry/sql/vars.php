@@ -1,13 +1,13 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
+abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKIP = 7.2e83;
 
     protected $id = array();
     protected $table;
@@ -62,6 +62,9 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
         if (!$this->where)
             return;
 
+        if ($this->relations[$name])
+            return $this->_subObject($name);
+
         $id = '__get'.spl_object_hash($this);
 
         if (!array_key_exists($id, self::$cache)){            $class = clone $this;
@@ -84,7 +87,7 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
             if ($fid = self::$cache[$id][$relation['local']['field']]){
                 $foreign = $relation['foreign'];
                 self::$cache[$id][$name] = self::$sql->selectCol(
-                    $this->build('habtmids'),
+                    self::build('HABTMIDs'),
                     $foreign['field3'], $foreign['table1'], $foreign['field1'], $fid
                 );
             } else {
@@ -96,7 +99,12 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __set($name, $value){        is_array($value) and asort($value);
+    function __set($name, $value){        if (is_array($value)){            $func = create_function('$a', 'return !is_int($a);');            $array = array_map($func, array_keys($value));
+
+            if (in_array(true, $array))                asort($value);
+            else
+                sort($value);
+        }
 
         if ($this->where and ($value == $this->__get($name) or !$this->__get($this->primary_key)))
             return $value;
@@ -163,6 +171,35 @@ class SQL_vars implements ArrayAccess {    const SKIP = 7.2e83;
 
             return $this->multisave[$offset];
         }
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _subObject($name){        $relation = $this->relations[$name];        $local = $relation['local'];
+        $foreign = $relation['foreign'];
+
+        if ($relation['type'] == 'has_one')
+            return $this->table($name, $this->__get($relation['local']['field']));
+
+        if ($relation['type'] == 'belongs_to')
+            return $this->table($name)->limit(1)->where(
+                $foreign['alias'].'.'.$foreign['field'].' = ?',
+                $this->__get($local['field'])
+            );
+
+        if ($relation['type'] == 'has_many')
+            return $this->table($name)->where(
+                $foreign['alias'].'.'.$foreign['field'].' = ?',
+                $this->__get($local['field'])
+            );
+
+        return $this->table($name)->where(
+            $foreign['alias2'].'.'.$foreign['field2'].' in (?a)',
+            self::$sql->selectCol(
+                self::build('HABTMIDs'),
+                $foreign['field3'], $foreign['table1'], $foreign['field1'], $this->__get($local['field'])
+            )
+        );
     }
 
 ////////////////////////////////////////////////////////////////////////////////

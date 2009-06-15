@@ -1,10 +1,10 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Check {
@@ -52,7 +52,7 @@ class Check {
                         return $item;
                     '), arr::trim(explode(',', $match[3][$i])));
 
-                $args = array($name, $value, $params, $array, $data);
+                $args = array($value, $params, $name, $array, $data);
 
                 if (function_exists($call = 'check_'.$func)){
                     $check[$func] = call_user_func_array($call, $args);
@@ -137,58 +137,58 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function int($name, $value, $params){
+    function int($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_INT) !== false and (!$params or ($value >= $params[0] and $value <= $params[1])));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function float($name, $value, $params){
+    function float($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_FLOAT) !== false and (!$params or ($value >= $params[0] and $value <= $params[1])));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function number($name, $value, $params){
+    function number($value){
         return preg_match('/^[+-]\d+([\s.,]\d+)?([\s.,]\d+)?$/', $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function datetime($name, $value, $params){
+    function datetime($value, $params = array()){
         $time = strtotime($value);
         return (preg_match('/^[12]\d{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function date($name, $value, $params){
+    function date($value, $params = array()){
         $time = strtotime($value);
         return (preg_match('/^[12]\d{3}-\d{2}-\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function time($name, $value, $params){
+    function time($value, $params = array()){
         $time = strtotime($value);
         return (preg_match('/^\d{2}:\d{2}:\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function string($name, $value, $params){
+    function string($value){
         return ($value !== '');
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function mail($name, $value, $params){
+    function mail($value){
         return (filter_var($value, FILTER_VALIDATE_EMAIL) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function url($name, $value, $params){
+    function url($value, $params){
         $check = (filter_var($value, FILTER_VALIDATE_URL) !== false);
 
         if ($params)
@@ -199,55 +199,55 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function aid($name, $value, $params){
+    function aid($value){
         return (preg_match('/^[^_\-][a-z0-9_\-]+[^_\-]$/', $value) and !is_numeric($value));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ip($name, $value, $params){
+    function ip($value){
         return (filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function checker($name, $value, $params){
+    function checker($value, $params){
         return self::call($params[0], $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function compare($name, $value, $params){
+    function compare($value){
         return version_compare($value, $params[1], $params[0]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unique($name, $value, $params){        $tmp = explode('.', $params[0]);
+    function unique($value, $params){        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
         return !sql::query(
-            'select 1 from ?_ where lower(?#) = ? { and ?} limit 1',
+            'select 1 from ?_ where lower(?#) = ? { and ? } limit 1',
             $table, $field, strtolower($value), ($params[1] ? sql::raw($params[1]) : sql::SKIP)
         );
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function in($name, $value, $params, $array){
-        return in_array($name, $value, $params);
+    function in($value, $params){
+        return in_array($value, $params);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function mime($name, $value, $params, $array){
+    function mime($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.type\\2', $name);
         return preg_match('{('.str_replace('*', '(.*)', join('|', $params)).')}i', $array[$tmp]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ext($name, $value, $params, $array){
+    function ext($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
         $ext = strtolower(pathinfo($array[$tmp], PATHINFO_EXTENSION));
 
@@ -256,7 +256,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function size($name, $value, $params, $array){
+    function size($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.size\\2', $name);
         $tmp = $array[$tmp];
 
@@ -268,7 +268,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function width($name, $value, $params, $array){
+    function width($value, $params = array(), $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[0];
@@ -281,7 +281,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function height($name, $value, $params, $array){
+    function height($value, $params = array(), $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[1];
@@ -294,8 +294,27 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function phone($name, $value, $params){
-        return in_array(b::len(preg_replace('/\D+/', '', $value)), ($params ? $params : array(7, 10, 11)));
+    function phone($value, $params = array()){
+        return in_array(b::len(preg_replace('/\D/', '', $value)), ($params ? $params : array(7, 10, 11)));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function isbn($value){        $number = strtolower(str_replace('-', '', $value));
+        $len = b::len($number);
+        $sum = 0;
+
+        if ($len == 10 and preg_match('/\d+-\d+-\d+-(\d{1}|x)/', $value)){            for ($i = 0; $i < 9; $i++)
+                $sum += ($number[$i] * ($i + 1));
+
+            return ($sum % 11 == (substr($number, -1) == 'x' ? 10 : substr($number, -1)));        }
+
+        if ($len == 13 and preg_match('/\d+-\d+-\d+-\d+-\d{1}/', $value)){
+            for ($i = 12; $i >= 0; $i--)
+                $sum += ($i % 2 == 1 ? ($number[$i] * 3) : $number[$i]);
+
+            return ($sum % 10 == 0);
+        }
     }
 
 ////////////////////////////////////////////////////////////////////////////////

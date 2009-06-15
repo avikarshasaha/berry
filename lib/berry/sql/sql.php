@@ -1,10 +1,10 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class SQL extends SQL_control {
@@ -68,7 +68,7 @@ class SQL extends SQL_control {
                 $relation['foreign']['alias'] = $arg;
                 $this->relations[$relation['foreign']['alias']] = $relation;            }
             $relation = $this->relations[$arg];
-            $this->join = array_merge($this->join, $this->_buildJoin($relation));
+            $this->join = array_merge($this->join, self::build('join', $relation));
 
             if (substr($relation['type'], -4) == 'many')
                 $this->multiple[] = ($relation['foreign']['alias2'] ? $relation['foreign']['alias2'] : $relation['foreign']['alias']);

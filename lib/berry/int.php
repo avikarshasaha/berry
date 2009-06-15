@@ -1,13 +1,13 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class int {
+class Int {
 ////////////////////////////////////////////////////////////////////////////////
     // http://cutephp.com
     function size($file_size, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
@@ -100,6 +100,25 @@ class int {
         }
 
         return $array[strtoupper($currency)]['value'];
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function phone($number, $format = '[1] [(3)] 3-2-2'){        $plus = ($number[0] == '+');        $number = preg_replace('/\D/', '', $number);
+
+        $len = array_sum(preg_split('/\D/', $format));
+        $params = arr::merge(array_fill(0, $len, 0), array_reverse(str_split($number)));
+
+        $format = strrev(preg_replace('/(\d)/e', "str_repeat('d%', '\\1')", $format));
+        $format = call_user_func_array('sprintf', array_merge(array($format), $params));
+        $format = ($plus ? '+' : '').strrev($format);
+
+        if (preg_match_all('/\[(.*?)\]/', $format, $match))
+            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
+                if (!(int)preg_replace('/\D/', '', $match[1][$i]))
+                    $format = str_replace($match[0][$i], '', $format);
+
+        return strtr(trim($format), array('[' => '', ']' => ''));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,19 +1,18 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_build extends SQL_etc {
+class SQL_build {
 ////////////////////////////////////////////////////////////////////////////////
 
     function build(){        $args = func_get_args();
         $type = array_shift($args);
-
-        $this->_prepareBuild();        return call_user_func_array(array($this, '_build'.$type), $args);    }
+        return call_user_func_array(array(($this ? $this : 'self'), '_build_'.$type), $args);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -56,7 +55,8 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepareBuild(){        foreach ($this->select as $v){
+    protected function _prepareBulid(){
+        foreach ($this->select as $v){
             $this->_appendJoin($v);
 
             $if = (
@@ -64,12 +64,15 @@ class SQL_build extends SQL_etc {
                 strtolower(substr($v, 0, (b::len($this->table) + 1))) != strtolower($this->table.".")
             );
 
-            if ($v == '*'){                $v = '`'.$this->table.'`.*';
-            } elseif (strpos($v, '*') and is_bool(strpos($v, '`'))){                $tmp = preg_replace('/([\w\.]+)\.\*/', '\\1', $v);
+            if ($v == '*'){
+                $v = '`'.$this->table.'`.*';
+            } elseif (strpos($v, '*') and is_bool(strpos($v, '`'))){
+                $tmp = preg_replace('/([\w\.]+)\.\*/', '\\1', $v);
 
                 if (strtolower($tmp) == strtolower($this->table))
                     $v = '`'.$tmp.'`.*';
-                elseif ($this->relations[$tmp])                    $v = join(', ', $this->_prepareSelectAll($tmp));
+                elseif ($this->relations[$tmp])
+                    $v = join(', ', $this->_prepareSelectAll($tmp));
             } elseif ($if){
                 $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
             } else {
@@ -93,23 +96,21 @@ class SQL_build extends SQL_etc {
         $this->select = $select;
         $this->from = $from;
         $this->join = array_unique($this->join);
-        $this->where = array_map(array($this, '_prepareFields'), $this->where);
-        $this->group_by = array_map(array($this, '_prepareFields'), $this->group_by);
-        $this->having = array_map(array($this, '_prepareFields'), $this->having);
-        $this->order_by = array_map(array($this, '_prepareFields'), $this->order_by);
 
-        return $this;
+        foreach (array('where', 'group_by', 'having', 'order_by') as $v)
+            $this->$v = array_map(array($this, '_prepareFields'), $this->$v);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildGet(){
+    protected function _build_get(){        $this->_prepareBulid();
+
         $query[] = 'select '.join(', ', $this->select);
         $query[] = 'from '.join(', ', $this->from);
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
 
-        if (!$subquery = $this->build('getsub')){
+        if (!$subquery = self::build('getsub')){
             $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
             $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
         }
@@ -126,9 +127,11 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildGetSub(){ // :(
+    protected function _build_getSub(){ // :(
         if (!($this->multiple and ($this->limit or $this->where)))
             return;
+
+        $this->_prepareBulid();
 
         $query[] = 'select '.$this->table.'.'.$this->primary_key;
         $query[] = 'from '.join(', ', $this->from);
@@ -149,7 +152,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildSave(){        if (!$this->where)
+    protected function _build_save(){        if (!$this->where)
             return 'insert into ['.$this->_table.'] set ?a on duplicate key update ?a';
 
         $query[] = 'update ['.$this->_table.'] as '.$this->table.' set ?a';
@@ -164,7 +167,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildInsert(){        foreach ($this->values as $value){
+    protected function _build_insert(){        foreach ($this->values as $value){
             $values[] = '(?a)';
             $this->placeholders[] = $value;
         }
@@ -178,7 +181,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildDelete(){        if ($pos = stripos(($from = $this->from[0]), ' as '))
+    protected function _build_delete(){        if ($pos = stripos(($from = $this->from[0]), ' as '))
             $table = trim(substr($this->from[0], 0, $pos));
 
         $query[] = 'delete from ['.$this->_table.']';
@@ -193,7 +196,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildHABTM(){        $query = array();
+    protected function _build_HABTM(){        $query = array();
         if (!$this->joinvalues)
             return $query;
         $id = ($this->id ? $this->id : ($this->last_id() + 1));
@@ -214,7 +217,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildCreate(){
+    protected function _build_create(){
         $query[] = 'create table ['.$this->_table.'] (';
         $query[] = 'id int not null auto_increment,';
         $query[] = 'primary key (id)';
@@ -225,7 +228,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildAlter(){        $array1 = $this->values;
+    protected function _build_alter(){        $array1 = $this->values;
         $array2 = $this->schema($this->_table);
 
         $query = array();
@@ -282,7 +285,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildGetCount(){
+    protected function _build_getCount(){
         $query[] = 'select count(*)';
         $query[] = 'from '.join(', ', $this->from);
 
@@ -295,7 +298,7 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildJoin($relation){        if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
+    protected function _build_join($relation){        if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
             $join[] = str::format('
                 [%foreign.table] as `%foreign.alias` on (
                     `%foreign.alias`.%foreign.field = `%local.alias`.%local.field
@@ -320,17 +323,17 @@ class SQL_build extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildSchema(){        return 'desc ?_';    }
+    protected function _build_schema(){        return 'desc ?_';    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildChildrens(){
+    protected function _build_childrens(){
         return 'select ?# as array_key, ?# as parent_key from ?_';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _buildHABTMIDs(){
+    protected function _build_HABTMIDs(){
         return 'select ?# from ?_ where ?# = ?d';
     }
 

@@ -1,10 +1,10 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://berry.goodgirl.ru>                             | ~ )\
-                                                           /__/\ \____
-    Лёха zloy и красивый <http://lexa.cutenews.ru>         /   \_/    \
-    LGPL <http://www.gnu.org/licenses/lgpl.txt>           / <_ ____,_-/\ __
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Arr {
@@ -171,6 +171,22 @@ class Arr {
 ////////////////////////////////////////////////////////////////////////////////
 
     function filter($array, $allow){        return array_intersect_key($attr, array_flip($allow));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function rand($array, $num = 1){
+        if ($num == 1)
+            return $array[array_rand($array)];
+
+        $keys = array_rand($array, min($num, b::len($array)));
+        $result = array();
+
+        for ($i = 0, $c = b::len($keys); $i < $c; $i++){            $key = $keys[$i];
+            $result[$key] = $array[$key];
+        }
+
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
