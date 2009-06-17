@@ -76,10 +76,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function alter(){        foreach (self::build('alter') as $table => $query)
-            $result[$table] = (self::$sql->query($query) !== null);
-
-        return $result;
+    function alter(){        return (self::$sql->query(self::build('alter')) !== null);
     }
 ////////////////////////////////////////////////////////////////////////////////
 

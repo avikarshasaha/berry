@@ -257,7 +257,7 @@ class SQL_build {
             )
                 $after['default'] = self::$sql->escape($after['default']);
 
-            $query[$this->_table][] = ($before ? 'change '.$k : 'add').' '.
+            $query[] = ($before ? 'change '.$k : 'add').' '.
                        $name.' '.$after['type'].' '.(!$after['null'] ? 'not' : '').' null '.
                        ($after['auto'] ? 'auto_increment' : '').' '.
                        (isset($after['default']) ? 'default '.$after['default'] : '');
@@ -269,18 +269,13 @@ class SQL_build {
 
             if (array_key_exists('key', $after)){
                 if (!$after['key'] and $before['key'])
-                    $query[$this->_table][] = $key['drop'];
+                    $query[] = $key['drop'];
                 elseif ($after['key'] != $before['key'])
-                    $query[$this->_table][] = ($before['key'] ? $key['drop'].', ' : '').$key['add'];
+                    $query[] = ($before['key'] ? $key['drop'].', ' : '').$key['add'];
             }
         }
 
-        foreach ($query as $table => $alter)
-            $query[$table] = 'alter table ['.$table.'] '.join(', ', $alter);
-
-        echo_r($query);
-
-        return $query;
+        return 'alter table ['.$this->_table.'] '.join(', ', $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

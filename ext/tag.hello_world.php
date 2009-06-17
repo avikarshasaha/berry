@@ -12,5 +12,5 @@ function tag_hello_world($attr){	$attr = array_merge(array(
 	    '#text' => 'Fire! Fire!'
 	), $attr);
 
-	return replace('Hello World! My name is %name and I say "%#text".', $attr);
+	return str::format('Hello World! My name is %name and I say "%#text".', $attr);
 }

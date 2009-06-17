@@ -85,10 +85,11 @@ class B {    static $path = array();
         static $config = array();
 
         if (!$config){
-            $pattern = '/data/config/*.yaml';
-            $files = file::glob(self::$path[0].$pattern, self::$path[1].$pattern);
+            $dir = '/data/config';
+            $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
 
-            if (!$cache = cache::get('config.php', array('file' => $files))){
+            if (!$cache = cache::get('config.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.yaml', $dirs[1].'/*.yaml');
+
                 foreach ($files as $k => $v){
                     $k = substr(basename($v), 0, -5);
                     $k = explode('.', $k);
@@ -120,13 +121,18 @@ class B {    static $path = array();
     function i18n($text, $array = array()){
         static $lang = array();
 
-        if (!$lang){            $pattern = '/lang/en/*.yaml';
-            $files = file::glob(self::$path[0].$pattern, self::$path[1].$pattern);
-            if (self::$lang != 'en'){                $pattern = '/lang/'.self::$lang.'/*.yaml';
-                $files = array_merge($files, file::glob(self::$path[0].$pattern, self::$path[1].$pattern));
+        if (!$lang){            $dir = '/lang/en';
+            $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
+
+            if (self::$lang != 'en'){                $dir = '/lang/'.self::$lang;
+                $dirs = array_merge($dirs, array(self::$path[0].$dir, self::$path[1].$dir));
             }
 
-            if (!$cache = cache::get('lang/'.self::$lang.'.php', array('file' => $files))){
+            if (!$cache = cache::get('lang/'.self::$lang.'.php', array('file' => $dirs))){
+                $func = create_function('$v', 'return $v."/*.yaml";');
+                $dirs = array_map($func, $dirs);
+                $files = call_user_func_array(array('file', 'glob'), $dirs);
+
                 foreach ($files as $k => $v)
                     $lang = arr::merge($lang, array(substr(basename($v), 0, -5) => yaml::load($v)));
 
@@ -153,29 +159,47 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function call(){
+    function call(){        static $func = array();
+
         $args = func_get_args();
-        $func = array_shift($args);
+        $name = trim(array_shift($args));
 
-        if (!is_array($func) and is_int($pos = strrpos($func, '.'))){
-            $file = substr($func, 0, $pos);
-            $func = substr($func, ($pos + 1));
+        if ($name[0] == '*'){            $name = substr($name, 1);
+            $args = $args[0];        }
+
+        if (!$func){            $dir = '/ext';
+            $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
+            if (!$cache = cache::get('ext.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
+
+                foreach ($files as $k => $v){                    foreach (token_get_all(file_get_contents($v)) as $token){
+                        if ($token[0] == T_FUNCTION)
+                            $line = $token[2];
+
+                        if ($token[0] == T_STRING and $token[2] == $line){
+                            $line = 0;
+                            $func[$token[1]] = $v;
+                        }
+                    }                }
+
+                cache::set($func);
+            } else {
+                $func = include $cache;
+            }        }
+
+        if (!is_array($name)){            if ($file = $func[$name]){                if (!function_exists($name))
+                    include $file;
+
+                return call_user_func_array($name, $args);            }
+
+            if (strpos($name, '::'))
+                $name = explode('::', $name);
         }
-
-        if (!is_array($func) and strpos($func, '::'))
-            $func = explode('::', $func);
 
         if (
-            (is_array($func) and method_exists($func[0], $func[1])) or
-            (!is_array($func) and function_exists($func))
+            (is_array($name) and method_exists($name[0], $name[1])) or
+            (!is_array($name) and function_exists($name))
         )
-            return call_user_func_array($func, $args);
-
-        if (is_file($path = file::path('lib/'.str_replace('.', '/', $file).'.php'))){
-            $args = func_get_args();
-            include $path;
-            return call_user_func_array(array('self', 'call'), $args);
-        }
+            return call_user_func_array($name, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

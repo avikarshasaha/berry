@@ -304,16 +304,16 @@ class Check {
         $len = b::len($number);
         $sum = 0;
 
-        if ($len == 10 and preg_match('/\d+-\d+-\d+-(\d{1}|x)/', $value)){            for ($i = 0; $i < 9; $i++)
+        if ($len == 10 and preg_match('/\d+-\d+-\d+-(\d{1}|x)/', $value)){            for ($i = 0; $i < ($len - 1); $i++)
                 $sum += ($number[$i] * ($i + 1));
 
-            return ($sum % 11 == (substr($number, -1) == 'x' ? 10 : substr($number, -1)));        }
+            return (($sum % 11) == ($number[$i] == 'x' ? 10 : $number[$i]));        }
 
         if ($len == 13 and preg_match('/\d+-\d+-\d+-\d+-\d{1}/', $value)){
-            for ($i = 12; $i >= 0; $i--)
-                $sum += ($i % 2 == 1 ? ($number[$i] * 3) : $number[$i]);
+            for ($i = 0; $i < $len; $i++)
+                $sum += (($i % 2) == 1 ? ($number[$i] * 3) : $number[$i]);
 
-            return ($sum % 10 == 0);
+            return (($sum % 10) == 0);
         }
     }
 

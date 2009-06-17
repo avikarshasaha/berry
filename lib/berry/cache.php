@@ -55,7 +55,10 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function check_file($check){        return array_sum(array_map('filemtime', (array)$check));
+    function check_file($check){        foreach ((array)$check as $file)
+            if (file_exists($file))
+                $time += filemtime($file);
+        return $time;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
