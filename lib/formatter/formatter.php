@@ -10,7 +10,7 @@
 class Formatter {////////////////////////////////////////////////////////////////////////////////
 
     // http://www.hobix.com/textile/
-    function textile($output, $params){
+    static function textile($output, $params){
         static $textile;
 
         if (!$textile)
@@ -22,7 +22,7 @@ class Formatter {/////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://daringfireball.net/projects/markdown/syntax
-    function markdown($output){
+    static function markdown($output){
         static $markdown;
 
         if (!$markdown)
@@ -33,7 +33,7 @@ class Formatter {/////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function bbcode($output){
+    static function bbcode($output){
         static $bbcode;
 
         if (!$bbcode)
@@ -45,7 +45,7 @@ class Formatter {/////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://wackowiki.com/WackoDocumentation/WackoFormatting
-    function wacko($output){
+    static function wacko($output){
         static $wacko;
 
         if (!$wacko)
@@ -56,7 +56,7 @@ class Formatter {/////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function jevix($output){        static $jevix;
+    static function jevix($output){        static $jevix;
 
         if (!$jevix){            $jevix = new Jevix;
 

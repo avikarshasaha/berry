@@ -10,7 +10,7 @@
 class SQL_etc extends SQL_vars {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function connect($dsn){        define('DBSIMPLE_SKIP', self::SKIP);
+    static function connect($dsn){        define('DBSIMPLE_SKIP', self::SKIP);
         define('DBSIMPLE_ARRAY_KEY', 'array_key');
         define('DBSIMPLE_PARENT_KEY', 'parent_key');
 
@@ -25,7 +25,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function using($dsn){
+    static function using($dsn){
         static $last;
 
         if (!self::$sql->dsn[$dsn])
@@ -48,19 +48,19 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function table($table, $id = 0){        return (class_exists($table, true) ? new $table($id) : new SQL($id, $table));
+    static function table($table, $id = 0){        return (class_exists($table, true) ? new $table($id) : new SQL($id, $table));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function query(){
+    static function query(){
         $args = func_get_args();
         return call_user_method_array('query', self::$sql, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_valid(){
+    static function is_valid(){
         return (bool)self::$sql->link;
     }
 
@@ -77,7 +77,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function last_error($what = ''){        if (!$error = self::$sql->error)
+    static function last_error($what = ''){        if (!$error = self::$sql->error)
             return array();
 
         unset($error['context']);
@@ -86,7 +86,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function last_query($what = ''){
+    static function last_query($what = ''){
         if (!$query = self::$sql->_lastQuery)
             return array();
 
@@ -96,7 +96,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function statistics($what = ''){        if (!$stat = self::$sql->getStatistics())
+    static function statistics($what = ''){        if (!$stat = self::$sql->getStatistics())
             return array();
 
 	    return ($what ? $stat[$what] : $stat);
@@ -104,13 +104,13 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function logger($func){
+    static function logger($func){
 	    return self::$sql->setLogger($func);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function relations($table1, $table2, $type){        if (is_array($table2)){
+    static function relations($table1, $table2, $type){        if (is_array($table2)){
             $key = key($table2);
 
             if (!is_numeric($key))
@@ -181,7 +181,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function raw($raw){        return new SQL_raw($raw);    }
+    static function raw($raw){        return new SQL_raw($raw);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -209,7 +209,7 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _childrens($array, $id, $parent = false, $result = array()){
+    protected static function _childrens($array, $id, $parent = false, $result = array()){
         foreach ($array as $k => $v){
             if ($k == $id or $parent){
                 $result[] = $k;

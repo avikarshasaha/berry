@@ -10,7 +10,7 @@
 class File {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function path($filename){
+    static function path($filename){
         if (b::$path[1] and file_exists($path = b::$path[1].'/'.$filename))
             return $path;
 
@@ -18,7 +18,7 @@ class File {
     }
 ////////////////////////////////////////////////////////////////////////////////
 
-    function mkdir($path){
+    static function mkdir($path){
         if (b::is_windows())
             $path = str_replace('/', '\\', $path);
 
@@ -35,7 +35,7 @@ class File {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rmdir($filename){
+    static function rmdir($filename){
         $files = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($filename),
             RecursiveIteratorIterator::CHILD_FIRST
@@ -52,7 +52,7 @@ class File {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function glob(){
+    static function glob(){
         $args = func_get_args();
         $files = array();
 
@@ -68,7 +68,7 @@ class File {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://www.php.net/manual/ru/function.symlink.php#74464
-    function link($target, $link){
+    static function link($target, $link){
         if (b::is_windows())
             return exec('mklink '.(is_dir($target) ? '/D' : '').' "'.str_replace('/', '\\', $link).'" "'.str_replace('/', '\\', $target).'"');
 
@@ -77,7 +77,7 @@ class File {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function chmod($filename){
+    static function chmod($filename){
         if (is_writable($filename))
             return true;
 

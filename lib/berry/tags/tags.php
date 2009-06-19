@@ -15,7 +15,7 @@ class Tags extends Attr {
     static $var = '$GLOBALS';
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse($output, $is_final = false){
+    static function parse($output, $is_final = false){
         $output = self::parse_vars($output);
         $output = self::parse_supadupa($output, $is_final);
         $output = self::sux('<berry>'.$output.'</berry>');
@@ -35,12 +35,12 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse_else($if, $output){        $arr = preg_split('/<else( ([^>]*))?\/>/i', $output, 2);
+    static function parse_else($if, $output){        $arr = preg_split('/<else( ([^>]*))?\/>/i', $output, 2);
         return ($if ? $arr[0] : $arr[1]);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _errors($parser, $output){        $output = str_replace(array('<berry>', '</berry>', '<berry />'), '', $output);
+    protected static function _errors($parser, $output){        $lines = array();
         $code = xml_get_error_code($parser);
 
         libxml_use_internal_errors(true);
@@ -59,7 +59,10 @@ class Tags extends Attr {
             $href[] = '<a href="#'.$line.'">'.$line.'</a>';
 
         echo '<h1>'.xml_error_string($code).'</h1>';
-        echo '<h2>Line(s): '.join(', ', $href).'</h2>';
+
+        if ($lines)
+            echo '<h2>Line'.(count($lines) > 1 ? 's' : '').': '.join(', ', $href).'</h2>';
+
         echo '<table>';
 
         foreach (explode("\n", self::unsux($output)) as $k => $v){            $i  = ($k + 1);
@@ -76,7 +79,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function skip($tag = ''){
+    static function skip($tag = ''){
         static $skip = array();
 
         if ($tag)
@@ -87,7 +90,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse_vars($output){
+    static function parse_vars($output){
     	$output = str_replace('\#', self::char('#'), $output);
         $output = str_replace('\$', self::char('$'), $output);
 
@@ -118,8 +121,8 @@ class Tags extends Attr {
                     $var = self::vars($match[2][$i]);
                     $match[1][$i] = strtolower($match[1][$i]);
 
-                    if (($type = substr($match[1][$i], 1)) and function_exists($func = 'type_'.$type))
-                        $result = call_user_func($func, $match[2][$i], $var);
+                    if (($type = substr($match[1][$i], 1)) and self::function_exists($func = 'type_'.$type))
+                        $result = self::call($func, $match[2][$i], $var);
                     else
                         $result = (is_array($var) ? self::serialize($var) : $var);
 
@@ -131,13 +134,13 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse_lvars($output, $key, $value = null, $each = false){        if (is_array($output))            list($output, $key, $value, $each) = array($output['#text'], $output['#tag'], $key, $value);
+    static function parse_lvars($output, $key, $value = null, $each = false){        if (is_array($output))            list($output, $key, $value, $each) = array($output['#text'], $output['#tag'], $key, $value);
 
         $output = str_replace('\%', self::char('%'), $output);
 
         $rand    = rand();
         $pattern = '/%(\w+)?{'.preg_quote($key, '/').'(.([^}]*))?}/U';
-        $replace = 'function.tags.parse_lvars.'.$key.'.'.$rand;
+        $replace = 'lib.tags.parse_lvars.'.$key.'.'.$rand;
 
         if ($each){            $keys = array_keys($value);
 
@@ -152,13 +155,13 @@ class Tags extends Attr {
 
         self::vars($replace, $value);
         $result = self::parse($result);
-        unset($GLOBALS['function']['tags']['parse_lvars'][$key][$rand]);
+        unset($GLOBALS['lib']['tags']['parse_lvars'][$key][$rand]);
         return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _values($values, $is_final = false){        $skipit = self::skip();
+    protected static function _values($values, $is_final = false){        $skipit = self::skip();
 
         foreach ($values as $it){
             $it['attributes']['#is_final'] = $is_final;
@@ -168,11 +171,11 @@ class Tags extends Attr {
 
             if (self::$ns){                $ns = str_replace(array(':', '-', '.'), '_', $it['tag']);
                 if (
-                    !function_exists($func = 'tag_'.$it['attr']['#tag']) or
+                    !self::function_exists($func = 'tag_'.$it['attr']['#tag']) or
                     substr($ns, 0, (strlen(self::$ns) + 1)) != self::$ns.'_'
                 )
                     unset($func);
-            } elseif (!function_exists($func = 'tag_'.$it['attr']['#tag'])){
+            } elseif (!self::function_exists($func = 'tag_'.$it['attr']['#tag'])){
                 unset($func);
             }
 
@@ -231,7 +234,7 @@ class Tags extends Attr {
                     $tmp[$it['tag']][$it['level']]['attr'][$k] = self::unsux($v);
 
                 $result  = $tmp[$it['tag']][$it['level']]['result'];
-                $result .= call_user_func($func, attr::normalize($tmp[$it['tag']][$it['level']]['attr'], false));
+                $result .= self::call($func, attr::normalize($tmp[$it['tag']][$it['level']]['attr'], false));
                 unset($tmp[$it['tag']][$it['level']]);
             }
 
@@ -243,7 +246,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fill($tag, $attr = array()){
+    static function fill($tag, $attr = array()){
         if (is_array($tag)){
             $attr = $tag;
             $tag  = $attr['#tag'];
@@ -276,7 +279,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function sux($output){
+    static function sux($output){
         $output = str_replace('&', self::char('&'), $output);
         $output = preg_replace('/\<([^a-z^\/])/ie', "str_replace('<', self::char('<'), '<\\1')", $output);
 
@@ -285,7 +288,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unsux($output){
+    static function unsux($output){
         $output = str_replace(self::char('&'), '&', $output);
         $output = str_replace(self::char('$'), '$', $output);
         $output = str_replace(self::char('#'), '#', $output);
@@ -298,27 +301,27 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function html($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars_decode($string, $quote_style);        $string = preg_replace(array('/&#35;(\w+?){/', '/&#36;(\w+?){/', '/&#37;(\w+?){/', '/&#64;(\w+?){/'), array('#\\1{', '$\\1{', '%\\1{', '@\\1{'), $string);
+    static function html($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars_decode($string, $quote_style);        $string = preg_replace(array('/&#35;(\w+?){/', '/&#36;(\w+?){/', '/&#37;(\w+?){/', '/&#64;(\w+?){/'), array('#\\1{', '$\\1{', '%\\1{', '@\\1{'), $string);
 
     	return str_replace('&#96;', '`', $string);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unhtml($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars($string, $quote_style);        $string = preg_replace(array('/#(\w+)?{/', '/\$(\w+)?{/', '/%(\w+)?{/', '/@(\w+)?{/'), array('&#35;\\1{', '&#36;\\1{', '&#37;\\1{', '&#64;\\1{'),$string);
+    static function unhtml($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars($string, $quote_style);        $string = preg_replace(array('/#(\w+)?{/', '/\$(\w+)?{/', '/%(\w+)?{/', '/@(\w+)?{/'), array('&#35;\\1{', '&#36;\\1{', '&#37;\\1{', '&#64;\\1{'),$string);
 
     	return str_replace('`', '&#96;', $string);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function char($char){
+    static function char($char){
         return '%it['.ord($char).']';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function varname($string, $ns = ''){        static $array;
+    static function varname($string, $ns = ''){        static $array = array();
 
         if (!$ns)
             $ns = self::$var;
@@ -354,7 +357,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function vars(){        $args = func_get_args();
+    static function vars(){        $args = func_get_args();
         $var  = self::varname($args[0]);
         $name = explode('.', str_replace('\.', self::char('.'), $args[0]), 2);
         $map  = array(
@@ -383,7 +386,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function constant(){
+    static function constant(){
         $args = func_get_args();
 
         if (func_num_args() == 2){
@@ -401,7 +404,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function elmname_parse($string){    	if (!strpos($string, '['))
+    static function elmname_parse($string){    	if (!strpos($string, '['))
     	    return $string;
 
         $char = base64_encode(self::char('.'));
@@ -417,7 +420,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function elmname_unparse($array){
+    static function elmname_unparse($array){
         if (!is_array($array)){
             $array = str_replace('\.', self::char('.'), $array);
             $array = explode('.', $array);
@@ -430,26 +433,26 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function serialize($value){
+    static function serialize($value){
         return base64_encode(serialize($value));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unserialize($value){
+    static function unserialize($value){
         $result = unserialize(base64_decode($value));
         return ($result ? $result : array());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_array($value){
+    static function is_array($value){
         return is_array(unserialize(base64_decode($value)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_container($tag = ''){
+    static function is_container($tag = ''){
         static $tags;
 
         if (!$tags)
@@ -558,7 +561,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse_supadupa($output, $is_final = false){        static $tags;
+    static function parse_supadupa($output, $is_final = false){        static $tags = array();
 
         if (!$tags){            $ns = (self::$ns ? self::$ns.'_' : '');
             $tags = str_replace('_', '[_\.:-]', $ns.join('|'.$ns, array_keys(self::functions('supadupa'))));
@@ -588,7 +591,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function functions($prefix = ''){
+    static function functions($prefix = ''){
     	if (!$prefix)
     	    return end(get_defined_functions());
 
@@ -605,7 +608,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function constants($prefix = ''){
+    static function constants($prefix = ''){
     	if (!$prefix)
     	    return array_keys(get_defined_constants());
 
@@ -622,7 +625,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ns($tag){        $tag = strtolower(str_replace(array(':', '-', '.'), '_', $tag));
+    static function ns($tag){        $tag = strtolower(str_replace(array(':', '-', '.'), '_', $tag));
 
         if (!self::$ns)
             return $tag;
@@ -634,6 +637,32 @@ class Tags extends Attr {
 
         return $tag;
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function call(){        $args = func_get_args();
+        $func = array_shift($args);
+        if (class_exists('b'))
+            return b::call('*'.$func, $args);
+        else            return call_user_func_array($func, $args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function function_exists($func){        static $funcs = array();
+        if (function_exists($func))
+            return true;
+
+        if (!class_exists('b'))
+            return false;
+
+        if (!$file = cache::exists('ext.php'))
+            b::call('#');
+
+        if (!$funcs and ($file = cache::exists('ext.php')))
+            $funcs = include $file;
+
+        return isset($funcs[$func]);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

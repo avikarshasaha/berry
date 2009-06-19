@@ -13,12 +13,12 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '0.1.6');
+    static function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '0.1.6');
         return ($what ? $version[$what] : $version);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function init($level = 0){        $path = realpath(dirname(__file__).'/../../');        self::$path = (isset(self::$path[0]) ? array($path, self::$path[0]) : array($path));
+    static function init($level = 0){        $path = realpath(dirname(__file__).'/../../');        self::$path = (isset(self::$path[0]) ? array($path, self::$path[0]) : array($path));
         error_reporting($level);        spl_autoload_register(array('self', 'autoload'));
 
         debug::timer();
@@ -39,7 +39,7 @@ class B {    static $path = array();
     }
 ////////////////////////////////////////////////////////////////////////////////
 
-    function q($i = '', $c = '', $s = '/'){
+    static function q($i = '', $c = '', $s = '/'){
         $q = explode('/', $_GET['q']);
 
         if (is_int($pos = strpos($_SERVER['REQUEST_URI'], '?')))
@@ -68,20 +68,20 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function l(){
+    static function l(){
         $args = func_get_args();
         return call_user_func_array(array('tags', 'vars'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function len($mixed){
+    static function len($mixed){
         return ((is_array($mixed) or is_object($mixed)) ? sizeof($mixed) : strlen($mixed));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function config(){
+    static function config(){
         static $config = array();
 
         if (!$config){
@@ -118,7 +118,7 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function i18n($text, $array = array()){
+    static function i18n($text, $array = array()){
         static $lang = array();
 
         if (!$lang){            $dir = '/lang/en';
@@ -153,13 +153,13 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_windows(){
-        return (strtolower(substr(PHP_OS, 0, 3)) == 'win');
+    static function is_windows(){
+        return (substr(PHP_OS, 0, 3) == 'WIN');
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function call(){        static $func = array();
+    static function call(){        static $func = array();
 
         $args = func_get_args();
         $name = trim(array_shift($args));
@@ -250,7 +250,7 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function load($string, $_ = array()){
+    static function load($string, $_ = array()){
         extract($_);
 
         $_['string'] = $string;
@@ -272,7 +272,7 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function show($string, $_ = array(), $is_main = false){        static $_main;
+    static function show($string, $_ = array(), $is_main = false){        static $_main;
 
         if (!is_array($_))
             list($_, $is_main) = array(array(), $_);        else            extract($_);

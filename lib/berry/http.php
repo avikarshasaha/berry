@@ -11,7 +11,7 @@ class HTTP {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function cookie($name = null, $value = null, $time = '+1 hour'){
+    static function cookie($name = null, $value = null, $time = '+1 hour'){
         if ($name !== null and $value !== null)
             return setcookie($name, $value, date::time($time), '/', '', false, true);
         elseif ($name !== null)
@@ -20,7 +20,7 @@ class HTTP {
             return $_COOKIE;
     }////////////////////////////////////////////////////////////////////////////////
 
-    function go($location = '', $status = 303){        if (!$location)
+    static function go($location = '', $status = 303){        if (!$location)
             $location = b::q(0, 0);
         elseif (!strpos($location, '://'))
             $location = b::q(0).'/'.$location;
@@ -36,7 +36,7 @@ class HTTP {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://php.net/manual/ru/function.header.php#60050
-    function status($num, $replace = true){
+    static function status($num){
         static $http = array(
             100 => 'Continue',
             101 => 'Switching Protocols',
@@ -79,60 +79,61 @@ class HTTP {
             504 => 'Gateway Time-out'
         );
 
-        $status = (substr(php_sapi_name(), 0, 3) == 'cgi' ? 'Status:' : $_SERVER['SERVER_PROTOCOL']);
-        return header($status.' '.$num.' '.$http[$num], $replace);
+        $status = (substr(PHP_SAPI, 0, 3) == 'cgi' ? 'Status:' : $_SERVER['SERVER_PROTOCOL']);
+        header($status.' '.$num.' '.$http[$num], true, $num);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ping($urls){
-        foreach ((array)$urls as $url)
-            if ($ping = parse_url($url))
-                $result[$url] = xmlrpc::request(
-                    $ping['host'].($ping['port'] ? ':'.$ping['port'] : ''),
-                    $ping['path'], 'weblogUpdates.ping',
-                    array(b::config('site.name'), b::q(0)), 'Putoberry'
-                );
+    static function ping($url, $params = array()){        $params = array_merge(array(
+            'name' => b::config('site.name'),
+            'url'  => b::q(0)
+        ), $params);
+        $url = parse_url($url);
+        $response = end(xmlrpc::request(
+            $url['host'].($url['port'] ? ':'.$url['port'] : ''),
+            $url['path'], 'weblogUpdates.ping',
+            array($params['name'], $params['url']), 'Putoberry'
+        ));
 
-        return ($result ? $result : array());
+        if (!is_array($response))
+            return array(-1, '');
+
+        return array_values($response);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function trackback($urls, $params = array()){
+    static function trackback($url, $params = array()){
         $params = http_build_query(array_merge(array(
             'blog_name' => b::config('site.name'),
             'charset'   => 'utf-8'
         ), $params));
 
-        foreach ((array)$urls as $url)
-            if ($ping = parse_url($url)){
-                $fp = fsockopen($ping['host'], ($ping['port'] ? $ping['port'] : 80));
+        $url = parse_url($url);
+        $fp = fsockopen($url['host'], ($url['port'] ? $url['port'] : 80));
 
-                fwrite($fp,
-                    'POST '.$ping['path'].' HTTP/1.0'."\r\n".
-                    'Host: '.$ping['host']."\r\n".
-                    'User-Agent: Putoberry'."\r\n".
-                    'Content-Type: application/x-www-form-urlencoded; charset=utf-8'."\r\n".
-                    'Content-Length: '.b::len($params)."\r\n\r\n".
-                    $params
-                );
+        fwrite($fp,
+            'POST '.$url['path'].' HTTP/1.0'."\r\n".
+            'Host: '.$url['host']."\r\n".
+            'User-Agent: Putoberry'."\r\n".
+            'Content-Type: application/x-www-form-urlencoded; charset=utf-8'."\r\n".
+            'Content-Length: '.b::len($params)."\r\n\r\n".
+            $params
+        );
 
-                while (!feof($fp))
-                    $response .= fread($fp, 128);
+        while (!feof($fp))
+            $response .= fread($fp, 128);
 
-                fclose($fp);
+        fclose($fp);
 
-                if ($response = str::untag('message', $response))
-                    $result[$url] = $response[0];
-            }
-
-        return ($result ? $result : array());
+        if ($response = str::untag('message', $response))
+            return $response[0];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function pingback($url){
+    static function pingback($url){
         $headers = get_headers($url, true);
 
         if (!$to = $headers['X-Pingback']){

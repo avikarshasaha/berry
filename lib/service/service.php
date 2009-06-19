@@ -11,13 +11,13 @@ class Service {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function LJ($username, $password, $journal = ''){
+    static function LJ($username, $password, $journal = ''){
     	return new Service_LJ($username, $password, $journal);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function LastFM(){    	static $lastfm;
+    static function LastFM(){    	static $lastfm;
 
     	if (!$lastfm)
     	    $lastfm = new Service_LastFM;

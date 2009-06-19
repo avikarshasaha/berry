@@ -50,9 +50,3 @@ function type_u($var, $value){
 function type_h($var, $value){
     return supadupa_htmlize(array('#text' => $value));
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-function type__($var, $value){
-    return print_r($value, 1);
-}

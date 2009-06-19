@@ -7,11 +7,11 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class captcha {    const len = 4;
-    const symbols = '23456789abcdeghkmnpqsuvxyz';
+class captcha {    const LEN = 4;
+    const SYMBOLS = '23456789abcdeghkmnpqsuvxyz';
 ////////////////////////////////////////////////////////////////////////////////
 
-    function zz($len = self::len, $symbols = self::symbols){        $slen = (b::len($symbols) - 1);
+    static function zz($len = self::LEN, $symbols = self::SYMBOLS){        $slen = (b::len($symbols) - 1);
         for ($i = 0; $i < $len; $i++)
             $rand .= $symbols[mt_rand(0, $slen)];
 
@@ -26,7 +26,7 @@ class captcha {    const len = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function kcaptcha($len = self::len, $symbols = self::symbols){
+    static function kcaptcha($len = self::LEN, $symbols = self::SYMBOLS){
         $captcha = new kcaptcha;
         $captcha->width = ($len * 25);
         $captcha->allowed_symbols = $symbols;
@@ -37,24 +37,24 @@ class captcha {    const len = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function checker($check){
+    static function checker($check){
         return ($check == $_SESSION['captcha']);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __call($method, $args){
+    static function __call($method, $args){
         self::kcaptcha(8);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function captcha3D($len = 'easy'){        $url = 'http://blockspam.ru/Captcha.ashx?type='.$len;        list($url, $texr) = explode("\r\n", file_get_contents($url));
+    static function captcha3D($len = 'easy'){        $url = 'http://blockspam.ru/Captcha.ashx?type='.$len;        list($url, $texr) = explode("\r\n", file_get_contents($url));
         $_SESSION['captcha'] = strtolower($texr);        http::go($url);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function hight($len = self::len, $symbols = self::symbols){        $captcha = new hight($len, $symbols);
+    static function hight($len = self::LEN, $symbols = self::SYMBOLS){        $captcha = new hight($len, $symbols);
         $_SESSION['captcha'] = $captcha->key;
     }
 }

@@ -9,14 +9,14 @@
                                                                    \/|*/
 class YAML {////////////////////////////////////////////////////////////////////////////////
 
-    function load($input){
+    static function load($input){
         if (!$input or (is_file($input) and !filesize($input)))
             return array();
         return spyc::YAMLload($input);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function dump($array, $indent = 4, $wordwrap = false){
+    static function dump($array, $indent = 4, $wordwrap = false){
         if (!$array or !is_array($array))
             return '';
 

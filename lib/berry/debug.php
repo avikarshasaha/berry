@@ -10,12 +10,12 @@
 class Debug {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function print_r($var, $return = false){
+    static function print_r($var, $return = false){
         $echo = print_r($var, true);
         return highlight_string($echo, $return);
     }
 ////////////////////////////////////////////////////////////////////////////////
-    function timer($id = 'main'){
+    static function timer($id = 'main'){
         static $timer;
 
         if (!$timer[$id])
@@ -24,7 +24,7 @@ class Debug {
         return (microtime(true) - $timer[$id]);
     }////////////////////////////////////////////////////////////////////////////////
 
-    function info($save = false){
+    static function info($save = false){
         $file = file::path('cache').'/log/info.log';
 
         if (!$save)
@@ -59,7 +59,7 @@ class Debug {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function sql($object = null, $string = ''){
+    static function sql($object = null, $string = ''){
         static $fp;
 
         $file = file::path('cache').'/log/sql.log';

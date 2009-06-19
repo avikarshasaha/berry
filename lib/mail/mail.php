@@ -11,7 +11,7 @@ class Mail extends Nomad_MimeMail {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function send($to, $params, $tags = array()){
+    static function send($to, $params, $tags = array()){
         $params = array_merge(array(
             'type'   => b::config('mail.type'),
             'attach' => array()
@@ -59,7 +59,7 @@ class Mail extends Nomad_MimeMail {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function bender($message){
+    static function bender($message){
         if (is_file($file = file::path($message.'.eml')))
             $message = file_get_contents($file);
 

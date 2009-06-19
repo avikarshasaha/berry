@@ -12,7 +12,7 @@ class Hook {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function get($key, $value, $params = array()){
+    static function get($key, $value, $params = array()){
         if (!self::exists($key))
             return $value;
 
@@ -26,21 +26,21 @@ class Hook {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function set($key, $value, $sort = 50){
+    static function set($key, $value, $sort = 50){
         self::$hook[$key][$value] = $sort;
         return $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function remove($key){
+    static function remove($key){
         if (self::exists($key))
             unset(self::$hook[$key]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function exists($key){
+    static function exists($key){
         return isset(self::$hook[$key]);
     }
 

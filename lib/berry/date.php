@@ -10,10 +10,10 @@
 class Date {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function now(){        return date('Y-m-d H:i:s');    }
+    static function now(){        return date('Y-m-d H:i:s');    }
 ////////////////////////////////////////////////////////////////////////////////
 
-    function arr($date = 0){
+    static function arr($date = 0){
         $date = self::time($date);
 
         $array['year']   = date('Y', $date);
@@ -28,13 +28,13 @@ class Date {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function format($format, $timestamp = 0){
+    static function format($format, $timestamp = 0){
         return strftime($format, self::time($timestamp));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function time($timestamp = 0){
+    static function time($timestamp = 0){
         if (!$timestamp)
             $timestamp = time();
         elseif (!is_numeric($timestamp))
@@ -46,7 +46,7 @@ class Date {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://php.net/datetime/#78025
-    function ago($second, $len = 3, $plural = array()){        if (b::len($second) == 10 or !is_numeric($second))
+    static function ago($second, $len = 3, $plural = array()){        if (b::len($second) == 10 or !is_numeric($second))
             $second = (time() - self::time($second));
 
         $plural = array_merge(b::i18n('lib.date.ago'), array('separator' => ','), $plural);

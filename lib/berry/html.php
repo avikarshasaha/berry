@@ -10,7 +10,7 @@
 class HTML {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function block($key, $value = null, $sort = 50){
+    static function block($key, $value = null, $sort = 50){
         static $block, $sorts;
 
         if ($value !== null and !in_array($value, (array)$block[$key])){
@@ -26,7 +26,7 @@ class HTML {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function msg($key, $value = null, $sort = 50){
+    static function msg($key, $value = null, $sort = 50){
         static $sorts;
 
         if ($value !== null and !in_array($value, (array)$_SESSION['html']['msg'][$key])){
@@ -44,7 +44,7 @@ class HTML {
         return array();
     }////////////////////////////////////////////////////////////////////////////////
 
-    function dropdown($name, $array, $selected = array()){
+    static function dropdown($name, $array, $selected = array()){
         if (!is_array($name))
             $attr['name'] = $name;
         else
@@ -79,7 +79,7 @@ class HTML {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function js($text){
+    static function js($text){
         $attr = array('type' => 'text/javascript', '#text' => '');
 
         if (strtolower(substr($text, -3)) != '.js' or strpos($text, "\n"))
@@ -92,7 +92,7 @@ class HTML {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function css($text, $media = ''){
+    static function css($text, $media = ''){
         $attr = array('type' => 'text/css');
 
         if ($media)

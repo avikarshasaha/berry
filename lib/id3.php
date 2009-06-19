@@ -11,14 +11,14 @@ class ID3 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function tag($filename, $array = null){    	if ($array !== null)
+    static function tag($filename, $array = null){    	if ($array !== null)
     	    self::tag_set($filename, $array);
 
     	return self::tag_get($filename);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function genre($id = null){
+    static function genre($id = null){
     	if ($id === null)
     	    return self::genre_list();
     	elseif (is_numeric($id))
@@ -31,7 +31,7 @@ class ID3 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function tag_get($filename){    	if (!file_exists($filename))
+    static function tag_get($filename){    	if (!file_exists($filename))
     	    return;
 
         $fopen = fopen($filename, 'rb');
@@ -51,7 +51,7 @@ class ID3 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function tag_set($filename, $array){
+    static function tag_set($filename, $array){
     	if (!file_exists($filename) or !is_array($array))
     	    return;
 
@@ -77,19 +77,19 @@ class ID3 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function genre_name($id){    	$genre = self::genre_list();
+    static function genre_name($id){    	$genre = self::genre_list();
     	return $genre[$id];    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function genre_id($name){
+    static function genre_id($name){
     	$genre = array_flip(self::genre_list());
     	return $genre[$name];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function genre_list(){
+    static function genre_list(){
         static $genre;
 
         if (!$genre){

@@ -10,7 +10,7 @@
 class Int {
 ////////////////////////////////////////////////////////////////////////////////
     // http://cutephp.com
-    function size($file_size, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
+    static function size($file_size, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
 
         if ($file_size >= 1073741824)
             $file_size = (round($file_size / 1073741824 * 100) / 100).' '.$size['gb'];
@@ -26,7 +26,7 @@ class Int {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function plural($int, $array, $noint = false){        list($banan, $banana, $bananov) = (!is_array($array) ? explode('/', $array) : $array);
+    static function plural($int, $array, $noint = false){        list($banan, $banana, $bananov) = (!is_array($array) ? explode('/', $array) : $array);
 
         $n1 = substr($int, -1);
         $n2 = substr($int, -2);
@@ -45,7 +45,7 @@ class Int {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://php.ru/forum/viewtopic.php?t=13399
-    function roman($num){
+    static function roman($num){
         $n = intval($num);
 
         $romans = array(
@@ -65,7 +65,7 @@ class Int {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function bytes($value){
+    static function bytes($value){
         if (is_numeric($value))
             return $value;
 
@@ -77,7 +77,7 @@ class Int {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function roubleRate($currency, $date = ''){
+    static function roubleRate($currency, $date = ''){
         $date = date('d.m.Y', date::time($date));
 
         if (!$cache = cache::get('int/roublerate/'.$date.'.php')){
@@ -104,7 +104,7 @@ class Int {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function phone($number, $format = '[1] [(3)] 3-2-2'){        $plus = ($number[0] == '+');        $number = preg_replace('/\D/', '', $number);
+    static function phone($number, $format = '[1] [(3)] 3-2-2'){        $plus = ($number[0] == '+');        $number = preg_replace('/\D/', '', $number);
 
         $len = array_sum(preg_split('/\D/', $format));
         $params = arr::merge(array_fill(0, $len, 0), array_reverse(str_split($number)));

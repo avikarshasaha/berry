@@ -11,7 +11,7 @@ class Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function merge(){        $args  = func_get_args();
+    static function merge(){        $args  = func_get_args();
         $allow = array_shift($args);
 
         foreach ($args as $attr)
@@ -20,7 +20,7 @@ class Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function filter($attr, $allow = array()){
+    static function filter($attr, $allow = array()){
         foreach ($attr as $k => $v)
             if ($k[0] == '#')
                 unset($attr[$k]);
@@ -33,7 +33,7 @@ class Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function group($group, $attr){
+    static function group($group, $attr){
         if (is_array($attr[$group]))
             return $attr[$group];
 
@@ -48,7 +48,7 @@ class Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function normalize($attr, $symbols = true){
+    static function normalize($attr, $symbols = true){
         if (!is_array($attr))
             return array();
 

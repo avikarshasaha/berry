@@ -10,7 +10,7 @@
 class Arr {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function files($files){
+    static function files($files){
         foreach ($files as $k1 => $v1)
             foreach ($v1 as $k2 => $v2){
                 if (is_array($v2))
@@ -28,7 +28,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function html($item){
+    static function html($item){
         if (is_array($item))
             return array_map(array('self', 'html'), $item);
         else
@@ -37,7 +37,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unhtml($item){
+    static function unhtml($item){
         if (is_array($item))
             return array_map(array('self', 'unhtml'), $item);
         else
@@ -46,7 +46,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function trim($item){
+    static function trim($item){
         if (is_array($item))
             return array_map(array('self', 'trim'), $item);
         else
@@ -55,7 +55,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function export($filename, $array, $name = ''){
+    static function export($filename, $array, $name = ''){
         $contents .= "<?php\r\n";
         $contents .= ($name ? '$'.$name.' =' : 'return').' ';
         $contents .= var_export($array, true);
@@ -66,7 +66,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function assoc($array){
+    static function assoc($array){
         $array = self::flat($array);
         $keys  = array_keys($array);
 
@@ -87,7 +87,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function flat($array, $subk = '', $result = array()){
+    static function flat($array, $subk = '', $result = array()){
         foreach ($array as $k => $v){
             $k = str_replace('.', '\.', $k);
 
@@ -104,7 +104,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function tree($array, $level = 0, $result = array()){
+    static function tree($array, $level = 0, $result = array()){
         foreach ($array as $k => $items){
             $tmp = $items;
             unset($tmp['childNodes']);
@@ -122,7 +122,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function json($value){
+    static function json($value){
         $json = json_encode($value);
         $json = str_replace('\"', '¬', $json);
         $json = str_replace("'", '¬*', $json);
@@ -135,7 +135,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function date($array, $timestamp = false){
+    static function date($array, $timestamp = false){
         if ($array['year'])
             $date[] = $array['year'];
         if ($array['month'])
@@ -161,7 +161,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function merge(){        $args = func_get_args();        $result = array();
+    static function merge(){        $args = func_get_args();        $result = array();
 
         foreach (array_reverse($args) as $array)
             $result += self::flat($array);
@@ -170,12 +170,12 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function filter($array, $allow){        return array_intersect_key($attr, array_flip($allow));
+    static function filter($array, $allow){        return array_intersect_key($attr, array_flip($allow));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rand($array, $num = 1){
+    static function rand($array, $num = 1){
         if ($num == 1)
             return $array[array_rand($array)];
 

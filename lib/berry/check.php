@@ -12,7 +12,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_valid($name, $re, $data = '_post'){
+    static function is_valid($name, $re, $data = '_post'){
         $data = (!is_array($data) ? b::l($data) : $data);
         $array = arr::flat($data);
         $name = tags::elmname_parse($name);
@@ -80,7 +80,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_valid_session($array = null){        if (!is_array($array))
+    static function is_valid_session($array = null){        if (!is_array($array))
             $array = b::l('_session'.($array ? '.'.$array : ''));
 
         if ($array and $_SESSION['berry'])
@@ -91,7 +91,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_valid_get($array = null){
+    static function is_valid_get($array = null){
         if (!is_array($array))
             $array = b::l('_get'.($array ? '.'.$array : ''));
 
@@ -107,7 +107,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_valid_post($array = null){        if (!is_array($array))
+    static function is_valid_post($array = null){        if (!is_array($array))
             $array = b::l('_post'.($array ? '.'.$array : ''));
 
         if (
@@ -122,7 +122,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function is_valid_files($array = null){        if (!is_array($array))
+    static function is_valid_files($array = null){        if (!is_array($array))
             $array = b::l('_files'.($array ? '.'.$array : ''));
 
         if ($array /*and self::is_valid_session()*/){            foreach (array_keys(arr::flat(arr::files($_FILES))) as $k)
@@ -137,58 +137,58 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function int($value, $params = array()){
+    static function int($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_INT) !== false and (!$params or ($value >= $params[0] and $value <= $params[1])));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function float($value, $params = array()){
+    static function float($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_FLOAT) !== false and (!$params or ($value >= $params[0] and $value <= $params[1])));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function number($value){
+    static function number($value){
         return preg_match('/^[+-]\d+([\s.,]\d+)?([\s.,]\d+)?$/', $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function datetime($value, $params = array()){
+    static function datetime($value, $params = array()){
         $time = strtotime($value);
         return (preg_match('/^[12]\d{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function date($value, $params = array()){
+    static function date($value, $params = array()){
         $time = strtotime($value);
         return (preg_match('/^[12]\d{3}-\d{2}-\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function time($value, $params = array()){
+    static function time($value, $params = array()){
         $time = strtotime($value);
         return (preg_match('/^\d{2}:\d{2}:\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function string($value){
+    static function string($value){
         return ($value !== '');
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function mail($value){
+    static function mail($value){
         return (filter_var($value, FILTER_VALIDATE_EMAIL) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function url($value, $params){
+    static function url($value, $params){
         $check = (filter_var($value, FILTER_VALIDATE_URL) !== false);
 
         if ($params)
@@ -199,31 +199,31 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function aid($value){
+    static function aid($value){
         return (preg_match('/^[^_\-][a-z0-9_\-]+[^_\-]$/', $value) and !is_numeric($value));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ip($value){
+    static function ip($value){
         return (filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function checker($value, $params){
+    static function checker($value, $params){
         return self::call($params[0], $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function compare($value){
+    static function compare($value){
         return version_compare($value, $params[1], $params[0]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function unique($value, $params){        $tmp = explode('.', $params[0]);
+    static function unique($value, $params){        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
         return !sql::query(
@@ -234,20 +234,20 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function in($value, $params){
+    static function in($value, $params){
         return in_array($value, $params);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function mime($value, $params, $name, $array){
+    static function mime($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.type\\2', $name);
         return preg_match('{('.str_replace('*', '(.*)', join('|', $params)).')}i', $array[$tmp]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ext($value, $params, $name, $array){
+    static function ext($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
         $ext = strtolower(pathinfo($array[$tmp], PATHINFO_EXTENSION));
 
@@ -256,7 +256,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function size($value, $params, $name, $array){
+    static function size($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.size\\2', $name);
         $tmp = $array[$tmp];
 
@@ -268,7 +268,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function width($value, $params = array(), $name, $array){
+    static function width($value, $params = array(), $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[0];
@@ -281,7 +281,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function height($value, $params = array(), $name, $array){
+    static function height($value, $params = array(), $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[1];
@@ -294,13 +294,13 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function phone($value, $params = array()){
+    static function phone($value, $params = array()){
         return in_array(b::len(preg_replace('/\D/', '', $value)), ($params ? $params : array(7, 10, 11)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function isbn($value){        $number = strtolower(str_replace('-', '', $value));
+    static function isbn($value){        $number = strtolower(str_replace('-', '', $value));
         $len = b::len($number);
         $sum = 0;
 

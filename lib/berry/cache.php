@@ -12,74 +12,53 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function get($key, $check = array()){
-        foreach ($check as $func => $value)
-            if ($value and method_exists('cache', 'check_'.$func))
-                $time += call_user_func(array('cache', 'check_'.$func), $value);
-
-        self::$file = file::path('cache/').$key.'.md5';
-        self::$md5  = md5($time);
-
-        if (($file = self::exists($key)) and file_get_contents(self::$file) == self::$md5)
-            return $file;
+    static function get($key, $check = array()){
+        if (
+            (self::$file = self::exists($key)) and
+            !self::expired(self::$file, $check)
+        )
+            return self::$file;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function set($value){        file::mkdir(dirname(self::$file));
+    static function set($value){
+        file::mkdir(dirname(self::$file));
+        b::call((!is_scalar($value) ? 'arr::export' : 'file_put_contents'), self::$file, $value);
 
-        $func = (!is_scalar($value) ? 'arr::export' : 'file_put_contents');
-
-        b::call($func, substr(self::$file, 0, -4), $value);
-        file_put_contents(self::$file, self::$md5);
         return self::$file;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function remove($key){
-        if (!$file = self::exists($key))
-            return;
-
-        unlink($file);
-        unlink($file.'.md5');
+    static function remove($key){
+        if ($file = self::exists($key))
+            return unlink($file);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function exists($key){        $dir = file::path('cache');
-
-        if (is_file($file = $dir.'/'.$key) and is_file($dir.'/'.$key.'.md5'))
+    static function exists($key){        if (is_file($file = file::path('cache').'/'.$key))
             return $file;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function check_file($check){        foreach ((array)$check as $file)
-            if (file_exists($file))
-                $time += filemtime($file);
-        return $time;
-    }
+    static function expired($filename, $array){        $time = filemtime($filename);        $result = array();
+        foreach ($array as $k => $v){            if (!$v)
+                continue;
 
-////////////////////////////////////////////////////////////////////////////////
+            if ($k == 'file' and file_exists($v))
+                $result[] = (filemtime($v) > $time);
 
-    function check_DB($check){
-        foreach ((array)$check as $table)
-            if ($query = sql::getRow('show table status like "?_"', $table))
-                $time += strtotime($query['Update_time']);
+            if ($k == 'db' and ($query = sql::getRow('show table status like "?_"', $v)))
+                $result[] = (strtotime($query['Update_time']) > $time);
 
-        return $time;
-    }
+            if ($k == 'url' and ($headers = get_headers($v, true)))
+                $result[] = (strtotime($headers['Last-Modified']) > $time);
+        }
 
-////////////////////////////////////////////////////////////////////////////////
-
-    function check_URL($check){
-        foreach ((array)$check as $url)
-            if ($headers = get_headers($url, true))
-                $time += strtotime($headers['Last-Modified']);
-
-        return $time;
-    }
+        return in_array(true, $result);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

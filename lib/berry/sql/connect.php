@@ -102,7 +102,7 @@ class SQL_connect extends DbSimple_Mysql {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _is_subclass_of($mixed){
+    protected static function _is_subclass_of($mixed){
         if (!is_object($mixed))
             return;
 
