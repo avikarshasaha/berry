@@ -12,11 +12,9 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function get($key, $check = array()){
-        if (
-            (self::$file = self::exists($key)) and
-            !self::expired(self::$file, $check)
-        )
+    static function get($key, $array = array()){        self::$file = file::path('cache').'/'.$key;
+
+        if (!self::expired($key, $check))
             return self::$file;
     }
 
@@ -44,7 +42,9 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function expired($filename, $array){        $time = filemtime($filename);        $result = array();
+    static function expired($key, $array){        if (!$file = self::exists($key))
+            return true;
+        $time = filemtime($file);        $result = array();
         foreach ($array as $k => $v){            if (!$v)
                 continue;
 

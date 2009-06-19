@@ -10,18 +10,14 @@
 class Int {
 ////////////////////////////////////////////////////////////////////////////////
     // http://cutephp.com
-    static function size($file_size, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
+    static function size($filesize, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
+        $map = array('gb' => 3, 'mb' => 2, 'kb' => 1);
 
-        if ($file_size >= 1073741824)
-            $file_size = (round($file_size / 1073741824 * 100) / 100).' '.$size['gb'];
-        elseif ($file_size >= 1048576)
-            $file_size = (round($file_size / 1048576 * 100) / 100).' '.$size['mb'];
-        elseif ($file_size >= 1024)
-            $file_size = (round($file_size / 1024 * 100) / 100).' '.$size['kb'];
-        else
-            $file_size = $file_size.' '.$size['b'];
+        foreach ($map as $k => $v)
+            if ($filesize >= ($v = pow(1024, $v)))
+                return (round($filesize / $v * 100) / 100).' '.$size[$k];
 
-        return $file_size;
+        return $filesize.' '.$size['b'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

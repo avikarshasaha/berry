@@ -127,15 +127,15 @@ class Str {///////////////////////////////////////////////////////////////////
     static function untag($tag, $string, $open = '<', $close = '>'){
         while (true){
             //начало тэга
-            if (($start = strpos($string, $open.$tag, $stop)) === false)
+            if (($start = stripos($string, $open.$tag, $stop)) === false)
                 break;
 
             //начало контента
-            if (($start = strpos($string, $close, $start)) === false)
+            if (($start = stripos($string, $close, $start)) === false)
                 break;
 
             //конец контента
-            if (($stop = strpos($string, $open.'/'.$tag.$close, ++$start)) === false)
+            if (($stop = stripos($string, $open.'/'.$tag.$close, ++$start)) === false)
                 break;
 
             //выкусить контент!
