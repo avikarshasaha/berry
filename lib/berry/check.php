@@ -54,8 +54,8 @@ class Check {
 
                 $args = array($value, $params, $name, $array, $data);
 
-                if (function_exists($call = 'check_'.$func)){
-                    $check[$func] = call_user_func_array($call, $args);
+                if (b::function_exists($call = 'check_'.$func)){
+                    $check[$func] = b::call('*'.$call, $args);
                     continue;
                 }
 

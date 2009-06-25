@@ -82,7 +82,7 @@ function tag_loop($attr){
     	    $array = b::l($explode[1]);
     } elseif ($attr['range']){    	$explode = explode(' in ', $attr['range']);
     	$range = explode('-', trim($explode[1]), 3);
-    	$array = call_user_func_array('range', arr::trim($range));
+    	$array = b::call('*range', arr::trim($range));
     	list($key, $value) = arr::trim(explode(',', $explode[0], 2));    } else {        return;    }
 
     $i = 0;

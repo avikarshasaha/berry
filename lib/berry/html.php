@@ -110,4 +110,36 @@ class HTML {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    static function highlight($search, $output, $case = false, $class = 'highlight'){
+        $pattern = array('/', '('.join('|', (array)$search).')', '/u', (!$case ? 'i' : ''));
+        $replace = '<'.base64_encode('span class="'.$class.'"').'>\\1<'.base64_encode('/span').'>';
+
+        $output = preg_replace('/<([^>]*)>/es', "'<'.base64_encode('\\1').'>'", $output);
+        $output = preg_replace(join('', $pattern), $replace, $output);
+        $output = preg_replace('/<([^>]*)>/es', "'<'.base64_decode('\\1').'>'", $output);
+        $output = str_replace('\"', '"', $output);
+
+        return $output;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function quotes($message, $class = 'quotes'){
+        $result = array();
+
+        foreach (explode("\r\n", $message) as $line){
+            $line = trim($line);
+            $left = substr($line, 0, strpos($line, ' '));
+
+            if (!$level = substr_count($left, '>'))
+                $level = substr_count($left, '&gt;');
+
+            $result[] = ($level ? '<span class="'.$class.'_'.$level.'">'.$line.'</span>' : $line);
+        }
+
+        return join("\r\n", $result);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

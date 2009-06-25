@@ -106,7 +106,7 @@ class Int {
         $params = arr::merge(array_fill(0, $len, 0), array_reverse(str_split($number)));
 
         $format = strrev(preg_replace('/(\d)/e', "str_repeat('d%', '\\1')", $format));
-        $format = call_user_func_array('sprintf', array_merge(array($format), $params));
+        $format = b::call('*sprintf', array_merge(array($format), $params));
         $format = ($plus ? '+' : '').strrev($format);
 
         if (preg_match_all('/\[(.*?)\]/', $format, $match))

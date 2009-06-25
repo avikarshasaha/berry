@@ -60,8 +60,8 @@ class Attr {
         }
 
         foreach ($attr as $k => $v)
-            if (function_exists($func = 'attr_'.$k))
-                $attr = call_user_func($func, $attr);
+            if (tags::function_exists($func = 'attr_'.$k))
+                $attr = tags::call($func, $attr);
 
         if ($symbols)
             foreach ($attr as $k => $v)

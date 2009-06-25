@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Mail extends Nomad_MimeMail {
+class Mail {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ class Mail extends Nomad_MimeMail {
 
         $params['subject'] = str::format($params['subject'], $tags);
 
-        $mail = new parent;
+        $mail = new Nomad_MimeMail;
         $mail->debug_status = 'no';
         $mail->set_subject($params['subject']);
         $mail->set_charset('utf-8');

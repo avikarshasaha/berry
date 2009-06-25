@@ -14,7 +14,7 @@ class Cache {    static $file;
 
     static function get($key, $array = array()){        self::$file = file::path('cache').'/'.$key;
 
-        if (!self::expired($key, $check))
+        if (!self::expired($key, $array))
             return self::$file;
     }
 

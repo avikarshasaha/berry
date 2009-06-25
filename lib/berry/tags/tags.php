@@ -100,11 +100,10 @@ class Tags extends Attr {
                     $k = trim(substr($match[2][$i], 0, $pos));
                     $v = trim(substr($match[2][$i], $pos + 1));
 
-                    if (($v[0] == "'" and substr($v, -1) == "'") or ($v[0] == '"' and substr($v, -1) == '"')){
+                    if (($v[0] == "'" and substr($v, -1) == "'") or ($v[0] == '"' and substr($v, -1) == '"'))
                         $v = substr($v, 1, -1);
-                    } elseif ($f = create_function('', 'return '.$v.';')){
+                    elseif ($f = create_function('', 'return '.$v.';'))
                         $v = $f();
-                    }
 
                     if ($match[1][$i] == '#')
                         self::constant($k, $v);
@@ -206,7 +205,8 @@ class Tags extends Attr {
             }
 
             if (!$tmp[$it['tag']][$it['level']]){
-                unset($attr);
+                $attr = '';
+
                 foreach ($it['attr'] as $k => $v)
                     if ($k[0] != '#'){
                         $quote = (is_int(strpos($v, '"')) ? "'" : '"');
@@ -235,6 +235,7 @@ class Tags extends Attr {
 
                 $result  = $tmp[$it['tag']][$it['level']]['result'];
                 $result .= self::call($func, attr::normalize($tmp[$it['tag']][$it['level']]['attr'], false));
+
                 unset($tmp[$it['tag']][$it['level']]);
             }
 
@@ -373,8 +374,8 @@ class Tags extends Attr {
             self::char('.') => '_dot_'
         );
 
-        if (function_exists($func = 'var_'.strtr($name[0], $map))){            $args[0] = substr($args[0], (strlen($name[0]) + 1));
-            return call_user_func_array($func, $args);
+        if (self::function_exists($func = 'var_'.strtr($name[0], $map))){            $args[0] = substr($args[0], (strlen($name[0]) + 1));
+            return self::call('*'.$func, $args);
         } elseif (func_num_args() == 2){
             if ($func = create_function('$def', 'return '.$var.' = $def;'))
                 return $func($args[1]);
@@ -642,6 +643,11 @@ class Tags extends Attr {
 
     static function call(){        $args = func_get_args();
         $func = array_shift($args);
+
+        if ($func[0] == '*'){
+            $func = substr($func, 1);
+            $args = $args[0];
+        }
         if (class_exists('b'))
             return b::call('*'.$func, $args);
         else            return call_user_func_array($func, $args);
@@ -649,20 +655,13 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function function_exists($func){        static $funcs = array();
-        if (function_exists($func))
+    static function function_exists($func){        if (function_exists($func))
             return true;
 
         if (!class_exists('b'))
             return false;
 
-        if (!$file = cache::exists('ext.php'))
-            b::call('#');
-
-        if (!$funcs and ($file = cache::exists('ext.php')))
-            $funcs = include $file;
-
-        return isset($funcs[$func]);    }
+        return b::function_exists($func);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

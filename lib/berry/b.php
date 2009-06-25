@@ -171,7 +171,7 @@ class B {    static $path = array();
             $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
             if (!$cache = cache::get('ext.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
 
-                foreach ($files as $k => $v){                    foreach (token_get_all(file_get_contents($v)) as $token){
+                foreach ($files as $k => $v)                    foreach (token_get_all(file_get_contents($v)) as $token){
                         if ($token[0] == T_FUNCTION)
                             $line = $token[2];
 
@@ -179,7 +179,7 @@ class B {    static $path = array();
                             $line = 0;
                             $func[$token[1]] = $v;
                         }
-                    }                }
+                    }
 
                 cache::set($func);
             } else {
@@ -200,6 +200,23 @@ class B {    static $path = array();
             (!is_array($name) and function_exists($name))
         )
             return call_user_func_array($name, $args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function function_exists($func){
+        static $funcs = array();
+
+        if (function_exists($func))
+            return true;
+
+        if (!$file = cache::exists('ext.php'))
+            self::call('#');
+
+        if (!$funcs and ($file = cache::exists('ext.php')))
+            $funcs = include $file;
+
+        return isset($funcs[$func]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

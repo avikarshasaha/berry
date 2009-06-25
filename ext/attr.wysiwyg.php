@@ -8,8 +8,8 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 function attr_wysiwyg($attr){
-    if (function_exists($func = 'attr_wysiwyg_'.$attr['wysiwyg']))
-        return call_user_func($func, $attr);
+    if (b::function_exists($func = 'attr_wysiwyg_'.$attr['wysiwyg']))
+        $attr = b::call($func, $attr);
 
     unset($attr['wysiwyg']);
     return $attr;
@@ -39,13 +39,12 @@ function attr_wysiwyg_markitup($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function attr_wysiwyg_spaw($attr){    unset($attr['wysiwyg_spaw']);
-
-    include file::path('lib/spaw2/spaw.inc.php');
+function attr_wysiwyg_spaw($attr){    include file::path('lib/spaw2/spaw.inc.php');
 
     $spaw = new SpawEditor($attr['name']);
     $attr['#skip'] = supadupa_skip(array('#text' => $spaw->getHTML()));
 
+    unset($attr['wysiwyg_spaw']);
     return $attr;
 }
 
@@ -56,10 +55,10 @@ if (is_file(file::path('lib/spaw2/spaw.inc.php')) and b::q(-4, 0) == 'lib/spaw2/
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function attr_wysiwyg_fckeditor($attr){    unset($attr['wysiwyg_fckeditor']);
-
+function attr_wysiwyg_fckeditor($attr){
     $fckeditor = new FCKeditor($attr['name']);
     $fckeditor->BasePath = '~/lib/fckeditor/';
     $attr['#skip'] = $fckeditor->createHTML();
 
+    unset($attr['wysiwyg_fckeditor']);
     return $attr;}
