@@ -10,7 +10,7 @@
 class Formatter {////////////////////////////////////////////////////////////////////////////////
 
     // http://www.hobix.com/textile/
-    static function textile($output, $params){
+    static function textile($output, $params = array()){
         static $textile;
 
         if (!$textile)

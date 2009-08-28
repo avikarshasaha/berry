@@ -11,30 +11,24 @@ class Compare extends Diff {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($array1, $array2, $format = 'text'){
-        if (is_file($array1))
-            $array1 = file($array1);
-        elseif (!is_array($array1))
-            $array1 = explode("\r\n", $array1);
+        if (!is_array($array1))
+            $array1 = (is_file($array1) ? file($array1) : explode("\r\n", $array1));
 
-        if (is_file($array2))
-            $array2 = file($array2);
-        elseif (!is_array($array2))
-            $array2 = explode("\r\n", $array2);
-
-        $diff = new parent($array1, $array2);
+        if (!is_array($array2))
+            $array2 = (is_file($array2) ? file($array2) : explode("\r\n", $array2));
 
         if ($format == 'text')
-            $formatter = new UnifiedDiffFormatter;
+            $this->formatter = new UnifiedDiffFormatter;
         elseif ($format == 'html')
-            $formatter = new TableDiffFormatter;
+            $this->formatter = new TableDiffFormatter;
 
-        $this->output = $formatter->format($diff);
+        $this->compare = array($array1, $array2);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function __toString(){
-        return $this->output;
+        return $this->formatter->format(new parent($this->compare[0], $this->compare[1]));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

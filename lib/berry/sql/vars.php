@@ -117,8 +117,9 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
         ){
             $this->joinvalues[$rname] = $value;
         } else {
-            if (is_int($value) and ($value = ($value - $this->__get($name))))
+            if (is_int($value)){                $value -= $this->__get($name);
                 $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
+            }
 
             $this->values[$name] = $value;
         }

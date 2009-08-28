@@ -436,14 +436,22 @@ function tag_str_pad($attr){	$attr = array_merge(array(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function tag_toc($attr){
+function tag_toc($attr){    $uri = b::q(1, 0);
+    $string = '<a name="%s"></a><a href="'.$uri.'#%s">%s</a>';
+    if (preg_match_all('/<ref>(.*?)<\/ref>/i', $attr['#text'], $match)){
+        for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){            $id = 'ref-'.($i + 1);            $ref[] = sprintf($string, $id, '_'.$id, '↑').' '.$match[1][$i];
+            $attr['#text'] = str_replace($match[0][$i], sprintf($string, '_'.$id, $id, '<sup>[?]</sup>'), $attr['#text']);        }
+
+        if ($ref)
+            $ref = '<li>'.join('</li><li>', $ref).'</li>';
+    }
     if (preg_match_all('/<h(\d+)( (.*?))?>(.*)<\/h\\1>/i', $attr['#text'], $match)){
         for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){
         	preg_match('/ id=("|\')(.*?)\\1/', $match[2][$i], $id);
 
         	$id = ($id[2] ? $id[2] : 'toc-'.($i + 1));
             $toc .= str_repeat('#', $match[1][$i]);
-            $toc .= ' <a href="'.q(1, 0).'#'.$id.'">'.$match[4][$i].'</a>'."\r\n";
+            $toc .= ' <a href="'.$uri.'#'.$id.'">'.$match[4][$i].'</a>'."\r\n";
             $attr['#text'] = str_replace($match[0][$i], '<a name="'.$id.'"></a> '.$match[0][$i], $attr['#text']);
         }
 
@@ -451,7 +459,7 @@ function tag_toc($attr){
             $toc = formatter::textile($toc);
     }
 
-	return tags::parse_lvars($attr, $toc);
+	return tags::parse_lvars($attr, compact('toc', 'ref'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
