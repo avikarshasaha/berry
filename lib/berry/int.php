@@ -73,33 +73,6 @@ class Int {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function roubleRate($currency, $date = ''){
-        $date = date('d.m.Y', date::time($date));
-
-        if (!$cache = cache::get('int/roublerate/'.$date.'.php')){
-            $xml = simplexml_load_file('http://cbr.ru/scripts/XML_daily.asp?date_req='.$date);
-            $array = array();
-
-            foreach ($xml->xpath('//Valute') as $key => $xml){
-                $id = (string)$xml->attributes()->ID;
-                $name = (string)$xml->Name;
-                $code = (int)$xml->NumCode;
-                $value = (str_replace(',', '.', $xml->Value) / $xml->Nominal);
-                $value = str_replace(',', '.', $value);
-
-                $array[(string)$xml->CharCode] = compact('id', 'name', 'code', 'value');
-            }
-
-            cache::set($array);
-        } else {
-            $array = include $cache;
-        }
-
-        return $array[strtoupper($currency)]['value'];
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function phone($number, $format = '[1] [(3)] 3-2-2'){        $plus = ($number[0] == '+');        $number = preg_replace('/\D/', '', $number);
 
         $len = array_sum(preg_split('/\D/', $format));
