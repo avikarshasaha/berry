@@ -8,11 +8,10 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Cache {    static $file;
-    static $md5;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function get($key, $array = array()){        self::$file = file::path('cache').'/'.$key;
+    static function get($key, $array = array()){        self::$file = file::path('cache/').$key;
 
         if (!self::expired($key, $array))
             return self::$file;
@@ -36,7 +35,7 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function exists($key){        if (is_file($file = file::path('cache').'/'.$key))
+    static function exists($key){        if (is_file($file = file::path('cache/').$key))
             return $file;
     }
 

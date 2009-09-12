@@ -27,8 +27,12 @@ class Service {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function IMDb($title){
-    	return new Service_IMDb($title);
+    static function IMDb($title){        static $imdb = array();
+
+        if (!isset($imdb[$title]))
+            $imdb[$title] = new Service_IMDb($title);
+
+    	return $imdb[$title];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
