@@ -63,7 +63,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
             return;
 
         if ($this->relations[$name])
-            return $this->_subObject($name);
+            return $this->_sub_object($name);
 
         $id = '__get'.spl_object_hash($this);
 
@@ -73,7 +73,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
                 if (!in_array(substr($schema['type'], -4), array('text', 'blob')))
                     $class->select($this->table.'.'.$field);
 
-            self::$cache[$id] = $class->getArray();
+            self::$cache[$id] = $class->as_array();
         }
 
         if (
@@ -87,7 +87,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
             if ($fid = self::$cache[$id][$relation['local']['field']]){
                 $foreign = $relation['foreign'];
                 self::$cache[$id][$name] = self::$sql->selectCol(
-                    self::build('HABTMIDs'),
+                    self::build('HABTM_IDs'),
                     $foreign['field3'], $foreign['table1'], $foreign['field1'], $fid
                 );
             } else {
@@ -142,7 +142,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetGet($offset){
-        if ($class = $this->_setMultiSave($offset))
+        if ($class = $this->_set_multi_save($offset))
             return $class;
 
         return $this->__get($offset);
@@ -151,7 +151,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetSet($offset, $value){
-        if (!is_array($value) or (!$class = $this->_setMultiSave($offset)))
+        if (!is_array($value) or (!$class = $this->_set_multi_save($offset)))
             return $this->__set($offset, $value);
 
         foreach ($value as $k => $v)
@@ -162,7 +162,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _setMultiSave($offset){
+    protected function _set_multi_save($offset){
         if (is_null($offset))
             return $this->multisave[] = $this->table($this->table);
 
@@ -176,7 +176,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _subObject($name){        $relation = $this->relations[$name];        $local = $relation['local'];
+    protected function _sub_object($name){        $relation = $this->relations[$name];        $local = $relation['local'];
         $foreign = $relation['foreign'];
 
         if ($relation['type'] == 'has_one')
@@ -197,7 +197,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
         return $this->table($name)->where(
             $foreign['alias2'].'.'.$foreign['field2'].' in (?a)',
             self::$sql->selectCol(
-                self::build('HABTMIDs'),
+                self::build('HABTM_IDs'),
                 $foreign['field3'], $foreign['table1'], $foreign['field1'], $this->__get($local['field'])
             )
         );

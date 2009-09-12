@@ -16,7 +16,7 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _appendJoin($v){        if ($pos = strrpos($v, '.')){
+    protected function _append_join($v){        if ($pos = strrpos($v, '.')){
             $table = substr($v, 0, $pos);
 
             if ($table != $this->table and strpos($table, '`') === false)
@@ -26,7 +26,7 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepareFields($v){        $this->_appendJoin($v);
+    protected function _prepare_fields($v){        $this->_append_join($v);
 
         if (strpos($v, '`') === false)
             $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
@@ -36,13 +36,13 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepareSelectAll($v){
+    protected function _prepare_select_all($v){
         static $cache = array();
 
         $vars = get_class_vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
         $key = ($vars['table'] ? $vars['table'] : $v);
 
-        if (!$cache[$key]){            $this->_appendJoin($v);
+        if (!$cache[$key]){            $this->_append_join($v);
             $cache[$key] = array_keys($this->schema($key));
         }
 
@@ -55,9 +55,9 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepareBulid(){
+    protected function _prepare_bulid(){
         foreach ($this->select as $v){
-            $this->_appendJoin($v);
+            $this->_append_join($v);
 
             $if = (
                 !stripos($v, " as ") and is_bool(strpos($v, '`')) and
@@ -72,7 +72,7 @@ class SQL_build {
                 if (strtolower($tmp) == strtolower($this->table))
                     $v = '`'.$tmp.'`.*';
                 elseif ($this->relations[$tmp])
-                    $v = join(', ', $this->_prepareSelectAll($tmp));
+                    $v = join(', ', $this->_prepare_select_all($tmp));
             } elseif ($if){
                 $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
             } else {
@@ -98,19 +98,19 @@ class SQL_build {
         $this->join = array_unique($this->join);
 
         foreach (array('where', 'group_by', 'having', 'order_by') as $v)
-            $this->$v = array_map(array($this, '_prepareFields'), $this->$v);
+            $this->$v = array_map(array($this, '_prepare_fields'), $this->$v);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_get(){        $this->_prepareBulid();
+    protected function _build_get(){        $this->_prepare_bulid();
 
         $query[] = 'select '.join(', ', $this->select);
         $query[] = 'from '.join(', ', $this->from);
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
 
-        if (!$subquery = self::build('getsub')){
+        if (!$subquery = self::build('subquery')){
             $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
             $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
         }
@@ -127,11 +127,11 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_getSub(){ // :(
+    protected function _build_subquery(){ // :(
         if (!($this->multiple and ($this->limit or $this->where)))
             return;
 
-        $this->_prepareBulid();
+        $this->_prepare_bulid();
 
         $query[] = 'select '.$this->table.'.'.$this->primary_key;
         $query[] = 'from '.join(', ', $this->from);
@@ -280,9 +280,9 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_getCount(){
+    protected function _build_count(){
         $query[] = 'select count(*)';
-        $query[] = 'from '.join(', ', $this->from);
+        $query[] = 'from ['.$this->_table.']';
 
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
@@ -328,7 +328,7 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_HABTMIDs(){
+    protected function _build_HABTM_IDs(){
         return 'select ?# from ?_ where ?# = ?d';
     }
 

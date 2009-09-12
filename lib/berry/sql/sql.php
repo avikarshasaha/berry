@@ -90,7 +90,7 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function orderBy(){
+    function order_by(){
         foreach (func_get_args() as $arg)
             $this->order_by[] = ($arg[0] == '-' ? substr($arg, 1).' desc' : $arg);
 
@@ -120,7 +120,7 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function groupBy(){
+    function group_by(){
         $args = func_get_args();
         $this->group_by = array_merge($this->group_by, $args);
 

@@ -86,12 +86,14 @@ class SQL_control extends SQL_etc {
 
         $method = strtolower($method);
 
-        if (in_array($method, array('array', 'object', 'count')))
-            return $this->{'get'.$method}();
+        if (in_array($method, array('array', 'object')))
+            return $this->{'as_'.$method}();
+        elseif ($method == 'count')
+            return $this->count();
 
         $method = 'select'.(in_array($method, array('cell', 'col', 'row')) ? $method : '');
 
-        if ($query = self::build('getsub')){
+        if ($query = self::build('subquery')){
             $args = $this->placeholders;
             array_unshift($args, $query);
 
@@ -109,7 +111,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function getArray(){        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
+    function as_array(){        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
 
         if ($this->parent_key){            $this->select[] = $this->table.'.'.$this->parent_key.' as parent_key';
 
@@ -142,8 +144,8 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function getObject(){        $result = array();
-        $array = ($this->id ? array($this->id => $this->getArray()) : $this->getArray());
+    function as_object(){        $result = array();
+        $array = ($this->id ? array($this->id => $this->as_array()) : $this->as_array());
 
         foreach ($array as $id => $row)
             foreach ($row as $k => $v)
@@ -156,7 +158,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function getCell(){        if ($this)
+    function cell(){        if ($this)
             return $this->get('cell');
 
         $args = func_get_args();
@@ -165,7 +167,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function getCol(){
+    function col(){
         if ($this)
             return $this->get('col');
 
@@ -175,7 +177,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function getRow(){
+    function row(){
         if ($this)
             return $this->get('row');
 
@@ -185,9 +187,9 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function getCount(){
+    function count(){
         $args = $this->placeholders;
-        array_unshift($args, self::build('getcount'));
+        array_unshift($args, self::build('count'));
         return call_user_method_array('selectCell', self::$sql, $args);
     }
 

@@ -9,7 +9,7 @@
                                                                    \/|*/
 class Int {
 ////////////////////////////////////////////////////////////////////////////////
-    // http://cutephp.com
+
     static function size($filesize, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
         $map = array('gb' => 3, 'mb' => 2, 'kb' => 1);
 
@@ -74,20 +74,22 @@ class Int {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function phone($number, $format = '[1] [(3)] 3-2-2'){        $plus = ($number[0] == '+');        $number = preg_replace('/\D/', '', $number);
-
         $len = array_sum(preg_split('/\D/', $format));
         $params = arr::merge(array_fill(0, $len, 0), array_reverse(str_split($number)));
 
-        $format = strrev(preg_replace('/(\d)/e', "str_repeat('d%', '\\1')", $format));
+        if ($plus)
+            $params[$len - 1] .= '+';
+
+        $format = strrev(preg_replace('/(\d)/e', "str_repeat('s%', '\\1')", $format));
         $format = b::call('*sprintf', array_merge(array($format), $params));
-        $format = ($plus ? '+' : '').strrev($format);
+        $format = strrev($format);
 
         if (preg_match_all('/\[(.*?)\]/', $format, $match))
             for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
                 if (!(int)preg_replace('/\D/', '', $match[1][$i]))
                     $format = str_replace($match[0][$i], '', $format);
 
-        return strtr(trim($format), array('[' => '', ']' => ''));
+        return trim(strtr($format, array('[' => '', ']' => '')));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
