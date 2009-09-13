@@ -302,7 +302,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function html($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars_decode($string, $quote_style);        $string = preg_replace(array('/&#35;(\w+?){/', '/&#36;(\w+?){/', '/&#37;(\w+?){/', '/&#64;(\w+?){/'), array('#\\1{', '$\\1{', '%\\1{', '@\\1{'), $string);
+    static function html($string, $quote_style = ENT_QUOTES){        $string = htmlspecialchars_decode($string, $quote_style);        $string = preg_replace(array('/&#35;(\w+)?{/', '/&#36;(\w+)?{/', '/&#37;(\w+)?{/', '/&#64;(\w+)?{/'), array('#\\1{', '$\\1{', '%\\1{', '@\\1{'), $string);
 
     	return str_replace('&#96;', '`', $string);
     }

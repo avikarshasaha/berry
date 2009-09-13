@@ -170,7 +170,7 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function filter($array, $allow){        return array_intersect_key($attr, array_flip($allow));
+    static function filter($array, $allow){        return array_intersect_key($array, array_flip($allow));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

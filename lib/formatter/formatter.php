@@ -21,7 +21,7 @@ class Formatter {/////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // http://daringfireball.net/projects/markdown/syntax
+    // http://daringfireball.net/projects/markdown/syntax/
     static function markdown($output){
         static $markdown;
 
@@ -44,7 +44,7 @@ class Formatter {/////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // http://wackowiki.com/WackoDocumentation/WackoFormatting
+    // http://wackowiki.com/WackoDocumentation/WackoFormatting/
     static function wacko($output){
         static $wacko;
 
