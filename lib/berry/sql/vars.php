@@ -63,7 +63,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
             return;
 
         if ($this->relations[$name])
-            return $this->_sub_object($name);
+            return $this->_object($name);
 
         $id = '__get'.spl_object_hash($this);
 
@@ -142,7 +142,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetGet($offset){
-        if ($class = $this->_set_multi_save($offset))
+        if ($class = $this->_multisave($offset))
             return $class;
 
         return $this->__get($offset);
@@ -151,7 +151,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetSet($offset, $value){
-        if (!is_array($value) or (!$class = $this->_set_multi_save($offset)))
+        if (!is_array($value) or (!$class = $this->_multisave($offset)))
             return $this->__set($offset, $value);
 
         foreach ($value as $k => $v)
@@ -162,7 +162,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _set_multi_save($offset){
+    protected function _multisave($offset){
         if (is_null($offset))
             return $this->multisave[] = $this->table($this->table);
 
@@ -176,7 +176,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _sub_object($name){        $relation = $this->relations[$name];        $local = $relation['local'];
+    protected function _object($name){        $relation = $this->relations[$name];        $local = $relation['local'];
         $foreign = $relation['foreign'];
 
         if ($relation['type'] == 'has_one')

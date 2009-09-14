@@ -76,7 +76,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function alter(){        return (self::$sql->query(self::build('alter')) !== null);
+    function alter(){        if ($query = self::build('alter'))            return (self::$sql->query($query) !== null);
     }
 ////////////////////////////////////////////////////////////////////////////////
 

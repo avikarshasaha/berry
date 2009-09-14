@@ -275,7 +275,8 @@ class SQL_build {
             }
         }
 
-        return 'alter table ['.$this->_table.'] '.join(', ', $query);
+        if ($query)
+            return 'alter table ['.$this->_table.'] '.join(', ', $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
