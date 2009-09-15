@@ -18,8 +18,8 @@ class Hook {
 
         asort(self::$hook[$key]);
 
-        foreach (self::$hook[$key] as $hook => $sort)
-            $value = b::call($hook, $value, $params, compact('key', 'sort'));
+        foreach (self::$hook[$key] as $func => $sort)
+            $value = b::call($func, $value, $params, compact('key', 'sort'));
 
         return $value;
     }
@@ -33,15 +33,18 @@ class Hook {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function remove($key){
-        if (self::exists($key))
+    static function remove($key, $func = ''){        if (!$func and self::exists($key))
             unset(self::$hook[$key]);
+        if ($func and self::exists($key, $func))
+            unset(self::$hook[$key][$func]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function exists($key){
-        return isset(self::$hook[$key]);
+    static function exists($key, $func = ''){        if (!$func)
+            return isset(self::$hook[$key]);
+
+        return isset(self::$hook[$key][$func]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -40,6 +40,7 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
     protected $relations = array();
     protected $placeholders = array();
     protected $multisave = array();
+    protected $initclass;
 
     protected static $sql;
     protected static $cache = array();
@@ -62,10 +63,14 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
         if (!$this->where)
             return;
 
-        if ($this->relations[$name])
-            return $this->_object($name);
-
         $id = '__get'.spl_object_hash($this);
+
+        if ($this->relations[$name]){
+            if (!array_key_exists($id.$name, self::$cache))
+                return self::$cache[$id.$name] = $this->_object($name);
+
+            return self::$cache[$id.$name];
+        }
 
         if (!array_key_exists($id, self::$cache)){            $class = clone $this;
 

@@ -57,6 +57,7 @@ function typo_ru($content){    $replace = array(
     );
 
     $content = preg_replace('/<(code|script|style|notypo)( ([^>]*))?>(.*?)<\/\\1>/ies', "'¬'.base64_encode(stripslashes('<\\1\\2>'.'\\4'.'</\\1>')).'¬*'", $content);
+    $content = preg_replace('/<!--(.*?)-->/ies', "'¬'.base64_encode(stripslashes('<!--\\1-->')).'¬*'", $content);
     $content = preg_replace('/<([a-z]+([a-z\.:-]+)?[^>]*)>/ie', "'¬'.base64_encode(stripslashes('<\\1>')).'¬*'", $content);
     $content = preg_replace('/(\$|\#|\%)(\w+)?\{(.*)\}/Use', "'¬'.base64_encode(stripslashes('\\1\\2{'.'\\3'.'}')).'¬*'", $content);
     $content = preg_replace('/¬([^¬]*)¬\*"([^"]*)"<\/([^>]*)>/s', '"¬\\1¬*\\2</\\3>"', $content);

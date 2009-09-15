@@ -11,7 +11,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function save(){        if ($this->multisave){            foreach ($this->multisave as $class){                $result[] = $class->save();            }
+    function save(){        if ($this->multisave){            foreach ($this->multisave as $class)                $result[] = $class->save();
 
             return $result;
         }
