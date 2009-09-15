@@ -1,0 +1,12 @@
+# Закрываем доступ к папким и файлам, которыми светить не стоит.
+# Закрываем таким методом для того, чтобы работал POST.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine on
+
+    RewriteRule ^(cache|lang)(/(.*))?$ ../home/%{REQUEST_URI} [QSA,L]
+    RewriteRule ^(lib|ext|load|show|data)/(.*)\.(eml|ini|php|phtml|yaml) ../home/%{REQUEST_URI} [QSA,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^.*$ ../home/%{REQUEST_URI} [QSA,L]
+</IfModule>

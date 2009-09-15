@@ -68,11 +68,16 @@ class File {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://www.php.net/manual/ru/function.symlink.php#74464
-    static function link($target, $link){
-        if (b::is_windows())
-            return exec('mklink '.(is_dir($target) ? '/D' : '').' "'.str_replace('/', '\\', $link).'" "'.str_replace('/', '\\', $target).'"');
+    static function link($target, $link){        self::chmod(dirname($link));
 
-        return link($target, $link);
+        if (!b::is_windows())
+            return link($target, $link);
+
+        $target = str_replace('/', '\\', $target);
+        $link = str_replace('/', '\\', $link);
+        $key = (is_dir($target) ? 'D' : 'H');
+
+        return (bool)exec(sprintf('mklink /%s "%s" "%s"', $key, $link, $target));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

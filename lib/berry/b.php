@@ -7,8 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path = array();
-    static $lang;
+class B {    static $path = array('');
+    static $lang = 'ru';
     static $autoload = array();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,24 +18,18 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init($level = 0){        $path = realpath(dirname(__file__).'/../../');        self::$path = (isset(self::$path[0]) ? array($path, self::$path[0]) : array($path));
-        error_reporting($level);        spl_autoload_register(array('self', 'autoload'));
+    static function init(){        if (!self::$path[0])
+            self::$path[0] = realpath(dirname(__file__).'/../../');
 
+        spl_autoload_register(array('self', 'autoload'));
         debug::timer();
-        sql::connect(self::config('site.db'));
 
-        self::$lang = self::config('site.lang');
         $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
-        is_dir(file::path('lang/'.$lang)) and
+        $lang and is_dir(file::path('lang/'.$lang)) and
         self::$lang = $lang;
 
-        date_default_timezone_set(self::config('site.timezone'));
-        setlocale(LC_ALL, self::i18n('site.locale'));
-
-        if ($level = self::config('site.debug')){
-            error_reporting($level);
-            sql::logger(array('debug', 'sql'));
-        }
+        date_default_timezone_set(self::config('lib.b.timezone'));
+        setlocale(LC_ALL, self::i18n('lib.b.init.locale'));
     }
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +64,7 @@ class B {    static $path = array();
 
     static function l(){
         $args = func_get_args();
-        return call_user_func_array(array('tags', 'vars'), $args);
+        return self::call('*tags::vars', $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -299,7 +293,7 @@ class B {    static $path = array();
             return;
         }
 
-        if ($_main and $string == self::config('site.show'))
+        if ($_main and $string == self::config('lib.b.show'))
             $string = $_main;
 
         $_['string'] = $string;
