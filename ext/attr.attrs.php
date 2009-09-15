@@ -59,16 +59,16 @@ function attr_if($attr){    if (preg_match('/("|\'|)(.*)\\1 (==|===|!=|!==|<|<=
 
 function attr_check_re($attr){
 	$attr = array_merge(array(
-	    'check_msg' => 'e'
+	    'check_type' => 'e'
 	), $attr);
 
 	$_SESSION['attr']['check'][tags::elmname_parse($attr['name'])] = array(
 	    're'   => $attr['check_re'],
 	    'need' => str::format($attr['check_need'], $attr),
-	    'msg'  => $attr['check_msg']
+	    'type'  => $attr['check_type']
 	);
 
-    unset($attr['check_re'], $attr['check_need'], $attr['check_msg']);
+    unset($attr['check_re'], $attr['check_need'], $attr['check_type']);
 	return $attr;
 }
 

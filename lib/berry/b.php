@@ -218,6 +218,12 @@ class B {    static $path = array('');
     static function autoload($Name){
         static $prev;
 
+        if (is_file($cache = self::$path[0].'/cache/autoload.php'))
+            self::$autoload = array_merge(
+                include $cache,
+                self::$autoload
+            );
+
         $name = strtolower($Name);
 
         if (isset(self::$autoload[$name]))
@@ -255,14 +261,22 @@ class B {    static $path = array('');
                 is_file($path = self::$path[0].'/lib/'.$try.'.php')
             ){
                 include self::$autoload[$name] = $prev = $path;
+
+                $contents  = "<?php\r\n";
+                $contents .= 'return '.var_export(self::$autoload, true);
+                $contents .= ";\r\n";
+
+                file_put_contents($cache, $contents);
                 return true;
             }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function load($string, $_ = array()){
+    static function load($string = '', $_ = array()){
         extract($_);
+
+        $string = ($string ? $string : b::config('lib.b.load'));
 
         $_['string'] = $string;
         $_['files']  = array(
@@ -283,7 +297,9 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($string, $_ = array(), $is_main = false){        static $_main;
+    static function show($string = '', $_ = array(), $is_main = false){        static $_main;
+
+        $string = ($string ? $string : b::config('lib.b.show'));
 
         if (!is_array($_))
             list($_, $is_main) = array(array(), $_);        else            extract($_);

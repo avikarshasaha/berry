@@ -12,7 +12,9 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_valid($name, $re, $data = '_post'){
+    static function is_valid($name, $re = array(), $data = '_post'){        if (is_array($name))
+            return self::_is_valid($name, $re);
+
         $data = (!is_array($data) ? b::l($data) : $data);
         $array = arr::flat($data);
         $name = tags::elmname_parse($name);
@@ -64,6 +66,7 @@ class Check {
                     continue;
                 }
 
+                // Есть косяки при использовании на нескольких полях
                 if ($func == 'or empty')
                     $check = array($func => !$value);
             }
@@ -77,6 +80,21 @@ class Check {
         self::$error[$name] = $key;
         return false;
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _is_valid($check, $data){        $result = array();
+
+        foreach ($check as $k => $v){
+            if (!self::is_valid($k, $v['re'], $data)){
+                if (is_array($need = str::json($v['need'])))
+                    $v['need'] = $need[end(self::$error)];
+
+                $result[] = $v;
+            }
+        }
+
+        return $result;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -157,21 +175,29 @@ class Check {
 
     static function datetime($value, $params = array()){
         $time = strtotime($value);
-        return (preg_match('/^[12]\d{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
+        return (
+            preg_match('/^[12]\d{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) and $time and
+            (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1])))
+        );
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function date($value, $params = array()){
-        $time = strtotime($value);
-        return (preg_match('/^[12]\d{3}-\d{2}-\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
+    static function date($value, $params = array()){        $time = strtotime($value);
+        return (
+            preg_match('/^[12]\d{3}-\d{2}-\d{2}$/', $value) and $time and
+            (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1])))
+        );
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function time($value, $params = array()){
         $time = strtotime($value);
-        return (preg_match('/^\d{2}:\d{2}:\d{2}$/', $value) and (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1]))));
+        return (
+            preg_match('/^\d{2}:\d{2}:\d{2}$/', $value) and $time and
+            (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1])))
+        );
     }
 
 ////////////////////////////////////////////////////////////////////////////////
