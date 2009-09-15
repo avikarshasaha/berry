@@ -25,11 +25,14 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function using($dsn){
+    static function using($dsn = ''){
         static $last;
 
+        if (!$dsn)
+            return key(self::$sql->using);
+
         if (!self::$sql->dsn[$dsn])
-            return $dsn;
+            return;
 
         if (!$current = $last)
             $current = key(self::$sql->using);
