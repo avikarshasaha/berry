@@ -208,4 +208,15 @@ class SQL_control extends SQL_etc {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    function __call($method, $params){        if (!$trigger = $this->trigger[$method])
+            trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
+
+        foreach ($trigger as $k => $v)
+            call_user_method_array($k, $this, array_merge((array)$v, $params));
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

@@ -42,6 +42,7 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
     protected $placeholders = array();
     protected $multisave = array();
     protected $iterator = 0;
+    protected $trigger = array();
 
     protected static $sql;
     protected static $cache = array();
