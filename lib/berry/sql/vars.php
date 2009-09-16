@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayAccess {    const SKIP = 7.2e83;
+abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Iterator {
+    const SKIP = 7.2e83;
 
     protected $id;
     protected $table;
@@ -47,25 +48,30 @@ abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayA
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    public function count(){        static $cache = array();
+    function count(){
+        static $cache = array();
 
-        $id = spl_object_hash($this);
+        $key = spl_object_hash($this);
 
-        if (!isset($cache[$id])){            $args = $this->placeholders;
+        if (!isset($cache[$key])){
+            $args = $this->placeholders;
             array_unshift($args, self::build('count'));
-            $cache[$id] = call_user_method_array('selectCell', self::$sql, $args);
+            $cache[$key] = call_user_method_array('selectCell', self::$sql, $args);
         }
 
-        return $cache[$id];
+        return $cache[$key];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __isset($name){        return ($this->__get($name) !== null);    }
+    function __isset($name){
+        return ($this->__get($name) !== null);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __unset($name){        if (substr($name, -4) == '_ids' and ($rname = substr($name, 0, -4)))
+    function __unset($name){
+        if (substr($name, -4) == '_ids' and ($rname = substr($name, 0, -4)))
             unset($this->joinvalues[$rname]);
         else
             unset($this->values[$name]);
@@ -77,22 +83,23 @@ abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayA
         if (!$this->where)
             return;
 
-        $id = '__get'.spl_object_hash($this);
+        $key = '__get'.spl_object_hash($this);
 
         if ($this->relations[$name]){
-            if (!array_key_exists($id.$name, self::$cache))
-                return self::$cache[$id.$name] = $this->_object($name);
+            if (!array_key_exists($key.$name, self::$cache))
+                return self::$cache[$key.$name] = $this->_object($name);
 
-            return self::$cache[$id.$name];
+            return self::$cache[$key.$name];
         }
 
-        if (!array_key_exists($id, self::$cache)){            $class = clone $this;
+        if (!array_key_exists($key, self::$cache)){
+            $class = clone $this;
 
             /*foreach ($this->schema() as $field => $schema)
                 if (!in_array(substr($schema['type'], -4), array('text', 'blob')))
                     $class->select($class->table.'.'.$field);*/
 
-            self::$cache[$id] = $class->select($class->table.'.*')->as_array();
+            self::$cache[$key] = $class->select($class->table.'.*')->as_array();
         }
 
         if (
@@ -100,27 +107,31 @@ abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayA
             ($rname = substr($name, 0, -4)) and
             ($relation = $this->relations[$rname]) and
             $relation['type'] == 'has_and_belongs_to_many' and
-            array_key_exists($id, self::$cache) and
-            !array_key_exists($name, self::$cache[$id])
+            array_key_exists($key, self::$cache) and
+            !array_key_exists($name, self::$cache[$key])
         )
-            if ($fid = self::$cache[$id][$relation['local']['field']]){
+            if ($id = self::$cache[$key][$relation['local']['field']]){
                 $foreign = $relation['foreign'];
-                self::$cache[$id][$name] = self::$sql->selectCol(
+                self::$cache[$key][$name] = self::$sql->selectCol(
                     self::build('HABTM_IDs'),
-                    $foreign['field3'], $foreign['table1'], $foreign['field1'], $fid
+                    $foreign['field3'], $foreign['table1'], $foreign['field1'], $id
                 );
             } else {
-                self::$cache[$id][$name] = array();
+                self::$cache[$key][$name] = array();
             }
 
-        return self::$cache[$id][$name];
+        return self::$cache[$key][$name];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __set($name, $value){        if (is_array($value)){            $func = create_function('$a', 'return !is_int($a);');            $array = array_map($func, array_keys($value));
+    function __set($name, $value){
+        if (is_array($value)){
+            $func = create_function('$a', 'return !is_int($a);');
+            $array = array_map($func, array_keys($value));
 
-            if (in_array(true, $array))                asort($value);
+            if (in_array(true, $array))
+                asort($value);
             else
                 sort($value);
         }
@@ -136,7 +147,8 @@ abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayA
         ){
             $this->joinvalues[$rname] = $value;
         } else {
-            if (is_int($value)){                $value -= $this->__get($name);
+            if (is_int($value)){
+                $value -= $this->__get($name);
                 $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
             }
 
@@ -225,7 +237,9 @@ abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayA
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _object($name){        $relation = $this->relations[$name];        $local = $relation['local'];
+    protected function _object($name){
+        $relation = $this->relations[$name];
+        $local = $relation['local'];
         $foreign = $relation['foreign'];
 
         if ($relation['type'] == 'has_one')
@@ -253,4 +267,5 @@ abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayA
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+}

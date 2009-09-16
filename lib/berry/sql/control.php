@@ -7,18 +7,40 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_control extends SQL_etc {
+class SQL_control extends SQL_etc {
+////////////////////////////////////////////////////////////////////////////////
+
+    function save(){
+        $result = array();
+
+        foreach ($this->_save() as $v){
+            if (is_array($v))
+                $result[] = $v[0];
+            else
+                $result[] = $v;
+        }
+
+        $result = array_reverse($result);
+        return (b::len($result) == 1 ? reset($result) : $result);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function save(){        if ($this->multisave){            foreach ($this->multisave as $class)                $result[] = $class->save();
+    protected function _save($result = array()){        foreach (self::$cache as $value){            if (
+                !is_object($value) or
+                (($key = '_save'.spl_object_hash($value)) and isset(self::$cache[$key]))
+            )
+                continue;
+
+            self::$cache[$key] = true;
+            $result = array_merge($result, (array)$value->_save($result));        }
+        if ($this->multisave){            foreach ($this->multisave as $class)                $result[] = $class->_save();
 
             return $result;
         }
         if (!$this->values){            foreach (self::build('HABTM') as $query)
                 self::$sql->query($query);
 
-            return 0;
+            return $result;
         }
         if ($this->into){            $args = $this->values;
             array_unshift($args, self::build('insert'));
@@ -30,7 +52,7 @@ class SQL_control extends SQL_etc {
             $args = array_merge(array($this->values), $this->placeholders);
 
         array_unshift($args, self::build('save'));
-        $result = call_user_method_array('query', self::$sql, $args);
+        $result[] = call_user_method_array('query', self::$sql, $args);
         foreach (self::build('HABTM') as $query)
             self::$sql->query($query);
 
