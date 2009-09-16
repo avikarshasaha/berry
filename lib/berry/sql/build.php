@@ -199,7 +199,7 @@ class SQL_build {
     protected function _build_HABTM(){        $query = array();
         if (!$this->joinvalues)
             return $query;
-        $id = ($this->id ? $this->id : ($this->last_id() + 1));
+        $id = ($this->id ? $this->id : $this->last_id());
         foreach ($this->joinvalues as $k => $v){
             $relation = $this->relations[$k];
             $foreign = $relation['foreign'];

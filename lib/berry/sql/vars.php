@@ -145,12 +145,14 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
             ($rname = substr($name, 0, -4)) and
             ($relation = $this->relations[$rname]) and
             $relation['type'] == 'has_and_belongs_to_many'
-        ){
-            $this->joinvalues[$rname] = $value;
+        ){            foreach ($value as $v)
+                $this->joinvalues[$rname][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
         } else {
             if (is_int($value)){
                 $value -= $this->__get($name);
                 $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
+            } elseif (is_object($value)){
+                $value = ($value->id ? $value->id : $value->save());
             }
 
             $this->values[$name] = $value;

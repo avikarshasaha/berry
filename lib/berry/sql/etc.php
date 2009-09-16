@@ -226,4 +226,10 @@ class SQL_etc extends SQL_vars {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    function trigger($key, $value, $append = false){        if ($this->trigger[$key] and $append)
+            $this->trigger[$key] += $value;
+        else            $this->trigger[$key] = $value;    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

@@ -154,3 +154,15 @@ function attr_every($attr){	static $array = array();
 	unset($attr['every']);
 	return $attr;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+function attr_router($attr){    $group = attr::group('router', $attr);
+	$attr['href'] = b::router($attr['router'], $group);
+
+	foreach ($group as $k => $v)
+	    unset($attr['router_'.$k]);
+
+	unset($attr['router']);
+	return $attr;
+}

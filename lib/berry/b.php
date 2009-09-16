@@ -30,6 +30,9 @@ class B {    static $path = array('');
 
         date_default_timezone_set(self::config('lib.b.timezone'));
         setlocale(LC_ALL, self::i18n('lib.b.init.locale'));
+
+        $_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : self::config('lib.b.load'));
+        self::router();
     }
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -324,6 +327,45 @@ class B {    static $path = array('');
             ob_start();
                 include $_['file'];
             return ob_get_clean();
+        }
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function router(){
+        $rules = self::config('lib.b.router');
+
+        if (func_num_args()){
+            list($key, $array) = func_get_args();
+
+            if(preg_match_all('/\[([^\]]*)\]/', $rules[$key]['url'], $match)){
+                for ($i = 0, $c = self::len($match[0]); $i < $c; $i++)
+                    $match[1][$i] = $rules[$match[1][$i]]['url'];
+
+                $rules[$key]['url'] = str_replace($match[0], $match[1], $rules[$key]['url']);
+            }
+
+            return str::format($rules[$key]['url'], ($array ? $array : array()));
+        }
+
+        $rules = array_map(create_function('$rule', '
+            if (is_array($rule["re"])){
+                foreach ($rule["re"] as $k => $v)
+                    $rule["re"][$k] = "/^".str_replace("/", "\/", $v)."$/i";
+            } else {
+                $rule["re"] = "/^".str_replace("/", "\/", $rule["re"])."$/i";
+            }
+
+            return $rule;
+        '), $rules);
+
+        foreach ($rules as $k => $v)
+            $_GET['q'] = preg_replace($v['re'], $v['route'], $_GET['q']);
+
+        if (($url = parse_url($_GET['q'])) and $url['query']){
+            parse_str($url['query'], $query);
+            $_GET['q'] = $url['path'];
+            $_GET = array_merge($_GET, $query);
         }
     }
 

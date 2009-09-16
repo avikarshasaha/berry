@@ -34,3 +34,12 @@ fieldset.msg.e {
 fieldset.msg.e legend {
 	color: #c60000;
 }
+
+dfn {
+    color: maroon;
+    font-style: normal;
+}
+
+dfn.tag {
+    color: blue;
+}

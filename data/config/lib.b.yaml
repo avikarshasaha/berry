@@ -1,3 +1,8 @@
 timezone: Europe/Moscow
-load: index
-show: home
+load: home
+show: index
+router:
+    test:
+        re: sometest/(\d+).html
+        route: home/sometest/$1
+        url: sometest/%id.html

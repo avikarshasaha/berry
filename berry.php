@@ -9,7 +9,6 @@
                                                                    \/|*/
 $config = b::config();
 //$member = auth(http::cookie('aid'), http::cookie('password'));
-$_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : 'home');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,4 +35,4 @@ $_SESSION['berry'] = array('addr' => $_SERVER['REMOTE_ADDR'], 'agent' => $_SERVE
 
 ////////////////////////////////////////////////////////////////////////////////
 
-echo $output;
+return $output;
