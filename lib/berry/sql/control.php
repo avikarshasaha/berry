@@ -186,12 +186,4 @@ class SQL_control extends SQL_etc {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-    function count(){
-        $args = $this->placeholders;
-        array_unshift($args, self::build('count'));
-        return call_user_method_array('selectCell', self::$sql, $args);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
 }

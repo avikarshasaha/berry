@@ -7,9 +7,9 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKIP = 7.2e83;
+abstract class SQL_vars extends SQL_build implements Countable, Iterator, ArrayAccess {    const SKIP = 7.2e83;
 
-    protected $id = array();
+    protected $id;
     protected $table;
     protected $_table;
 
@@ -40,10 +40,24 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
     protected $relations = array();
     protected $placeholders = array();
     protected $multisave = array();
-    protected $initclass;
+    protected $iterator = 0;
 
     protected static $sql;
     protected static $cache = array();
+
+////////////////////////////////////////////////////////////////////////////////
+
+    public function count(){        static $cache = array();
+
+        $id = spl_object_hash($this);
+
+        if (!isset($cache[$id])){            $args = $this->placeholders;
+            array_unshift($args, self::build('count'));
+            $cache[$id] = call_user_method_array('selectCell', self::$sql, $args);
+        }
+
+        return $cache[$id];
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -74,11 +88,11 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
 
         if (!array_key_exists($id, self::$cache)){            $class = clone $this;
 
-            foreach ($this->schema() as $field => $schema)
+            /*foreach ($this->schema() as $field => $schema)
                 if (!in_array(substr($schema['type'], -4), array('text', 'blob')))
-                    $class->select($this->table.'.'.$field);
+                    $class->select($class->table.'.'.$field);*/
 
-            self::$cache[$id] = $class->as_array();
+            self::$cache[$id] = $class->select($class->table.'.*')->as_array();
         }
 
         if (
@@ -163,6 +177,36 @@ abstract class SQL_vars extends SQL_build implements ArrayAccess {    const SKI
             $class->$k = $v;
 
         return $value;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function rewind(){
+        $this->iterator = 0;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function current(){
+        return $this[$this->iterator + 1];
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function key(){
+        return $this->iterator;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function next(){
+        ++$this->iterator;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function valid(){
+        return ($this->iterator < $this->count());
     }
 
 ////////////////////////////////////////////////////////////////////////////////

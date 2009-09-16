@@ -281,7 +281,8 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_count(){
+    protected function _build_count(){        $this->_prepare_bulid();
+
         $query[] = 'select count(*)';
         $query[] = 'from ['.$this->_table.']';
 
