@@ -13,6 +13,7 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
     protected $id;
     protected $table;
     protected $_table;
+    protected $schema = array();
 
     protected $primary_key = 'id';
     protected $parent_key;

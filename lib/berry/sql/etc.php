@@ -166,7 +166,13 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function schema($table = ''){        $table = ((!$table and $this) ? $this->_table : $table);        $schema = array();
+    function schema($table = ''){        if (!$table and $this){
+            if ($this->schema)
+                return $this->schema;
+
+            $table = $this->_table;
+        };
+        $schema = array();
         $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
         foreach (self::$sql->query(self::build('schema'), $table) as $info)

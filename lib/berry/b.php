@@ -323,7 +323,16 @@ class B {    static $path = array('');
             is_file($_['file'] = file::path('show/'.$string.'.phtml')) or
             is_file($_['file'] = file::path('show/'.$string.'/index.phtml'))
         ){
-            unset($string, $is_main);
+            $funcs = include cache::get('ext.php');
+
+            foreach (token_get_all(file_get_contents($_['file'])) as $token)
+                if ($token[0] == T_STRING){
+                    if (!function_exists($token[1]) and $funcs[$token[1]])
+                        include $funcs[$token[1]];
+                }
+
+            unset($string, $is_main, $func, $token);
+
             ob_start();
                 include $_['file'];
             return ob_get_clean();
