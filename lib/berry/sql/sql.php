@@ -11,7 +11,7 @@ class SQL extends SQL_control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
-        $this->_table = ($this->table ? $this->table : $class);
+        $this->_table = ($this->table ? $this->table : inflector::plural(inflector::singular($class)));
         $from = (($this->table and $this->table != $class) ? $this->table.' as ' : '');        $this->from($from.$class)->table = $class;
 
         foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
@@ -41,8 +41,8 @@ class SQL extends SQL_control {
     function from($table){        if (!$this)
             return self::table($table);
 
-        $args = func_get_args();
-        $this->from = array_merge($this->from, $args);
+        foreach (func_get_args() as $from)            if (!$this->table){                $plural = inflector::plural(inflector::singular($from));                $this->from[] = $plural.($from == $plural ? '' : ' as '.$from);
+            } else {                $this->from[] = $from;            }
 
         return $this;
     }

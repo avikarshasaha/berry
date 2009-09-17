@@ -50,87 +50,114 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function count(){
-        static $cache = array();
-
-        $key = spl_object_hash($this);
-
-        if (!isset($cache[$key])){
-            $args = $this->placeholders;
-            array_unshift($args, self::build('count'));
-            $cache[$key] = call_user_method_array('selectCell', self::$sql, $args);
-        }
-
-        return $cache[$key];
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     function __isset($name){
-        return ($this->__get($name) !== null);
+        return $this->offsetExists($name);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __unset($name){
-        if (substr($name, -4) == '_ids' and ($rname = substr($name, 0, -4)))
-            unset($this->joinvalues[$rname]);
-        else
-            unset($this->values[$name]);
+    function __unset($name){        return $this->offsetUnset($name);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function __get($name){
+        return $this[$name];
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function __set($name, $value){        $this[$name] = $value;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function count(){
+        $key = $this->_hash('count');
+
+        if (!array_key_exists($key, self::$cache)){
+            $args = $this->placeholders;
+            array_unshift($args, self::build('count'));
+            self::$cache[$key] = call_user_method_array('selectCell', self::$sql, $args);
+        }
+
+        return self::$cache[$key];
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function offsetExists($offset){
+        return ($this[$name] !== null);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function offsetUnset($offset){
+        if ($name = self::_is_HABTM($offset))
+            unset($this->joinvalues[$name], self::$cache['HABTM_'.$offset]);
+        else
+            unset($this->values[$offset]);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function offsetGet($offset){        if ($class = self::_multisave($offset))
+            return $class;
+
         if (!$this->where)
             return;
 
-        $key = '__get'.spl_object_hash($this);
+        $key = $this->_hash('offsetGet');
 
-        if ($this->relations[$name]){
-            if (!array_key_exists($key.$name, self::$cache))
-                return self::$cache[$key.$name] = $this->_object($name);
+        if ($this->relations[$offset]){
+            if (!isset(self::$cache[$key.$offset]))
+                return self::$cache[$key.$offset] = self::_object($offset);
 
-            return self::$cache[$key.$name];
+            return self::$cache[$key.$offset];
         }
 
         if (!array_key_exists($key, self::$cache)){
             $class = clone $this;
 
-            /*foreach ($this->schema() as $field => $schema)
-                if (!in_array(substr($schema['type'], -4), array('text', 'blob')))
-                    $class->select($class->table.'.'.$field);*/
+            foreach ($class->select as $k => $v){
+                if (preg_match('/(^|\.)('.$this->table.'\.'.$offset.')(\.|$)/', $v, $match))
+                    $class->select[$k] = $match[2];
+                else
+                    unset($class->select[$k]);
+            }
 
-            self::$cache[$key] = $class->select($class->table.'.*')->as_array();
+            $class->select = ($class->select ? $class->select : array($class->table.'.*'));
+            self::$cache[$key] = $class->as_array();
         }
 
         if (
-            substr($name, -4) == '_ids' and
-            ($rname = substr($name, 0, -4)) and
-            ($relation = $this->relations[$rname]) and
-            $relation['type'] == 'has_and_belongs_to_many' and
-            array_key_exists($key, self::$cache) and
-            !array_key_exists($name, self::$cache[$key])
+            ($name = self::_is_HABTM($offset)) and
+            ($relation = $this->relations[$name]) and
+            !isset(self::$cache[$key][$offset])
         )
             if ($id = self::$cache[$key][$relation['local']['field']]){
                 $foreign = $relation['foreign'];
-                self::$cache[$key][$name] = self::$sql->selectCol(
+                self::$cache[$key][$offset] = self::$sql->selectCol(
                     self::build('HABTM_IDs'),
                     $foreign['field3'], $foreign['table1'], $foreign['field1'], $id
                 );
             } else {
-                self::$cache[$key][$name] = array();
+                self::$cache[$key][$offset] = array();
             }
 
-        return self::$cache[$key][$name];
+        return self::$cache[$key][$offset];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __set($name, $value){
-        if (is_array($value)){
+    function offsetSet($offset, $value){        if (is_array($value)){            if ($class = self::_multisave($offset)){
+                foreach ($value as $k => $v)
+                    $class[$k] = $v;
+            }
+
             $func = create_function('$a', 'return !is_int($a);');
             $array = array_map($func, array_keys($value));
+            $array = array_unique($array);
 
             if (in_array(true, $array))
                 asort($value);
@@ -138,61 +165,21 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
                 sort($value);
         }
 
-        if ($this->where and ($value == $this->__get($name) or !$this->__get($this->primary_key)))
+        if ($this->where and ($value == $this[$offset] or !$this[$this->primary_key]))
             return $value;
 
-        if (
-            substr($name, -4) == '_ids' and
-            ($rname = substr($name, 0, -4)) and
-            ($relation = $this->relations[$rname]) and
-            $relation['type'] == 'has_and_belongs_to_many'
-        ){            foreach ($value as $v)
-                $this->joinvalues[$rname][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
+        if ($name = self::_is_HABTM($offset)){            foreach ($value as $v)
+                $this->joinvalues[$name][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
         } else {
             if (is_int($value)){
-                $value -= $this->__get($name);
-                $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
+                $value -= $this[$offset];
+                $value = $this->raw('`'.$offset.'`'.($value >= 0 ? ' + ' : ' ').$value);
             } elseif (is_object($value)){
                 $value = ($value->id ? $value->id : $value->save());
             }
 
-            $this->values[$name] = $value;
+            $this->values[$offset] = $value;
         }
-
-        return $this->$name = $value;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function offsetExists($offset){
-        return $this->__isset($offset);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function offsetUnset($offset){
-        $this->__unset($offset);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function offsetGet($offset){
-        if ($class = $this->_multisave($offset))
-            return $class;
-
-        return $this->__get($offset);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function offsetSet($offset, $value){
-        if (!is_array($value) or (!$class = $this->_multisave($offset)))
-            return $this->__set($offset, $value);
-
-        foreach ($value as $k => $v)
-            $class->$k = $v;
-
-        return $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -227,9 +214,18 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    protected function _is_HABTM($offset){        if (
+            substr($offset, -4) == '_ids' and
+            ($name = substr($offset, 0, -4)) and
+            ($relation = $this->relations[$name]) and
+            $relation['type'] == 'has_and_belongs_to_many'
+        )
+            return $name;    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     protected function _multisave($offset){
-        if (is_null($offset))
-            return $this->multisave[] = $this->table($this->table);
+        if (is_null($offset))            return $this->multisave[] = $this->table($this->table);
 
         if (is_int($offset)){
             if (!isset($this->multisave[$offset]))
@@ -245,27 +241,28 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
         $relation = $this->relations[$name];
         $local = $relation['local'];
         $foreign = $relation['foreign'];
+        $name = inflector::singular($name);
 
         if ($relation['type'] == 'has_one')
-            return $this->table($name, $this->__get($relation['local']['field']));
+            return $this->table($name, $this[$relation['local']['field']]);
 
         if ($relation['type'] == 'belongs_to')
             return $this->table($name)->limit(1)->where(
                 $foreign['alias'].'.'.$foreign['field'].' = ?',
-                $this->__get($local['field'])
+                $this[$local['field']]
             );
 
         if ($relation['type'] == 'has_many')
             return $this->table($name)->where(
-                $foreign['alias'].'.'.$foreign['field'].' = ?',
-                $this->__get($local['field'])
+                inflector::singular($foreign['alias']).'.'.$foreign['field'].' = ?',
+                $this[$local['field']]
             );
 
         return $this->table($name)->where(
             $foreign['alias2'].'.'.$foreign['field2'].' in (?a)',
             self::$sql->selectCol(
                 self::build('HABTM_IDs'),
-                $foreign['field3'], $foreign['table1'], $foreign['field1'], $this->__get($local['field'])
+                $foreign['field3'], $foreign['table1'], $foreign['field1'], $this[$local['field']]
             )
         );
     }

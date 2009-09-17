@@ -47,14 +47,16 @@ class Cache {    static $file;
         foreach ($array as $k => $v){            if (!$v)
                 continue;
 
-            if ($k == 'file' and file_exists($v))
-                $result[] = (filemtime($v) > $time);
+            foreach ((array)$v as $i){
+                if ($k == 'file' and file_exists($i))
+                    $result[] = (filemtime($i) > $time);
 
-            if ($k == 'db' and ($query = sql::getRow('show table status like "?_"', $v)))
-                $result[] = (strtotime($query['Update_time']) > $time);
+                if ($k == 'db' and ($query = sql::row('show table status like "?_"', $i)))
+                    $result[] = (strtotime($query['Update_time']) > $time);
 
-            if ($k == 'url' and ($headers = get_headers($v, true)))
-                $result[] = (strtotime($headers['Last-Modified']) > $time);
+                if ($k == 'url' and ($headers = get_headers($i, true)))
+                    $result[] = (strtotime($headers['Last-Modified']) > $time);
+            }
         }
 
         return in_array(true, $result);    }

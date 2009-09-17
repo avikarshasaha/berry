@@ -13,7 +13,7 @@ class SQL_control extends SQL_etc {
     function save(){
         $result = array();
 
-        foreach ($this->_save() as $v){
+        foreach (self::_save() as $v){
             if (is_array($v))
                 $result[] = $v[0];
             else
@@ -25,7 +25,7 @@ class SQL_control extends SQL_etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _save($result = array()){        foreach (self::$cache as $value){            if (
+    protected function _save($result = array()){        foreach (self::$cache as $key => $value){            if (
                 !is_object($value) or
                 (($key = '_save'.spl_object_hash($value)) and isset(self::$cache[$key]))
             )
@@ -106,6 +106,11 @@ class SQL_control extends SQL_etc {
             return call_user_method_array('query', self::$sql, $args);
         }
 
+        $key = $this->_hash('get');
+
+        if (array_key_exists($key, self::$cache))
+            return self::$cache[$key];
+
         $method = strtolower($method);
 
         if (in_array($method, array('array', 'object')))
@@ -128,7 +133,7 @@ class SQL_control extends SQL_etc {
 
         $args = $this->placeholders;
         array_unshift($args, self::build('get'));
-        return call_user_method_array($method, self::$sql, $args);
+        return self::$cache[$key] = call_user_method_array($method, self::$sql, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

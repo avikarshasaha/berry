@@ -88,7 +88,7 @@ class SQL_build {
                 $from[] = $v;
             } else {
                 if ($pos = stripos($v, ' as '))
-                    $from[] = '['.(trim(substr($v, 0, $pos))).']'.substr($v, $pos);
+                    $from[] = '['.(trim(substr($v, 0, $pos))).']'.substr($v, $pos, 4).'`'.substr($v, ($pos + 4)).'`';
                 else
                     $from[] = '['.$v.']';
             }
