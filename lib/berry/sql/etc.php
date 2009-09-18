@@ -219,8 +219,7 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __call($method, $params){
-        if (!$trigger = $this->trigger[$method])
+    function __call($method, $params){        if (!$trigger = $this->trigger[$method])
             trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
 
         foreach ($trigger as $k => $v)
@@ -241,9 +240,7 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function hash($prefix = ''){        return $prefix.'_'.spl_object_hash($this);
-
-        ob_start();
+    protected function hash($prefix = ''){        ob_start();
             var_dump($this);
         return $prefix.'_'.md5(ob_get_clean());
     }
@@ -307,8 +304,10 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
             $foreign['field3'] = inflector::singular($foreign['alias2']).'_'.$foreign['field'];
 
             unset($foreign['table'], $foreign['alias'], $foreign['field']);
-        } elseif ($keys){
-            list($local['field'], $foreign['field']) = $keys;
+        } elseif ($keys){            if ($keys['local'] and $keys['foreign'])
+                list($local['field'], $foreign['field']) = array($keys['local'], $keys['foreign']);
+            else
+                list($local['field'], $foreign['field']) = $keys;
         }
 
         return compact('local', 'type', 'foreign', 'table');

@@ -10,11 +10,15 @@
 class Int {
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function size($filesize, $size = array()){        $size = array_merge(b::i18n('lib.int.size'), $size);
-        $map = array('gb' => 3, 'mb' => 2, 'kb' => 1);
+    static function size($filesize, $size = array()){        $size = array_merge(b::lang('lib.int.size'), $size);
+        $map = array(
+            'gb' => self::bytes('1G'),
+            'mb' => self::bytes('1M'),
+            'kb' => self::bytes('1K')
+        );
 
         foreach ($map as $k => $v)
-            if ($filesize >= ($v = pow(1024, $v)))
+            if ($filesize >= $v)
                 return (round($filesize / $v * 100) / 100).' '.$size[$k];
 
         return $filesize.' '.$size['b'];

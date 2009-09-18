@@ -36,12 +36,7 @@ class File {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function rmdir($filename){
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($filename),
-            RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $file => $iter){
+        foreach (self::dir($filename, true) as $file => $iter){
             self::chmod($file);
             ($iter->isDir() ? rmdir($file) : unlink($file));
         }
@@ -91,6 +86,15 @@ class File {
 
         umask($umask);
         return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function dir($filename, $child_first = false){
+        return new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($filename),
+            ($child_first ? RecursiveIteratorIterator::CHILD_FIRST : RecursiveIteratorIterator::SELF_FIRST)
+        );
     }
 
 ////////////////////////////////////////////////////////////////////////////////

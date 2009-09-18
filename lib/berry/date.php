@@ -13,8 +13,8 @@ class Date {
     static function now(){        return date('Y-m-d H:i:s');    }
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function arr($date = 0){
-        $date = self::time($date);
+    static function arr($timestamp = 0){
+        $date = self::time($timestamp);
 
         $array['year']   = date('Y', $date);
         $array['month']  = date('m', $date);
@@ -49,7 +49,7 @@ class Date {
     static function ago($second, $len = 3, $plural = array()){        if (b::len($second) == 10 or !is_numeric($second))
             $second = (time() - self::time($second));
 
-        $plural = array_merge(b::i18n('lib.date.ago'), array('separator' => ','), $plural);
+        $plural = array_merge(b::lang('lib.date.ago'), array('separator' => ','), $plural);
         $period = array(
             'years'   => 31556926,
             'months'  => 2629743,
@@ -84,6 +84,24 @@ class Date {
         }
 
         return trim($result.' '.$plural['ago']);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function is_today($date){
+        return (date('Ymd') == date('Ymd', self::time($date)));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function is_yesterday($date){
+        return (date('Ymd', strtotime('-1 day')) == date('Ymd', self::time($date)));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function is_tomorrow($date){
+        return (date('Ymd', strtotime('+1 day')) == date('Ymd', self::time($date)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

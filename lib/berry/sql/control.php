@@ -106,6 +106,9 @@ class SQL_control extends SQL_vars implements Countable {
             return call_user_method_array('query', self::$sql, $args);
         }
 
+        if (!$this->where)
+            return array();
+
         $key = self::hash('get');
 
         if (array_key_exists($key, self::$cache))
@@ -138,7 +141,7 @@ class SQL_control extends SQL_vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function as_array(){        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
+    function as_array(){        $result = array();        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
 
         if ($this->parent_key){            $this->select[] = $this->table.'.'.$this->parent_key.' as parent_key';
 
@@ -211,7 +214,6 @@ class SQL_control extends SQL_vars implements Countable {
         $args = func_get_args();
         return call_user_method_array('selectRow', self::$sql, $args);
     }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 

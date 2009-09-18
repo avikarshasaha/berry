@@ -137,4 +137,28 @@ class SQL extends SQL_control {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    function __call($method, $params){
+        $method = strtolower($method);
+
+        if (substr($method, 0, 3) == 'by_' and $params){
+            $method = substr($method, 3);
+
+            if (!strpos($method, '_')){
+                list($table, $field) = array($this->table, $method);
+            } else {                $pos = strrpos($method, '_');
+                $field = substr($method, ($pos + 1));
+                $table = str_replace('_', '.', substr($method, 0, $pos));
+            }
+
+            foreach ($params as $param)
+                $this->where($table.'.'.$field.' = ?'.(is_array($param) ? 'a' : ''), $param);
+
+            return $this;
+        }
+
+        return parent::__call($method, $params);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

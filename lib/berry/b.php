@@ -30,7 +30,7 @@ class B {    static $path = array('');
         self::$lang = $lang;
 
         date_default_timezone_set(self::config('lib.b.timezone'));
-        setlocale(LC_ALL, self::i18n('lib.b.init.locale'));
+        setlocale(LC_ALL, self::lang('lib.b.init.locale'));
 
         $_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : self::config('lib.b.load'));
         self::router();
@@ -118,7 +118,7 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function i18n($text, $array = array()){
+    static function lang($text, $array = array()){
         static $lang = array();
 
         if (!$lang){            $dir = '/lang/en';
@@ -149,9 +149,12 @@ class B {    static $path = array('');
         $var = tags::varname($text, '$lang');
 
         if ($func = create_function('$lang', 'if (isset('.$var.')) return '.$var.';'))
-            $text = $func($lang);
+            $result = $func($lang);
 
-        return self::$cache['lang'][$text] = (is_array($text) ? $text : str::format($text, $array));
+        if (is_array($result))
+            return $result;
+
+        return self::$cache['lang'][$text] = str::format($result, $array);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
