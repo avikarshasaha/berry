@@ -10,6 +10,7 @@
 class B {    static $path = array('');
     static $lang = 'ru';
     static $autoload = array();
+    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -103,11 +104,13 @@ class B {    static $path = array('');
 
         $args = func_get_args();
 
-        if (func_num_args() == 1){
+        if (func_num_args() == 1){            if (isset(self::$cache['config'][$args[0]]))
+                return self::$cache['config'][$args[0]];
+
             $var = tags::varname($args[0], '$config');
 
             if ($func = create_function('$config', 'if (isset('.$var.')) return '.$var.';'))
-                return $func($config);
+                return self::$cache['config'][$args[0]] = $func($config);
         } else {
             return $config;
         }
@@ -140,12 +143,15 @@ class B {    static $path = array('');
             }
         }
 
+        if (isset(self::$cache['lang'][$text]))
+            return self::$cache['lang'][$text];
+
         $var = tags::varname($text, '$lang');
 
         if ($func = create_function('$lang', 'if (isset('.$var.')) return '.$var.';'))
             $text = $func($lang);
 
-        return (is_array($text) ? $text : str::format($text, $array));
+        return self::$cache['lang'][$text] = (is_array($text) ? $text : str::format($text, $array));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

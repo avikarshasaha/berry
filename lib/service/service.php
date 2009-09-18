@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Service {
+class Service {    protected static $instance = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -17,22 +17,18 @@ class Service {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function LastFM(){    	static $lastfm;
+    static function LastFM(){    	if (!isset(self::$instance['lastfm']))
+    	    self::$instance['lastfm'] = new Service_LastFM;
 
-    	if (!$lastfm)
-    	    $lastfm = new Service_LastFM;
-
-    	return $lastfm;
+    	return self::$instance['lastfm'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function IMDb($title){        static $imdb = array();
+    static function IMDb($title){        if (!isset(self::$instance['imdb'][$title]))
+            self::$instance['imdb'][$title] = new Service_IMDb($title);
 
-        if (!isset($imdb[$title]))
-            $imdb[$title] = new Service_IMDb($title);
-
-    	return $imdb[$title];
+    	return self::$instance['imdb'][$title];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

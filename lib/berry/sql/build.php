@@ -10,12 +10,6 @@
 class SQL_build {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function build(){        $args = func_get_args();
-        $type = array_shift($args);
-        return call_user_func_array(array(($this ? $this : 'self'), '_build_'.$type), $args);    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     protected function _append_join($v){        if ($pos = strrpos($v, '.')){
             $table = substr($v, 0, $pos);
 
@@ -26,7 +20,7 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepare_fields($v){        $this->_append_join($v);
+    protected function _prepare_fields($v){        self::_append_join($v);
 
         if (strpos($v, '`') === false)
             $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
@@ -42,7 +36,7 @@ class SQL_build {
         $vars = get_class_vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
         $key = ($vars['table'] ? $vars['table'] : $v);
 
-        if (!$cache[$key]){            $this->_append_join($v);
+        if (!$cache[$key]){            self::_append_join($v);
             $cache[$key] = array_keys($this->schema($key));
         }
 
@@ -57,7 +51,7 @@ class SQL_build {
 
     protected function _prepare_bulid(){
         foreach ($this->select as $v){
-            $this->_append_join($v);
+            self::_append_join($v);
 
             $if = (
                 !stripos($v, " as ") and is_bool(strpos($v, '`')) and
@@ -72,7 +66,7 @@ class SQL_build {
                 if (strtolower($tmp) == strtolower($this->table))
                     $v = '`'.$tmp.'`.*';
                 elseif ($this->relations[$tmp])
-                    $v = join(', ', $this->_prepare_select_all($tmp));
+                    $v = join(', ', self::_prepare_select_all($tmp));
             } elseif ($if){
                 $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
             } else {
@@ -103,14 +97,14 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_get(){        $this->_prepare_bulid();
+    protected function _build_get(){        self::_prepare_bulid();
 
         $query[] = 'select '.join(', ', $this->select);
         $query[] = 'from '.join(', ', $this->from);
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
 
-        if (!$subquery = self::build('subquery')){
+        if (!$subquery = self::_build_subquery()){
             $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
             $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
         }
@@ -127,11 +121,11 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_subquery(){ // :(
+    protected function _build_subquery(){
         if (!($this->multiple and ($this->limit or $this->where)))
             return;
 
-        $this->_prepare_bulid();
+        self::_prepare_bulid();
 
         $query[] = 'select '.$this->table.'.'.$this->primary_key;
         $query[] = 'from '.join(', ', $this->from);
@@ -281,13 +275,14 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_count(){        $this->_prepare_bulid();
+    protected function _build_count(){        self::_prepare_bulid();
 
         $query[] = 'select count(*)';
-        $query[] = 'from ['.$this->_table.']';
+        $query[] = 'from '.join(', ', $this->from);
 
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
+        $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
         $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
 
         return join("\r\n", $query);

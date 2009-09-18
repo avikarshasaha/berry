@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_control extends SQL_etc {
+class SQL_control extends SQL_vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function save(){
@@ -106,7 +106,7 @@ class SQL_control extends SQL_etc {
             return call_user_method_array('query', self::$sql, $args);
         }
 
-        $key = $this->_hash('get');
+        $key = self::hash('get');
 
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
@@ -212,16 +212,25 @@ class SQL_control extends SQL_etc {
         return call_user_method_array('selectRow', self::$sql, $args);
     }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __call($method, $params){        if (!$trigger = $this->trigger[$method])
-            trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
+    function count(){        $class = clone $this;
 
-        foreach ($trigger as $k => $v)
-            if (call_user_method_array($k, $this, array_merge((array)$v)))
-                $this->placeholders = array_merge($this->placeholders, $params);
+        $class->select = array('count(*)');
+        $class->order_by = array();
 
-        return $this;
+        return $class->cell();
+
+        $key = self::hash('count');
+
+        if (!array_key_exists($key, self::$cache)){
+            $args = $this->placeholders;
+            array_unshift($args, self::build('count'));
+            self::$cache[$key] = call_user_method_array('selectCell', self::$sql, $args);
+        }
+
+        return self::$cache[$key];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

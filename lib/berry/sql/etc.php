@@ -7,7 +7,46 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_etc extends SQL_vars {
+class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
+
+    protected $id;
+    protected $table;
+    protected $_table;
+
+    protected $primary_key = 'id';
+    protected $parent_key;
+
+    protected $has_one = array();
+    protected $belongs_to = array();
+    protected $has_many = array();
+    protected $has_and_belongs_to_many = array();
+
+    protected $schema = array();
+    protected $trigger = array();
+
+    protected $select = array('*');
+    protected $from = array();
+    protected $join = array();
+
+    protected $into = array();
+    protected $values = array();
+    protected $joinvalues = array();
+
+    protected $where = array();
+    protected $group_by = array();
+    protected $having = array();
+    protected $order_by = array();
+    protected $limit = 0;
+    protected $offset = 0;
+
+    protected $multiple = array();
+    protected $relations = array();
+    protected $placeholders = array();
+    protected $multisave = array();
+    protected $iterator = 0;
+
+    protected static $sql;
+    protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
     static function connect($dsn){        define('DBSIMPLE_SKIP', self::SKIP);
@@ -113,67 +152,6 @@ class SQL_etc extends SQL_vars {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function relations($table1, $table2, $type){        if (is_array($table2)){
-            $key = key($table2);
-
-            if (!is_numeric($key))
-                list($table2, $keys) = array($key, reset($table2));
-            else
-                $table2 = reset($table2);
-        }
-        $vars1 = get_class_vars(inflector::singular($table1));
-        $vars2 = get_class_vars(inflector::singular($table2));
-
-        $local = array(
-            'table' => $table1,
-            'alias' => $table1,
-            'field' => ($vars1['primary_key'] ? $vars1['primary_key'] : 'id')
-        );
-        $foreign = array(
-            'table' => $table2,
-            'alias' => $table2,
-            'field' => ($vars2['primary_key'] ? $vars2['primary_key'] : 'id')
-        );
-
-        if ($type == 'has_one'){            $local['field'] = inflector::singular($foreign['table']).'_'.$local['field'];
-            $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
-        }
-
-        if ($type == 'belongs_to'){
-            $foreign['field'] = $local['alias'].'_'.$foreign['field'];
-            $local['table'] = ($vars1['table'] ? $vars1['table'] : $local['table']);
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
-        }
-
-        if ($type == 'has_many'){            $foreign['field'] = $local['alias'].'_'.$foreign['field'];
-            $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
-        }
-
-        if ($type == 'has_and_belongs_to_many'){            $table1 = inflector::plural($table1);
-            $local['table'] = ($vars1['table'] ? $vars1['table'] : $local['table']);
-
-            $foreign['table1'] = ($table1 < $table2 ? $table1.'_'.$table2 : $table2.'_'.$table1);
-            $foreign['alias1'] = $foreign['table1'];
-            $foreign['field1'] = inflector::singular($local['table']).'_'.$foreign['field'];
-
-            $foreign['table2'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
-            $foreign['alias2'] = $foreign['table'];
-            $foreign['field2'] = $foreign['field'];
-
-            $foreign['field3'] = inflector::singular($foreign['alias2']).'_'.$foreign['field'];
-
-            unset($foreign['table'], $foreign['alias'], $foreign['field']);
-        } elseif ($keys){
-            list($local['field'], $foreign['field']) = $keys;
-        }
-
-        return compact('local', 'type', 'foreign', 'table');
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     function schema($table = ''){        if (!$table and $this){
             if ($this->schema)
                 return $this->schema;
@@ -239,13 +217,101 @@ class SQL_etc extends SQL_vars {
         return $result;
     }
 
+////////////////////////////////////////////////////////////////////////////////
+
+    function __call($method, $params){
+        if (!$trigger = $this->trigger[$method])
+            trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
+
+        foreach ($trigger as $k => $v)
+            if (call_user_method_array($k, $this, array_merge((array)$v)))
+                $this->placeholders = array_merge($this->placeholders, $params);
+
+        return $this;
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _hash($prefix = ''){
+    protected function build(){
+        $args = func_get_args();
+        $type = array_shift($args);
+
+        return call_user_func_array(array(($this ? $this : 'self'), '_build_'.$type), $args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function hash($prefix = ''){        return $prefix.'_'.spl_object_hash($this);
+
         ob_start();
             var_dump($this);
         return $prefix.'_'.md5(ob_get_clean());
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function relations($table1, $table2, $type){
+        if (is_array($table2)){
+            $key = key($table2);
+
+            if (!is_numeric($key))
+                list($table2, $keys) = array($key, reset($table2));
+            else
+                $table2 = reset($table2);
+        }
+
+        $vars1 = get_class_vars(inflector::singular($table1));
+        $vars2 = get_class_vars(inflector::singular($table2));
+
+        $local = array(
+            'table' => $table1,
+            'alias' => $table1,
+            'field' => ($vars1['primary_key'] ? $vars1['primary_key'] : 'id')
+        );
+        $foreign = array(
+            'table' => $table2,
+            'alias' => $table2,
+            'field' => ($vars2['primary_key'] ? $vars2['primary_key'] : 'id')
+        );
+
+        if ($type == 'has_one'){
+            $local['field'] = inflector::singular($foreign['table']).'_'.$local['field'];
+            $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
+        }
+
+        if ($type == 'belongs_to'){
+            $foreign['field'] = $local['alias'].'_'.$foreign['field'];
+            $local['table'] = ($vars1['table'] ? $vars1['table'] : $local['table']);
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
+        }
+
+        if ($type == 'has_many'){
+            $foreign['field'] = $local['alias'].'_'.$foreign['field'];
+            $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
+        }
+
+        if ($type == 'has_and_belongs_to_many'){
+            $table1 = inflector::plural($table1);
+            $local['table'] = ($vars1['table'] ? $vars1['table'] : $local['table']);
+
+            $foreign['table1'] = ($table1 < $table2 ? $table1.'_'.$table2 : $table2.'_'.$table1);
+            $foreign['alias1'] = $foreign['table1'];
+            $foreign['field1'] = inflector::singular($local['alias']).'_'.$foreign['field'];
+
+            $foreign['table2'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
+            $foreign['alias2'] = $foreign['table'];
+            $foreign['field2'] = $foreign['field'];
+
+            $foreign['field3'] = inflector::singular($foreign['alias2']).'_'.$foreign['field'];
+
+            unset($foreign['table'], $foreign['alias'], $foreign['field']);
+        } elseif ($keys){
+            list($local['field'], $foreign['field']) = $keys;
+        }
+
+        return compact('local', 'type', 'foreign', 'table');
     }
 
 ////////////////////////////////////////////////////////////////////////////////

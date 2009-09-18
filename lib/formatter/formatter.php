@@ -7,58 +7,49 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Formatter {////////////////////////////////////////////////////////////////////////////////
+class Formatter {    protected static $instance = array();////////////////////////////////////////////////////////////////////////////////
 
     // http://www.hobix.com/textile/
     static function textile($output, $params = array()){
-        static $textile;
+        if (!isset(self::$instance['textile']))
+            self::$instance['textile'] = new Textile;
 
-        if (!$textile)
-            $textile = new Textile;
-
-        return $textile->TextileThis(trim($output), $params['lite'], $params['encode'], $params['noimage'], $params['strict'], $params['rel']);
+        return self::$instance['textile']->TextileThis(trim($output), $params['lite'], $params['encode'], $params['noimage'], $params['strict'], $params['rel']);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://daringfireball.net/projects/markdown/syntax/
     static function markdown($output){
-        static $markdown;
+        if (!isset(self::$instance['markdown']))
+            self::$instance['markdown'] = new Markdown_Parser;
 
-        if (!$markdown)
-            $markdown = new Markdown_Parser;
-
-        return $markdown->transform(trim($output));
+        return self::$instance['markdown']->transform(trim($output));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function bbcode($output){
-        static $bbcode;
+        if (!isset(self::$instance['bbcode']))
+            self::$instance['bbcode'] = new BBCode;
 
-        if (!$bbcode)
-            $bbcode = new BBCode;
-
-        return nl2br($bbcode->parse(trim($output)));
+        return nl2br(self::$instance['bbcode']->parse(trim($output)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://wackowiki.com/WackoDocumentation/WackoFormatting/
     static function wacko($output){
-        static $wacko;
+        if (!isset(self::$instance['wacko']))
+            self::$instance['wacko'] = new WackoFormatter;
 
-        if (!$wacko)
-            $wacko = new WackoFormatter;
-
-        return unhtml($wacko->format($output));
+        return unhtml(self::$instance['wacko']->format($output));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function jevix($output){        static $jevix;
-
-        if (!$jevix){            $jevix = new Jevix;
+    static function jevix($output){        if (!isset(self::$instance['jevix'])){
+            $jevix = new Jevix;
 
             // Разрешённые теги
             $jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'li', 'ol', 'ul', 'sup', 'sub', 'pre', 'acronym', 'code', 'quote', 'blockquote', 'small', 'p', 'strike', 'del', 'br'));
@@ -90,9 +81,11 @@ class Formatter {/////////////////////////////////////////////////////////////
             $jevix->cfgSetTagNoTypography('p');
             $jevix->entities0 = array();
             $jevix->entities2 = array();
+
+            self::$instance['jevix'] = $jevix;
         }
 
-        return substr($jevix->parse('<p>'.$output.'</p>'), 3, -4);
+        return substr(self::$instance['jevix']->parse('<p>'.$output.'</p>'), 3, -4);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

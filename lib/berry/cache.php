@@ -43,19 +43,22 @@ class Cache {    static $file;
 
     static function expired($key, $array){        if (!$file = self::exists($key))
             return true;
-        $time = filemtime($file);        $result = array();
-        foreach ($array as $k => $v){            if (!$v)
+        $mtime = filemtime($file);        $result = array();
+        foreach ($array as $k => $tmp){            if (!$tmp)
                 continue;
 
-            foreach ((array)$v as $i){
-                if ($k == 'file' and file_exists($i))
-                    $result[] = (filemtime($i) > $time);
+            foreach ((array)$tmp as $v){
+                if ($k == 'file' and file_exists($v))
+                    $result[] = (filemtime($v) > $mtime);
 
-                if ($k == 'db' and ($query = sql::row('show table status like "?_"', $i)))
-                    $result[] = (strtotime($query['Update_time']) > $time);
+                if ($k == 'db' and ($query = sql::row('show table status like "?_"', $v)))
+                    $result[] = (strtotime($query['Update_time']) > $mtime);
 
-                if ($k == 'url' and ($headers = get_headers($i, true)))
-                    $result[] = (strtotime($headers['Last-Modified']) > $time);
+                if ($k == 'url' and ($headers = get_headers($v, true)))
+                    $result[] = (strtotime($headers['Last-Modified']) > $mtime);
+
+                if ($k == 'time')
+                    $result[] = (date::time($v) > $mtime);
             }
         }
 

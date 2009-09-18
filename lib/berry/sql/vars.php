@@ -7,56 +7,17 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Iterator {
-    const SKIP = 7.2e83;
-
-    protected $id;
-    protected $table;
-    protected $_table;
-    protected $schema = array();
-
-    protected $primary_key = 'id';
-    protected $parent_key;
-
-    protected $has_one = array();
-    protected $belongs_to = array();
-    protected $has_many = array();
-    protected $has_and_belongs_to_many = array();
-
-    protected $select = array('*');
-    protected $from = array();
-    protected $join = array();
-
-    protected $into = array();
-    protected $values = array();
-    protected $joinvalues = array();
-
-    protected $where = array();
-    protected $group_by = array();
-    protected $having = array();
-    protected $order_by = array();
-    protected $limit = 0;
-    protected $offset = 0;
-
-    protected $multiple = array();
-    protected $relations = array();
-    protected $placeholders = array();
-    protected $multisave = array();
-    protected $iterator = 0;
-    protected $trigger = array();
-
-    protected static $sql;
-    protected static $cache = array();
+abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
-        return $this->offsetExists($name);
+        return isset($this[$name]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __unset($name){        return $this->offsetUnset($name);
+    function __unset($name){        unset($this[$name]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -72,22 +33,7 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function count(){
-        $key = $this->_hash('count');
-
-        if (!array_key_exists($key, self::$cache)){
-            $args = $this->placeholders;
-            array_unshift($args, self::build('count'));
-            self::$cache[$key] = call_user_method_array('selectCell', self::$sql, $args);
-        }
-
-        return self::$cache[$key];
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function offsetExists($offset){
-        return ($this[$name] !== null);
+    function offsetExists($offset){        return ($this[$offset] !== null);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +53,7 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
         if (!$this->where)
             return;
 
-        $key = $this->_hash('offsetGet');
+        $key = self::hash('offsetGet');
 
         if ($this->relations[$offset]){
             if (!isset(self::$cache[$key.$offset]))
@@ -209,7 +155,7 @@ abstract class SQL_vars extends SQL_build implements Countable, ArrayAccess, Ite
 ////////////////////////////////////////////////////////////////////////////////
 
     function valid(){
-        return ($this->iterator < $this->count());
+        return ($this->iterator < b::len($this));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
