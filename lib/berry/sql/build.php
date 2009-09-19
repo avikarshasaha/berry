@@ -87,12 +87,12 @@ class SQL_build {
                     $from[] = '['.$v.']';
             }
 
+        foreach (array('where', 'group_by', 'having', 'order_by') as $v)
+            $this->$v = array_map(array('self', '_prepare_fields'), $this->$v);
+
         $this->select = $select;
         $this->from = $from;
         $this->join = array_unique($this->join);
-
-        foreach (array('where', 'group_by', 'having', 'order_by') as $v)
-            $this->$v = array_map(array($this, '_prepare_fields'), $this->$v);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

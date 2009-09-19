@@ -160,21 +160,17 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _values($values, $is_final = false){        $skipit = self::skip();
-
-        foreach ($values as $it){
+    protected static function _values($values, $is_final = false){        foreach ($values as $it){
             $it['attributes']['#is_final'] = $is_final;
             $it['attributes']['#tag'] = self::ns($it['tag']);
             $it['attributes'] = array_change_key_case($it['attributes']);
             $it['attr'] = ($skip['tag'] ? $it['attributes'] : attr::normalize($it['attributes']));
+            $func_exists = self::function_exists($func = 'tag_'.$it['attr']['#tag']);
 
             if (self::$ns){                $ns = str_replace(array(':', '-', '.'), '_', $it['tag']);
-                if (
-                    !self::function_exists($func = 'tag_'.$it['attr']['#tag']) or
-                    substr($ns, 0, (strlen(self::$ns) + 1)) != self::$ns.'_'
-                )
+                if (!$func_exists or substr($ns, 0, (strlen(self::$ns) + 1)) != self::$ns.'_')
                     unset($func);
-            } elseif (!self::function_exists($func = 'tag_'.$it['attr']['#tag'])){
+            } elseif (!$func_exists){
                 unset($func);
             }
 
@@ -193,7 +189,7 @@ class Tags extends Attr {
             if ($skip['tag'] and $skip['tag']['level'] == $it['level'] and ($it['type'] == 'close' or $it['type'] == 'complete'))
                 unset($skip['tag']);
 
-            if (!$skip['tag'] and in_array($it['attr']['#tag'], $skipit) and $it['type'] == 'open')
+            if (!$skip['tag'] and in_array($it['attr']['#tag'], self::skip()) and $it['type'] == 'open')
                 $skip['tag'] = $it;
 
             $result .= $it['attr']['#before'];

@@ -106,9 +106,6 @@ class SQL_control extends SQL_vars implements Countable {
             return call_user_method_array('query', self::$sql, $args);
         }
 
-        if (!$this->where)
-            return array();
-
         $key = self::hash('get');
 
         if (array_key_exists($key, self::$cache))

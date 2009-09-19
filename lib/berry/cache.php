@@ -8,29 +8,59 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Cache {    static $file;
+    protected static $tags;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function get($key, $array = array()){        self::$file = file::path('cache/').$key;
+    static function get($key, $array = array(), $_array = array()){        self::$file = file::path('cache/').$key;
 
-        if (!self::expired($key, $array))
-            return self::$file;
+        if (!isset(self::$tags)){            if (!is_file($file = file::path('cache/').'cache.php'))
+                arr::export($file, array());
+
+            self::$tags = include $file;
+        }
+
+        if (is_object($array))
+            return new self($key, $array, $_array);
+
+        $is_array = (substr($key, -4) == '.php');
+
+        if (self::expired($key, $array))
+            return ($is_array ? array() : null);
+
+        return ($is_array ? include self::$file : file_get_contents(self::$file));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function set($value){
+    static function set($value, $tags = array()){        $name = str_replace(file::path('cache/'), '', self::$file);
+        $array = (isset(self::$tags[$name]) ? self::$tags[$name] : array());        self::$tags[$name] = array_merge($array, $tags);
+
+        arr::export(file::path('cache/').'cache.php', self::$tags);
         file::mkdir(dirname(self::$file));
-        b::call((!is_scalar($value) ? 'arr::export' : 'file_put_contents'), self::$file, $value);
+        b::call((is_array($value) ? 'arr::export' : 'file_put_contents'), self::$file, $value);
 
         return self::$file;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function remove($key){
-        if ($file = self::exists($key))
-            return unlink($file);
+    static function remove($key){        if (!is_array($key)){
+            if ($file = self::exists($key))
+                return unlink($file);
+
+            return;
+        }
+
+        $result = array();
+
+        foreach (self::$tags as $k => $v)
+            if (array_intersect($v, $key) and is_file($file = file::path('cache/').$k)){                unset(self::$tags[$k]);
+                $result[$k] = unlink($file);
+            }
+
+        arr::export(file::path('cache/').'cache.php', self::$tags);
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,18 +81,40 @@ class Cache {    static $file;
                 if ($k == 'file' and file_exists($v))
                     $result[] = (filemtime($v) > $mtime);
 
-                if ($k == 'db' and ($query = sql::row('show table status like "?_"', $v)))
+                if ($k == 'db'){                    if ($pos = strpos($v, '.')){
+                        $tmp = substr($v, 0, $pos);
+                        $v = substr($v, ($pos + 1));
+                    }
+
+                    $query = sql::row('show table status { from ?_ } like "?_"', $tmp, $v);
                     $result[] = (strtotime($query['Update_time']) > $mtime);
+                }
 
                 if ($k == 'url' and ($headers = get_headers($v, true)))
                     $result[] = (strtotime($headers['Last-Modified']) > $mtime);
 
                 if ($k == 'time')
-                    $result[] = (date::time($v) > $mtime);
+                    $result[] = ((date::time($v) - time()) < (time() - $mtime));
             }
         }
 
         return in_array(true, $result);    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function __construct($key, $object, $array){        $this->key = $key;
+        $this->object = $object;
+        $this->array = $array;    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function __call($method, $params){        if (!self::expired($this->key, $this->array))
+            return include self::$file;
+
+        $data = call_user_method_array($method, $this->object, $params);
+        self::set($data, ($this->array['tags'] ? (array)$this->array['tags'] : array()));
+
+        return $data;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

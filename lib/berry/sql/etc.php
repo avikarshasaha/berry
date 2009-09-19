@@ -158,18 +158,21 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
             $table = $this->_table;
         };
-        $schema = array();
-        $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
-        foreach (self::$sql->query(self::build('schema'), $table) as $info)
-            $schema[$info['Field']] = array(
-                'name' => $info['Field'],
-                'type' => $info['Type'],
-                'null' => ($info['Null'] == 'YES'),
-                'key'  => $keys[strtolower($info['Key'][0])],
-                'auto' => ($info['Extra'] == 'auto_increment'),
-                'default' => $info['Default']
-            );
+        if (!$schema = cache::get('schema/'.$table.'.php', array('db' => $table))){            $schema = array();
+            $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
+
+            foreach (self::$sql->query(self::build('schema'), $table) as $info)
+                $schema[$info['Field']] = array(
+                    'name' => $info['Field'],
+                    'type' => $info['Type'],
+                    'null' => ($info['Null'] == 'YES'),
+                    'key'  => (string)$keys[strtolower($info['Key'][0])],
+                    'auto' => ($info['Extra'] == 'auto_increment'),
+                    'default' => (string)$info['Default']
+                );
+
+            cache::set($schema);        }
 
         return $schema;
     }

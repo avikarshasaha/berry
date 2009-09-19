@@ -80,13 +80,13 @@ class B {    static $path = array('');
 ////////////////////////////////////////////////////////////////////////////////
 
     static function config(){
-        static $config = array();
+        static $config;
 
         if (!$config){
             $dir = '/data/config';
             $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
 
-            if (!$cache = cache::get('config.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.yaml', $dirs[1].'/*.yaml');
+            if (!$config = cache::get('config.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.yaml', $dirs[1].'/*.yaml');
 
                 foreach ($files as $k => $v){
                     $k = substr(basename($v), 0, -5);
@@ -97,8 +97,6 @@ class B {    static $path = array('');
                 }
 
                 cache::set($config);
-            } else {
-                $config = include $cache;
             }
         }
 
@@ -119,7 +117,7 @@ class B {    static $path = array('');
 ////////////////////////////////////////////////////////////////////////////////
 
     static function lang($text, $array = array()){
-        static $lang = array();
+        static $lang;
 
         if (!$lang){            $dir = '/lang/en';
             $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
@@ -128,7 +126,7 @@ class B {    static $path = array('');
                 $dirs = array_merge($dirs, array(self::$path[0].$dir, self::$path[1].$dir));
             }
 
-            if (!$cache = cache::get('lang/'.self::$lang.'.php', array('file' => $dirs))){
+            if (!$lang = cache::get('lang/'.self::$lang.'.php', array('file' => $dirs))){
                 $func = create_function('$v', 'return $v."/*.yaml";');
                 $dirs = array_map($func, $dirs);
                 $files = call_user_func_array(array('file', 'glob'), $dirs);
@@ -138,8 +136,6 @@ class B {    static $path = array('');
 
                 $lang = arr::assoc($lang);
                 cache::set($lang);
-            } else {
-                $lang = include $cache;
             }
         }
 
@@ -165,7 +161,7 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function call(){        static $func = array();
+    static function call(){        static $call;
 
         $args = func_get_args();
         $name = trim(array_shift($args));
@@ -173,9 +169,9 @@ class B {    static $path = array('');
         if ($name[0] == '*'){            $name = substr($name, 1);
             $args = $args[0];        }
 
-        if (!$func){            $dir = '/ext';
+        if (!$call){            $dir = '/ext';
             $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
-            if (!$cache = cache::get('ext.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
+            if (!$call = cache::get('ext.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
 
                 foreach ($files as $k => $v)                    foreach (token_get_all(file_get_contents($v)) as $token){
                         if ($token[0] == T_FUNCTION)
@@ -183,16 +179,14 @@ class B {    static $path = array('');
 
                         if ($token[0] == T_STRING and $token[2] == $line){
                             $line = 0;
-                            $func[$token[1]] = $v;
+                            $call[$token[1]] = $v;
                         }
                     }
 
-                cache::set($func);
-            } else {
-                $func = include $cache;
+                cache::set($call);
             }        }
 
-        if (!is_array($name)){            if ($file = $func[$name]){                if (!function_exists($name))
+        if (!is_array($name)){            if ($file = $call[$name]){                if (!function_exists($name))
                     include $file;
 
                 return call_user_func_array($name, $args);            }
@@ -332,7 +326,7 @@ class B {    static $path = array('');
             is_file($_['file'] = file::path('show/'.$string.'.phtml')) or
             is_file($_['file'] = file::path('show/'.$string.'/index.phtml'))
         ){
-            $funcs = include cache::get('ext.php');
+            $funcs = include cache::exists('ext.php');
 
             foreach (token_get_all(file_get_contents($_['file'])) as $token)
                 if ($token[0] == T_STRING){
