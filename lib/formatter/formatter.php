@@ -38,16 +38,6 @@ class Formatter {    protected static $instance = array();///////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // http://wackowiki.com/WackoDocumentation/WackoFormatting/
-    static function wacko($output){
-        if (!isset(self::$instance['wacko']))
-            self::$instance['wacko'] = new WackoFormatter;
-
-        return unhtml(self::$instance['wacko']->format($output));
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function jevix($output){        if (!isset(self::$instance['jevix'])){
             $jevix = new Jevix;
 

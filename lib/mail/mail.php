@@ -11,11 +11,10 @@ class Mail {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function send($to, $params, $tags = array()){
-        $params = array_merge(array(
+    static function send($to, $params, $tags = array()){        $params = array_merge(array(
             'type'   => b::config('mail.type'),
             'attach' => array()
-        ), $params);
+        ), (is_array($params) ? $params : self::bender($params)));
 
         $tags = array_merge(array('config' => b::config(), 'q' => b::q()), $tags);
 
@@ -31,10 +30,10 @@ class Mail {
         else
             $mail->set_to($to);
 
-        if (preg_match('/(.*)(?>\s<([^>]*)>)/', b::config('mail.sender'), $match))
+        if (preg_match('/(.*)(?>\s<([^>]*)>)/', b::config('lib.mail.sender'), $match))
             $mail->set_from($match[2], $match[1]);
         else
-            $mail->set_from(b::config('mail.sender'));
+            $mail->set_from(b::config('lib.mail.sender'));
 
         if (is_array($params['message'])){            if ($params['message']['text'])
                 $mail->set_text(str::format($params['message']['text'], $tags));
@@ -46,9 +45,9 @@ class Mail {
             $mail->set_text(str::format($params['message'], $tags));
         }
 
-        if (b::config('mail.smtp.on')){
-            $mail->set_smtp_host(b::config('mail.smtp.host'), b::config('mail.smtp.port'));
-            $mail->set_smtp_auth(b::config('mail.smtp.user'), b::config('mail.smtp.password'));
+        if (b::config('lib.mail.smtp.on')){
+            $mail->set_smtp_host(b::config('lib.mail.smtp.host'), b::config('lib.mail.smtp.port'));
+            $mail->set_smtp_auth(b::config('lib.mail.smtp.user'), b::config('lib.mail.smtp.password'));
         }
 
         foreach ($params['attach'] as $filename)
@@ -73,7 +72,7 @@ class Mail {
         $attach  = arr::trim(explode(';', $attach[1]));
 
         if (!$type = trim($type[1]))
-            $type = b::config('mail.type');
+            $type = b::config('lib.mail.type');
 
         return compact('subject', 'message', 'attach', 'type');
     }

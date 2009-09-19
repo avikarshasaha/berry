@@ -10,20 +10,27 @@
 class FiGlet {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($text, $font = 'slant.flf'){        static $figlet;
+    function __construct($text, $font = 'slant.flf', $german = true){        static $figlet;
 
         if (!$figlet)
             $figlet = new Text_FiGlet;
 
         $this->figlet = $figlet;
         $this->text = $text;
-        $this->font = $font;    }
+        $this->font = $font;
+        $this->german = $german;    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function show($html = false){
+        $this->figlet->LoadFont(dirname(__file__).'/font/'.$this->font, $this->german);
+        return $this->figlet->LineEcho($this->text, $html);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function __toString(){
-        $error = $this->figlet->LoadFont(dirname(__file__).'/font/'.$this->font); // $error['message']
-        return $this->figlet->LineEcho($this->text);
+        return $this->show($this->text);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

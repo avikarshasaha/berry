@@ -111,8 +111,16 @@ class Cache {    static $file;
     function __call($method, $params){        if (!self::expired($this->key, $this->array))
             return include self::$file;
 
+        $tags = array();
+
+        if (isset($this->array['tags'])){
+            $tags = $this->array['tags'];
+        } else {            foreach ($this->array as $k => $v)
+                if (is_int($k))
+                    $tags[] = $v;        }
+
         $data = call_user_method_array($method, $this->object, $params);
-        self::set($data, ($this->array['tags'] ? (array)$this->array['tags'] : array()));
+        self::set($data, $tags);
 
         return $data;    }
 

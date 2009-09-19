@@ -22,6 +22,11 @@ class B {    static $path = array('');
     static function init(){        if (!self::$path[0])
             self::$path[0] = realpath(dirname(__file__).'/../../');
 
+        ini_set('docref_root', 'http://php.net/');
+        ini_set('session.use_trans_sid', false);
+        ini_set('session.use_cookies', true);
+        ini_set('session.cookie_lifetime', 0);
+
         spl_autoload_register(array('self', 'autoload'));
         debug::timer();
 
@@ -31,6 +36,7 @@ class B {    static $path = array('');
 
         date_default_timezone_set(self::config('lib.b.timezone'));
         setlocale(LC_ALL, self::lang('lib.b.init.locale'));
+        session_start();
 
         $_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : self::config('lib.b.load'));
         self::router();

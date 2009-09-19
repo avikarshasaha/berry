@@ -1,10 +1,6 @@
-<?
-
-// Created by bouchon
-// http://dev.maxg.info
-
-// Need help ? http://forum.maxg.info
-
+<?php
+// http://maxg.info
+// http://web.archive.org/web/20070630183407/www.maxgcomp.php.maxg.info/
 class zip
 {
 

@@ -101,7 +101,7 @@ class Str {///////////////////////////////////////////////////////////////////
     // Откуда спиздил?
     static function gzip($output, $compress = 3){
         if (function_exists('ob_gzhandler'))
-            return ob_gzhandler($output, $compress);
+            return array('output' => ob_gzhandler($output, $compress));
 
         if (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'x-gzip') !== false)
             $encoding = 'x-gzip';

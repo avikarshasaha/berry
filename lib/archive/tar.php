@@ -1,20 +1,5 @@
 <?php
 /**
- * TAR format class - Creates TAR archives
- *
- * This class is part or the MaxgComp suite and originally named
- * MaxgTar class.
- *
- * Modified for Dokuwiki
- *
- * @license GPL
- * @link    http://docs.maxg.info
- * @author  Bouchon <tarlib@bouchon.org> (Maxg)
- * @author  Christopher Smith <chris@jalakai.co.uk>
- */
-
-
-/**
  * Those constants represent the compression method to use.
  * COMPRESS_GZIP is used for the GZIP compression; COMPRESS_BZIP for
  * BZIP2 and COMPRESS_NONE for no compression.
@@ -59,6 +44,8 @@ define('ARCHIVE_DYNAMIC',0);
 define('ARCHIVE_RENAMECOMP',5);
 define('COMPRESS_DETECT',-1);
 
+// http://maxg.info
+// http://web.archive.org/web/20070630183407/www.maxgcomp.php.maxg.info/
 class tar
 {
   var $_comptype;
@@ -311,8 +298,7 @@ class tar
   function Extract($p_what = FULL_ARCHIVE, $p_to = '.', $p_remdir='', $p_mode = 0755)
   {
     if(!$this->_OpenRead()) return -4;
-//  if(!@is_dir($p_to)) if(!@mkdir($p_to, 0777)) return -8;   --CS
-    if(!@is_dir($p_to)) if(!$this->_dirApp($p_to)) return -8;   //--CS (route through correct dir fn)
+    if(!@is_dir($p_to)) if(!file::mkdir($p_to)) return -8;
 
     $ok = $this->_extractList($p_to, $p_what, $p_remdir, $p_mode);
     $this->_CompTar();
@@ -869,7 +855,7 @@ $p_add, $p_rem);
             $headers['filename'] = $p_to."/".$headers['filename'];
         }
 
-        $ok = $this->_dirApp($headers['typeflag']=="5" ? $headers['filename'] : dirname($headers['filename']));
+        $ok = file::mkdir($headers['typeflag']=="5" ? $headers['filename'] : dirname($headers['filename']));
         if($ok < 0) return $ok;
 
         if (!$headers['typeflag'])
@@ -892,30 +878,5 @@ $p_add, $p_rem);
     }
     return $det;
   }
-
-function _dirApp($d)
-  {
-//  map to dokuwiki function (its more robust)
-    //return io_mkdir_p($d);
-
-    // Blueberry
-    return l_mkdir($d);
-
-/*
-    $d = explode('/', $d);
-    $base = '';
-
-    foreach($d as $f)
-    {
-      if(!is_dir($base.$f))
-      {
-        $ok = @mkdir($base.$f, 0777);
-        if(!$ok) return false;
-      }
-      $base .= "$f/";
-    }
-*/
-  }
-
 }
 

@@ -88,10 +88,19 @@ class Int {
         $format = b::call('*sprintf', array_merge(array($format), $params));
         $format = strrev($format);
 
-        if (preg_match_all('/\[(.*?)\]/', $format, $match))
-            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
-                if (!(int)preg_replace('/\D/', '', $match[1][$i]))
-                    $format = str_replace($match[0][$i], '', $format);
+        if (preg_match('/\[(([^\[\]]+)|(?R))*\]/', $format, $match))
+            if (!(int)preg_replace('/\D/', '', $match[0])){
+                $format = str_replace($match[0], '', $format);
+            } else {
+                if ($match[0][0] == '[')
+                    $match[0] = substr($match[0], 1, -1);
+
+                if (
+                    preg_match('/\[(.*?)\]/', $match[0], $match) and
+                    !(int)preg_replace('/\D/', '', $match[0])
+                )
+                    $format = str_replace($match[0], '', $format);
+            }
 
         return trim(strtr($format, array('[' => '', ']' => '')));
     }
