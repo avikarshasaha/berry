@@ -36,29 +36,3 @@ function attr_wysiwyg_markitup($attr){
     unset($attr['wysiwyg_markitup']);
     return $attr;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-function attr_wysiwyg_spaw($attr){    include file::path('lib/spaw2/spaw.inc.php');
-
-    $spaw = new SpawEditor($attr['name']);
-    $attr['#skip'] = supadupa_skip(array('#text' => $spaw->getHTML()));
-
-    unset($attr['wysiwyg_spaw']);
-    return $attr;
-}
-
-if (is_file(file::path('lib/spaw2/spaw.inc.php')) and b::q(-4, 0) == 'lib/spaw2/js/spaw.js.php'){
-    include file::path('lib/spaw2/js/spaw.js.php');
-    exit;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function attr_wysiwyg_fckeditor($attr){
-    $fckeditor = new FCKeditor($attr['name']);
-    $fckeditor->BasePath = '~/lib/fckeditor/';
-    $attr['#skip'] = $fckeditor->createHTML();
-
-    unset($attr['wysiwyg_fckeditor']);
-    return $attr;}

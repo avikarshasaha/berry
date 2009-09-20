@@ -36,6 +36,7 @@ function supadupa_skip($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
+hook::set('output', 'output_supadupa_skip');
 function output_supadupa_skip($output){
     if (preg_match_all('/<!--supadupa\[skip\]\[(.*)\]-->/', $output, $match))
         for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)

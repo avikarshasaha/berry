@@ -11,7 +11,7 @@
 // Ещё один повод поблагодарить и за PHP Expert Editor!
 function tag_zxchart($attr){    $titles = array('');
 
-    l_mkdir($dir = file::path('cache').'/tag/zxchart');
+    file::mkdir($dir = file::path('cache').'/tag/zxchart');
     if (preg_match_all('/<optgroup( ([^>]*))?>(.*?)<\/optgroup>/is', $attr['#text'], $match1))
         for ($i1 = 0, $c1 = b::len($match1[0]); $i1 < $c1; $i1++){
         	preg_match('/ label=("|\')(.*?)\\1/i', $match1[1][$i1], $tmp);
@@ -35,9 +35,9 @@ function tag_zxchart($attr){    $titles = array('');
 	$data['tBText'] = $attr['bottom'];
 	$data['title']  = join('; ', $titles).';';
 
-	$md5 = md5($data = http_build_query($data, 'data'));
+	$key = md5($data = http_build_query($data, 'data'));
 	$attr = array_merge(array(
-	    'file'   => 'tag/zxchart/'.$md5,
+	    'file'   => 'tag/zxchart/'.$key,
 	    'style'  => 'column6',
 	    'width'  => 400,
 	    'height' => 300
@@ -48,7 +48,7 @@ function tag_zxchart($attr){    $titles = array('');
 	$attr['src'] .= '&RefreshPeriod='.$attr['refresh'];
 	$attr['src'] .= '&stylefile=~/tag/zxchart/styles/'.$attr['style'].'.stl';
 
-	if (!is_file($file = $dir.'/'.$md5))
+	if (!is_file($file = $dir.'/'.$key))
 	    file_put_contents($file, iconv('utf-8', 'cp1251', $data));
 
 	return tag_flash($attr);

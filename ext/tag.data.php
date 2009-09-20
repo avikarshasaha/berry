@@ -7,32 +7,20 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-tags::skip('data');
-function tag_data($attr){    static $cache = array();
+function container_data($attr){    preg_match_all('/%(\w+)?{'.$attr['#tag'].'.([^}]*)}/', $attr['#text'], $match);
 
-    preg_match_all('/%(\w+)?{'.$attr['#tag'].'(\.([^}]*))?}/', $attr['#text'], $match);
-	    $md5 .= $from = reset(explode('.', $match[3][0]));
+    $from = reset(explode('.', $match[2][0]));
+    $table = sql::table($from);
+    $attr['#text'] = preg_replace('/(%(\w+)?{'.$attr['#tag'].').'.$from.'/', '\\1', $attr['#text']);
 
     for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
-        $select[] = $match[2][$i];
+        $table->select(preg_replace('/^'.$from.'./', '', $match[2][$i]));
 
-    if ($select)
-        $attr['select'] = join(', ', array_unique($select)).($attr['select'] ? ', '.$attr['select'] : '');
+    foreach (attr::filter($attr) as $k => $v)        if (preg_match_all('/\((([^\(\)]+)|(?R))*\)/', $v, $match)){
+            $match = array_map(create_function('$v', 'return substr($v, 1, -1);'), $match[0]);
 
-    foreach (array('select', 'where', 'order', 'group') as $v)
-        if ($attr[$v])
-            $md5 .= $attr[$v] = preg_replace('/([\w]+)\.([\w\.]+)(\s+)?/', '`\\1.\\2`\\3', $attr[$v]);
+            for ($i = 0, $c = b::len($match); $i < $c; $i++)
+                call_user_method($k, $table, $match[$i]);
+        } else {            $table->$k($v);        }
 
-    $md5 = md5($md5.$attr['count']);
-
-    if (!$data = $cache[$md5]){
-        $data = data::get($from, $attr);
-
-        if ($attr['count'])
-            $data = array(array($from => $data));
-
-        $cache[$md5] = $data;
-    }
-
-    return tags::parse_lvars($attr, $data, true);
-}
+    return tags::parse_lvars($attr, $table->as_array(), true);}

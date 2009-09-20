@@ -166,3 +166,16 @@ function attr_router($attr){    $group = attr::group('router', $attr);
 	unset($attr['router']);
 	return $attr;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+function attr_mailto($attr){
+	for ($i = 0, $c = b::len($attr['mailto']); $i < $c; $i++)
+	    $result .= '&#'.ord($attr['mailto'][$i]).';';
+
+    $attr['href'] = '&#109;&#97;&#105;&#108;&#116;&#111;&#58;'.$result;
+    $attr['#text'] = ($attr['#text'] == $attr['mailto'] ? $result : $attr['#text']);
+
+    unset($attr['mailto']);
+	return $attr;
+}

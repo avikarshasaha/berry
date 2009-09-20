@@ -7,8 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-tags::skip('opml');
-function tag_opml($attr){
+function container_opml($attr){
     $array  = array();
     $output = file_get_contents($attr['src']);
     $parser = xml_parser_create();
@@ -42,8 +41,7 @@ function tag_opml($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-tags::skip('xml');
-function tag_xml($attr){
+function container_xml($attr){
 	$xml = simplexml_load_file($attr['src']);
 
 	if ($attr['xpath'])

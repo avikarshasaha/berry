@@ -61,8 +61,6 @@ class SQL_build {
                 strtolower(substr($v, 0, (b::len($this->table) + 1))) != strtolower($this->table.'.')
             );
 
-            $v = self::_prepare_fields($v);
-
             if ($v == '*'){
                 $v = '`'.$this->table.'`.*';
             } elseif (strpos($v, '*') and strpos($v, '`') === false){
@@ -72,8 +70,10 @@ class SQL_build {
                     $v = '`'.$tmp.'`.*';
                 elseif ($this->relations[$tmp])
                     $v = join(', ', self::_prepare_select_all($tmp));
-            } elseif ($if){
-                $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
+            } elseif ($if){                if (!strpos($v, '.'))
+                    $v = '`'.$this->table.'`.'.$v;
+                else
+                    $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
             } else {
                 $v = preg_replace('/(?!`)([\w\.]+)\.(\w+)(?!`)/i', '`\\1`.\\2', $v);
                 $v = preg_replace('/``([\w\.]+)`\./', '`\\1.', $v);

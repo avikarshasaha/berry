@@ -11,7 +11,7 @@ class HTTP {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function cookie($name = null, $value = null, $time = '+1 hour'){
+    static function cookie($name = null, $value = null, $time = '+1 day'){
         if ($name !== null and $value !== null)
             return setcookie($name, $value, date::time($time), '/', '', false, true);
         elseif ($name !== null)

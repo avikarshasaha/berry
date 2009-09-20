@@ -216,8 +216,7 @@ class B {    static $path = array('');
         if (function_exists($func))
             return true;
 
-        if (!$file = cache::exists('ext.php'))
-            self::call('#');
+        !cache::exists('ext.php') and self::call('#');
 
         if (!$funcs and ($file = cache::exists('ext.php')))
             $funcs = include $file;
@@ -331,7 +330,7 @@ class B {    static $path = array('');
         if (
             is_file($_['file'] = file::path('show/'.$string.'.phtml')) or
             is_file($_['file'] = file::path('show/'.$string.'/index.phtml'))
-        ){
+        ){            !cache::exists('ext.php') and self::call('#');
             $funcs = include cache::exists('ext.php');
 
             foreach (token_get_all(file_get_contents($_['file'])) as $token)

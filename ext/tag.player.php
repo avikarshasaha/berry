@@ -8,8 +8,7 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 function tag_player($attr){    $ext = strtolower(pathinfo($attr['src'], PATHINFO_EXTENSION));
-    $func  = 'tag_player_';
-    $func .= ($ext == 'mp3' ? 'audio' : 'video');
+    $func = 'tag_player_'.($ext == 'mp3' ? 'audio' : 'video');
     return $func($attr);}
 ////////////////////////////////////////////////////////////////////////////////
 

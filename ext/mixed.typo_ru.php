@@ -8,11 +8,7 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 function tag_typo_ru($attr){
-    $content = '<span>'.$attr['#text'].'</span>';
-    $content = typo_ru($content);
-    $content = substr($content, 6, -7);
-
-    return $content;
+    return typo_ru($content);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +52,7 @@ function typo_ru($content){    $replace = array(
         )
     );
 
+    $content = '<span>'.$content.'</span>';
     $content = preg_replace('/<(code|script|style|notypo)( ([^>]*))?>(.*?)<\/\\1>/ies', "'¬'.base64_encode(stripslashes('<\\1\\2>'.'\\4'.'</\\1>')).'¬*'", $content);
     $content = preg_replace('/<!--(.*?)-->/ies', "'¬'.base64_encode(stripslashes('<!--\\1-->')).'¬*'", $content);
     $content = preg_replace('/<([a-z]+([a-z\.:-]+)?[^>]*)>/ie', "'¬'.base64_encode(stripslashes('<\\1>')).'¬*'", $content);
@@ -75,5 +72,5 @@ function typo_ru($content){    $replace = array(
 
     if (preg_match_all('/¬(.*)¬\*/U', $content, $match))        $content = strtr($content, array_combine($match[0], array_map('base64_decode', $match[1])));
 
-    return $content;
+    return substr($content, 6, -7);
 }
