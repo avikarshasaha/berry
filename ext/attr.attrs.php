@@ -63,9 +63,9 @@ function attr_check_re($attr){
 	), $attr);
 
 	$_SESSION['attr']['check'][tags::elmname_parse($attr['name'])] = array(
-	    're'   => $attr['check_re'],
-	    'need' => str::format($attr['check_need'], $attr),
-	    'type'  => $attr['check_type']
+	    $attr['check_re'],
+	    str::format($attr['check_need'], $attr),
+	    $attr['check_type']
 	);
 
     unset($attr['check_re'], $attr['check_need'], $attr['check_type']);

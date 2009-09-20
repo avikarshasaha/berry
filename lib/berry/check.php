@@ -86,9 +86,9 @@ class Check {
     protected function _is_valid($check, $data){        $result = array();
 
         foreach ($check as $k => $v){
-            if (!self::is_valid($k, $v['re'], $data)){
-                if (is_array($need = str::json($v['need'])))
-                    $v['need'] = $need[end(self::$error)];
+            if (!self::is_valid($k, $v[0], $data)){
+                if (is_array($need = str::json($v[1])))
+                    $v[1] = $need[end(self::$error)];
 
                 $result[] = $v;
             }

@@ -8,8 +8,8 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 if ($_POST['test'] and $_SESSION['attr']['check']){
-    foreach (check::is_valid($_SESSION['attr']['check'], $_POST) as $error)
-        html::msg($error['type'], $error['need']);
+    foreach (check::is_valid($_SESSION['attr']['check'], $_POST) as $array)
+        html::msg('e', $array[1]);
 
     if (!check::is_valid_post('test'))
         html::msg('e', 'Форма не прошла валидацию.', 1);
