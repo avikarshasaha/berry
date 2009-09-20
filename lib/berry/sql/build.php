@@ -22,8 +22,11 @@ class SQL_build {
 
     protected function _prepare_fields($v){        self::_append_join($v);
 
-        if (strpos($v, '`') === false)
+        if (strpos($v, '`') === false){            if (!strpos($v, '.') and strpos($v, '(') === false and !stripos($v, ' as '))
+                $v = $this->table.'.'.$v;
+
             $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
+        }
 
         return $v;
     }
@@ -34,7 +37,7 @@ class SQL_build {
         static $cache = array();
 
         $vars = get_class_vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
-        $key = ($vars['table'] ? $vars['table'] : $v);
+        $key = ($vars['table'] ? $vars['table'] : inflector::tableize($v));
 
         if (!$cache[$key]){            self::_append_join($v);
             $cache[$key] = array_keys($this->schema($key));
@@ -54,13 +57,15 @@ class SQL_build {
             self::_append_join($v);
 
             $if = (
-                !stripos($v, " as ") and is_bool(strpos($v, '`')) and
-                strtolower(substr($v, 0, (b::len($this->table) + 1))) != strtolower($this->table.".")
+                !stripos($v, ' as ') and strpos($v, '`') === false and
+                strtolower(substr($v, 0, (b::len($this->table) + 1))) != strtolower($this->table.'.')
             );
+
+            $v = self::_prepare_fields($v);
 
             if ($v == '*'){
                 $v = '`'.$this->table.'`.*';
-            } elseif (strpos($v, '*') and is_bool(strpos($v, '`'))){
+            } elseif (strpos($v, '*') and strpos($v, '`') === false){
                 $tmp = preg_replace('/([\w\.]+)\.\*/', '\\1', $v);
 
                 if (strtolower($tmp) == strtolower($this->table))

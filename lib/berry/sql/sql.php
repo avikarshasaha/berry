@@ -41,8 +41,8 @@ class SQL extends SQL_control {
     function from($table){        if (!$this)
             return self::table($table);
 
-        foreach (func_get_args() as $from)            if (!$this->table){                $table = inflector::tableize($from);                $this->from[] = $table.($from == $table ? '' : ' as '.$from);
-            } else {                $this->from[] = $from;            }
+        foreach (func_get_args() as $arg)            if (!$this->table){                $table = inflector::tableize($arg);                $this->from[] = $table.($arg == $table ? '' : ' as '.$arg);
+            } else {                $this->from[] = $arg;            }
 
         return $this;
     }
@@ -145,14 +145,14 @@ class SQL extends SQL_control {
             $method = substr($method, 3);
 
             if (!strpos($method, '_')){
-                list($table, $field) = array($this->table, $method);
+                $select[] = $method;
             } else {                $pos = strrpos($method, '_');
-                $field = substr($method, ($pos + 1));
-                $table = str_replace('_', '.', substr($method, 0, $pos));
+                $select[] = str_replace('_', '.', substr($method, 0, $pos));
+                $select[] = substr($method, ($pos + 1));
             }
 
             foreach ($params as $param)
-                $this->where($table.'.'.$field.' = ?'.(is_array($param) ? 'a' : ''), $param);
+                $this->where(join('.', $select).' = ?'.(is_array($param) ? 'a' : ''), $param);
 
             return $this;
         }

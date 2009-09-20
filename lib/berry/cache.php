@@ -81,7 +81,8 @@ class Cache {    static $file;
                 if ($k == 'file' and file_exists($v))
                     $result[] = (filemtime($v) > $mtime);
 
-                if ($k == 'db'){                    if ($pos = strpos($v, '.')){
+                if ($k == 'db'){                    $tmp = SQL::SKIP;
+                    if ($pos = strpos($v, '.')){
                         $tmp = substr($v, 0, $pos);
                         $v = substr($v, ($pos + 1));
                     }

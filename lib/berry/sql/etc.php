@@ -277,13 +277,13 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
         if ($type == 'has_one'){
             $local['field'] = inflector::singular($foreign['table']).'_'.$local['field'];
             $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::plural($foreign['table']));
         }
 
         if ($type == 'belongs_to'){
             $foreign['field'] = $local['alias'].'_'.$foreign['field'];
-            $local['table'] = ($vars1['table'] ? $vars1['table'] : $local['table']);
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : $foreign['table']);
+            $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::plural($foreign['table']));
         }
 
         if ($type == 'has_many'){
