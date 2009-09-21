@@ -7,8 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
-
+abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
@@ -47,85 +46,18 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        if ($class = self::_multisave($offset))
-            return $class;
+    function offsetGet($offset){        if (method_exists($this, '_get_'.$offset))
+            return $this->{'_get_'.$offset}();
 
-        if (!$this->where)
-            return;
-
-        $key = self::hash('offsetGet');
-
-        if ($this->relations[$offset]){
-            if (!isset(self::$cache[$key.$offset]))
-                return self::$cache[$key.$offset] = self::_object($offset);
-
-            return self::$cache[$key.$offset];
-        }
-
-        if (!array_key_exists($key, self::$cache)){
-            $class = clone $this;
-
-            foreach ($class->select as $k => $v){
-                if (preg_match('/(^|\.)('.$this->table.'\.'.$offset.')(\.|$)/', $v, $match))
-                    $class->select[$k] = $match[2];
-                else
-                    unset($class->select[$k]);
-            }
-
-            $class->select = ($class->select ? $class->select : array($class->table.'.*'));
-            self::$cache[$key] = $class->as_array();
-        }
-
-        if (
-            ($name = self::_is_HABTM($offset)) and
-            ($relation = $this->relations[$name]) and
-            !isset(self::$cache[$key][$offset])
-        )
-            if ($id = self::$cache[$key][$relation['local']['field']]){
-                $foreign = $relation['foreign'];
-                self::$cache[$key][$offset] = self::$sql->selectCol(
-                    self::build('HABTM_IDs'),
-                    $foreign['field3'], $foreign['table1'], $foreign['field1'], $id
-                );
-            } else {
-                self::$cache[$key][$offset] = array();
-            }
-
-        return self::$cache[$key][$offset];
+        return self::_get($offset);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if (is_array($value)){            if ($class = self::_multisave($offset)){
-                foreach ($value as $k => $v)
-                    $class[$k] = $v;
-            }
+    function offsetSet($offset, $value){        if (method_exists($this, '_set_'.$offset))
+            return $this->{'_set_'.$offset}($value);
 
-            $func = create_function('$a', 'return !is_int($a);');
-            $array = array_map($func, array_keys($value));
-            $array = array_unique($array);
-
-            if (in_array(true, $array))
-                asort($value);
-            else
-                sort($value);
-        }
-
-        if ($this->where and ($value == $this[$offset] or !$this[$this->primary_key]))
-            return $value;
-
-        if ($name = self::_is_HABTM($offset)){            foreach ($value as $v)
-                $this->joinvalues[$name][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
-        } else {
-            if (is_int($value)){
-                $value -= $this[$offset];
-                $value = $this->raw('`'.$offset.'`'.($value >= 0 ? ' + ' : ' ').$value);
-            } elseif (is_object($value)){
-                $value = ($value->id ? $value->id : $value->save());
-            }
-
-            $this->values[$offset] = $value;
-        }
+        return self::_set($offset, $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -160,24 +92,111 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _is_HABTM($offset){        if (
-            substr($offset, -4) == '_ids' and
-            ($name = substr($offset, 0, -4)) and
-            ($relation = $this->relations[$name]) and
-            $relation['type'] == 'has_and_belongs_to_many'
+    protected function _get($name){
+        if ($class = self::_multisave($name))
+            return $class;
+
+        if (!$this->where)
+            return;
+
+        $key = self::hash('_get');
+
+        if ($this->relations[$name]){
+            if (!isset(self::$cache[$key.$name]))
+                return self::$cache[$key.$name] = self::_object($name);
+
+            return self::$cache[$key.$name];
+        }
+
+        if (!array_key_exists($key, self::$cache)){
+            $class = clone $this;
+
+            foreach ($class->select as $k => $v){
+                if (preg_match('/(^|\.)('.$this->table.'\.'.$name.')(\.|$)/', $v, $match))
+                    $class->select[$k] = $match[2];
+                else
+                    unset($class->select[$k]);
+            }
+
+            $class->select = ($class->select ? $class->select : array($class->table.'.*'));
+            self::$cache[$key] = $class->as_array();
+        }
+
+        if (
+            ($_name = self::_is_HABTM($name)) and
+            ($relation = $this->relations[$_name]) and
+            !isset(self::$cache[$key][$name])
         )
-            return $name;    }
+            if ($id = self::$cache[$key][$relation['local']['field']]){
+                $foreign = $relation['foreign'];
+                self::$cache[$key][$name] = self::$sql->selectCol(
+                    self::build('HABTM_IDs'),
+                    $foreign['field3'], $foreign['table1'], $foreign['field1'], $id
+                );
+            } else {
+                self::$cache[$key][$name] = array();
+            }
+
+        return self::$cache[$key][$name];
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _multisave($offset){
-        if (is_null($offset))            return $this->multisave[] = $this->table($this->table);
+    protected function _set($name, $value){
+        if (is_array($value)){
+            if ($class = self::_multisave($name)){
+                foreach ($value as $k => $v)
+                    $class[$k] = $v;
+            }
 
-        if (is_int($offset)){
-            if (!isset($this->multisave[$offset]))
-                $this->multisave[$offset] = $this->table($this->table, $offset);
+            $func = create_function('$a', 'return !is_int($a);');
+            $array = array_map($func, array_keys($value));
+            $array = array_unique($array);
 
-            return $this->multisave[$offset];
+            if (in_array(true, $array))
+                asort($value);
+            else
+                sort($value);
+        }
+
+        if ($this->where and ($value == $this[$name] or !$this[$this->primary_key]))
+            return $value;
+
+        if ($_name = self::_is_HABTM($name)){
+            foreach ($value as $v)
+                $this->joinvalues[$_name][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
+        } else {
+            if (is_int($value)){
+                $value -= $this[$name];
+                $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
+            } elseif (is_object($value)){
+                $value = ($value->id ? $value->id : $value->save());
+            }
+
+            $this->values[$name] = $value;
+        }
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _is_HABTM($name){        if (
+            substr($name, -4) == '_ids' and
+            ($_name = substr($name, 0, -4)) and
+            ($relation = $this->relations[$_name]) and
+            $relation['type'] == 'has_and_belongs_to_many'
+        )
+            return $_name;    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _multisave($name){
+        if (is_null($name))            return $this->multisave[] = $this->table($this->table);
+
+        if (is_int($name)){
+            if (!isset($this->multisave[$name]))
+                $this->multisave[$name] = $this->table($this->table, $name);
+
+            return $this->multisave[$name];
         }
     }
 
