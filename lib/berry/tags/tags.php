@@ -79,17 +79,6 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function skip($tag = ''){
-        static $skip = array();
-
-        if ($tag)
-            $skip[] = strtolower($tag);
-
-        return $skip;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function parse_vars($output){
     	$output = str_replace('\#', self::char('#'), $output);
         $output = str_replace('\$', self::char('$'), $output);
@@ -165,12 +154,15 @@ class Tags extends Attr {
             $it['attributes']['#tag'] = self::ns($it['tag']);
             $it['attributes'] = array_change_key_case($it['attributes']);
             $it['attr'] = ($skip['tag'] ? $it['attributes'] : attr::normalize($it['attributes']));
-            $func_exists = self::function_exists($func = 'tag_'.$it['attr']['#tag']);
+            $exists = (
+                self::function_exists($func = 'tag_'.$it['attr']['#tag']) or
+                self::function_exists($func = 'container_'.$it['attr']['#tag'])
+            );
 
             if (self::$ns){                $ns = str_replace(array(':', '-', '.'), '_', $it['tag']);
-                if (!$func_exists or substr($ns, 0, (strlen(self::$ns) + 1)) != self::$ns.'_')
+                if (!$exists or substr($ns, 0, (strlen(self::$ns) + 1)) != self::$ns.'_')
                     unset($func);
-            } elseif (!$func_exists){
+            } elseif (!$exists){
                 unset($func);
             }
 
@@ -189,7 +181,7 @@ class Tags extends Attr {
             if ($skip['tag'] and $skip['tag']['level'] == $it['level'] and ($it['type'] == 'close' or $it['type'] == 'complete'))
                 unset($skip['tag']);
 
-            if (!$skip['tag'] and in_array($it['attr']['#tag'], self::skip()) and $it['type'] == 'open')
+            if (!$skip['tag'] and substr($func, 0, 9) == 'container' and $it['type'] == 'open')
                 $skip['tag'] = $it;
 
             $result .= $it['attr']['#before'];
@@ -579,7 +571,7 @@ class Tags extends Attr {
                     if ($attr['#skip'] !== true)
                         $output = str_replace($match[0][$i], $attr['#skip'], $output);
                 } else {                	$attr['#text'] = $match[4][$i];
-                    $output = str_replace($match[0][$i], call_user_func('supadupa_'.$attr['#tag'], $attr), $output);
+                    $output = str_replace($match[0][$i], self::call('supadupa_'.$attr['#tag'], $attr), $output);
                 }
             }
 
@@ -588,12 +580,21 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function functions($prefix = ''){
-    	if (!$prefix)
-    	    return end(get_defined_functions());
+    static function functions($prefix = ''){        static $funcs = array();
 
-        $funcs = end(get_defined_functions());
-    	$len = (strlen($prefix) + 1);
+        $ext = array();
+        $len = (strlen($prefix) + 1);
+
+    	if (!$funcs and class_exists('b')){
+            !cache::exists('ext.php') and self::call('#');
+            $ext = array_keys(include cache::exists('ext.php'));
+    	}
+
+    	if (!$funcs)
+    	    $funcs = array_merge(end(get_defined_functions()), $ext);
+
+    	if (!$prefix)
+    	    return $funcs;
 
         foreach ($funcs as $func)
             if (substr($func, 0, $len) == $prefix.'_')

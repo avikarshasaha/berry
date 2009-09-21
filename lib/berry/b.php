@@ -14,7 +14,7 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '0.1.6');
+    static function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '0.1.6.dev');
         return ($what ? $version[$what] : $version);    }
 
 ////////////////////////////////////////////////////////////////////////////////

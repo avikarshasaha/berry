@@ -20,15 +20,17 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepare_fields($v){        self::_append_join($v);
+    protected function _prepare_fields($array){        $array = (array)$array;
+        foreach ($array as &$v){            self::_append_join($v);
 
-        if (strpos($v, '`') === false){            if (!strpos($v, '.') and strpos($v, '(') === false and !stripos($v, ' as '))
-                $v = $this->table.'.'.$v;
+            if (strpos($v, '`') === false){                if (!strpos($v, '.') and strpos($v, '(') === false and !stripos($v, ' as '))
+                    $v = $this->table.'.'.$v;
 
-            $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
+                $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
+            }
         }
 
-        return $v;
+        return join(' or ', $array);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

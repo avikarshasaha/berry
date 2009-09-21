@@ -46,18 +46,16 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        if (method_exists($this, '_get_'.$offset))
-            return $this->{'_get_'.$offset}();
-
-        return self::_get($offset);
+    function offsetGet($offset){        return (method_exists($this, '_get_'.$offset) ? $this->{'_get_'.$offset}() : self::_get($offset));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if (method_exists($this, '_set_'.$offset))
-            return $this->{'_set_'.$offset}($value);
+    function offsetSet($offset, $value){        if (!method_exists($this, '_set_'.$offset))
+            return self::_set($offset, $value);
 
-        return self::_set($offset, $value);
+        self::_get($offset);
+        return $this->{'_set_'.$offset}($value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -142,8 +140,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _set($name, $value){
-        if (is_array($value)){
+    protected function _set($name, $value){        if (is_array($value)){
             if ($class = self::_multisave($name)){
                 foreach ($value as $k => $v)
                     $class[$k] = $v;
@@ -159,7 +156,12 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                 sort($value);
         }
 
-        if ($this->where and ($value == $this[$name] or !$this[$this->primary_key]))
+        $key = self::hash('_get');
+
+        if (isset(self::$cache[$key]))
+            self::$cache[$key][$name] = $value;
+
+        if ($this->where and ($value == self::_get($name) or !self::_get($this->primary_key)))
             return $value;
 
         if ($_name = self::_is_HABTM($name)){
@@ -167,7 +169,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                 $this->joinvalues[$_name][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
         } else {
             if (is_int($value)){
-                $value -= $this[$name];
+                $value -= self::_get($name);
                 $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
             } elseif (is_object($value)){
                 $value = ($value->id ? $value->id : $value->save());
