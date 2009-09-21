@@ -51,7 +51,7 @@ function tag_zxchart($attr){    $titles = array('');
 	if (!is_file($file = $dir.'/'.$key))
 	    file_put_contents($file, iconv('utf-8', 'cp1251', $data));
 
-	return tag_flash($attr);
+	return b::call('tag_flash', $attr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -9,6 +9,7 @@
                                                                    \/|*/
 function tag_flash($attr){
 	$attr = array_merge(array(
+	    'id' => '',
 	    'width' => 450,
 	    'height' => 350,
 	    'version' => 7,

@@ -22,23 +22,24 @@ class Str {///////////////////////////////////////////////////////////////////
 
         if (is_array($array) and b::len($array)){
             $array = arr::flat($array);
+            $func = create_function('$v', 'return str_replace("\\\", "", $v);');
 
             foreach ($array as $k => $v){
                 $k2 = preg_quote($k, '/');
 
                 if ($v){
-                    $string = preg_replace('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/se', "trim('\\1')", $string);
-                    $string = preg_replace('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/se', '', $string);
+                    $string = $func(preg_replace('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/se', "trim('\\1')", $string));
+                    $string = preg_replace('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/s', '', $string);
                 } else {
-                    $string = preg_replace('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/se', "trim('\\1')", $string);
-                    $string = preg_replace('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/se', '', $string);
+                    $string = $func(preg_replace('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/se', "trim('\\1')", $string));
+                    $string = preg_replace('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/s', '', $string);
                 }
 
                 $string = str_replace('%'.$k, $v, $string);
             }
 
             if (strpos($string, '%call:') !== false and strpos($string, '%/call:') !== false)
-                $string = preg_replace('/\%call:([\w\:]+)(.*?)\%\/call:\\1/se', "call_user_func_array(array('b', 'call'), arr::trim(explode(',', '\\1, \\2')))", $string);
+                $string = $func(preg_replace('/\%call:([\w\:]+)(.*?)\%\/call:\\1/se', "call_user_func_array(array('b', 'call'), arr::trim(explode(',', '\\1, \\2')))", $string));
         }
 
         return str_replace(tags::char('%'), '\%', $string);;
