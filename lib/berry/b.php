@@ -38,7 +38,7 @@ class B {    static $path = array('');
         setlocale(LC_ALL, self::lang('lib.b.init.locale'));
         session_start();
 
-        $_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : self::config('lib.b.load'));
+        $_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : 'home');
         self::router();
     }
 ////////////////////////////////////////////////////////////////////////////////

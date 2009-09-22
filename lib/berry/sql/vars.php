@@ -46,16 +46,15 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        return (method_exists($this, '_get_'.$offset) ? $this->{'_get_'.$offset}() : self::_get($offset));
+    function offsetGet($offset){        return (method_exists($this, $func = '_get_'.$offset) ? $this->$func() : self::_get($offset));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if (!method_exists($this, '_set_'.$offset))
-            return self::_set($offset, $value);
+    function offsetSet($offset, $value){        if (method_exists($this, $func = '_set_'.$offset))
+            return $this->$func($value);
 
-        self::_get($offset);
-        return $this->{'_set_'.$offset}($value);
+        self::_set($offset, $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -156,11 +155,6 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                 sort($value);
         }
 
-        $key = self::hash('_get');
-
-        if (isset(self::$cache[$key]))
-            self::$cache[$key][$name] = $value;
-
         if ($this->where and ($value == self::_get($name) or !self::_get($this->primary_key)))
             return $value;
 
@@ -168,15 +162,16 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
             foreach ($value as $v)
                 $this->joinvalues[$_name][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
         } else {
-            if (is_int($value)){
-                $value -= self::_get($name);
-                $value = $this->raw('`'.$name.'`'.($value >= 0 ? ' + ' : ' ').$value);
+            if (is_int($value)){                $tmp = $value;
+                $tmp -= self::_get($name);
+                $this->values[$name] = $this->raw('`'.$name.'`'.($tmp >= 0 ? ' + ' : ' ').$tmp);
             } elseif (is_object($value)){
-                $value = ($value->id ? $value->id : $value->save());
-            }
-
-            $this->values[$name] = $value;
+                $this->values[$name] = ($value->id ? $value->id : $value->save());
+            } else {                $this->values[$name] = $value;            }
         }
+
+        if (isset(self::$cache[$key = self::hash('_get')]))
+            self::$cache[$key][$name] = $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

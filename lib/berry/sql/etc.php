@@ -243,7 +243,8 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function hash($prefix = ''){        ob_start();
+    protected function hash($prefix = ''){        // Заебался. То тут не то, то там не так.        return $prefix.'_'.spl_object_hash($this);
+        ob_start();
             var_dump($this);
         return $prefix.'_'.md5(ob_get_clean());
     }
