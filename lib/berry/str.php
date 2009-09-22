@@ -22,16 +22,16 @@ class Str {///////////////////////////////////////////////////////////////////
 
         if (is_array($array) and b::len($array)){
             $array = arr::flat($array);
-            $func = create_function('$v', 'return str_replace("\\\", "", $v);');
+            $func = create_function('$match', 'return trim($match[1]);');
 
             foreach ($array as $k => $v){
                 $k2 = preg_quote($k, '/');
 
                 if ($v){
-                    $string = $func(preg_replace('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/se', "trim('\\1')", $string));
+                    $string = preg_replace_callback('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/s', $func, $string);
                     $string = preg_replace('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/s', '', $string);
                 } else {
-                    $string = $func(preg_replace('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/se', "trim('\\1')", $string));
+                    $string = preg_replace_callback('/\%if_not:'.$k2.'(.*?)\%\/if_not:'.$k2.'/s', $func, $string);
                     $string = preg_replace('/\%if:'.$k2.'(.*?)\%\/if:'.$k2.'/s', '', $string);
                 }
 
@@ -39,7 +39,7 @@ class Str {///////////////////////////////////////////////////////////////////
             }
 
             if (strpos($string, '%call:') !== false and strpos($string, '%/call:') !== false)
-                $string = $func(preg_replace('/\%call:([\w\:]+)(.*?)\%\/call:\\1/se', "call_user_func_array(array('b', 'call'), arr::trim(explode(',', '\\1, \\2')))", $string));
+                $string = preg_replace('/\%call:([\w\:]+)(.*?)\%\/call:\\1/se', "call_user_func_array(array('b', 'call'), arr::trim(explode(',', '\\1, \\2')))", $string);
         }
 
         return str_replace(tags::char('%'), '\%', $string);;
