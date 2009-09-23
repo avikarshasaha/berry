@@ -60,7 +60,7 @@ class DbSimple_Mysql extends DbSimple_Generic_Database
 
 
     function _performTransaction($parameters=null)
-    {
+    {        $this->query('SET AUTOCOMMIT = 0');
         return $this->query('BEGIN');
     }
 
@@ -95,14 +95,17 @@ class DbSimple_Mysql extends DbSimple_Generic_Database
 
 
     function _performCommit()
-    {
-        return $this->query('COMMIT');
+    {        $result = $this->query('COMMIT');
+        $this->query('SET AUTOCOMMIT = 1');
+        return $result;
     }
 
 
     function _performRollback()
     {
-        return $this->query('ROLLBACK');
+        $result = $this->query('ROLLBACK');
+        $this->query('SET AUTOCOMMIT = 1');
+        return $result;
     }
 
 

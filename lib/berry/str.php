@@ -47,14 +47,14 @@ class Str {///////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function unhtml($string){
-        return tags::unhtml($string);
+    static function unhtml($string, $quote_style = ENT_QUOTES){
+        return htmlspecialchars($string, $quote_style);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function html($string){
-        return tags::html($string);
+    static function html($string, $quote_style = ENT_QUOTES){
+        return htmlspecialchars_decode($string, $quote_style);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

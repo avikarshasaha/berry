@@ -23,7 +23,7 @@ class SQL_build {
     protected function _prepare_fields($array){        $array = (array)$array;
         foreach ($array as &$v){            self::_append_join($v);
 
-            if (strpos($v, '`') === false){                if (!strpos($v, '.') and strpos($v, '(') === false and !stripos($v, ' as '))
+            if (strpos($v, '`') === false){                if (!strpos($v, '.') and !stripos($v, ' as '))
                     $v = $this->table.'.'.$v;
 
                 $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
@@ -110,43 +110,11 @@ class SQL_build {
         $query[] = 'from '.join(', ', $this->from);
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
-
-        if (!$subquery = self::_build_subquery()){
-            $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
-            $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
-        }
-
-        $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
-
-        if (!$subquery and !$this->multiple and $this->limit){
-            $query[] = 'limit '.$this->limit;
-            $query[] = ($this->offset ? 'offset '.$this->offset : '');
-        }
-
-        return join("\r\n", $query);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function _build_subquery(){
-        if (!($this->multiple and ($this->limit or $this->where)))
-            return;
-
-        self::_prepare_bulid();
-
-        $query[] = 'select '.$this->table.'.'.$this->primary_key;
-        $query[] = 'from '.join(', ', $this->from);
-
-        $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
-        $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
-        $query[] = 'group by '.$this->table.'.'.$this->primary_key;
+        $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
         $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
-
-        if ($this->limit){
-            $query[] = 'limit '.$this->limit;
-            $query[] = ($this->offset ? 'offset '.$this->offset : '');
-        }
+        $query[] = ($this->limit ? 'limit '.$this->limit : '');
+        $query[] = ($this->offset ? 'offset '.$this->offset : '');
 
         return join("\r\n", $query);
     }
@@ -193,27 +161,6 @@ class SQL_build {
             $query[] = 'limit '.$this->limit;
 
         return join("\r\n", $query);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function _build_HABTM(){        $query = array();
-        if (!$this->joinvalues)
-            return $query;
-        $id = ($this->id ? $this->id : $this->last_id());
-        foreach ($this->joinvalues as $k => $v){
-            $relation = $this->relations[$k];
-            $foreign = $relation['foreign'];
-
-            if ($this->id)
-                $query[] = 'delete from ['.$foreign['table1'].'] where `'.$foreign['field1'].'` = '.$id;
-
-            $query[] = 'insert into ['.$foreign['table1'].'] '.
-                       '(`'.join('`, `', array($foreign['field1'], $foreign['field3'])).'`) '.
-                       'values ('.$id.', '.join('), ('.$id.', ', $v).')';
-        }
-
-        return $query;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -282,21 +229,6 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_count(){        self::_prepare_bulid();
-
-        $query[] = 'select count(*)';
-        $query[] = 'from '.join(', ', $this->from);
-
-        $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
-        $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
-        $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
-        $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
-
-        return join("\r\n", $query);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     protected function _build_join($relation){        if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
             $join[] = str::format('
                 [%foreign.table] as `%foreign.alias` on (
@@ -328,12 +260,6 @@ class SQL_build {
 
     protected function _build_childrens(){
         return 'select ?# as array_key, ?# as parent_key from ?_';
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function _build_HABTM_IDs(){
-        return 'select ?# from ?_ where ?# = ?d';
     }
 
 ////////////////////////////////////////////////////////////////////////////////

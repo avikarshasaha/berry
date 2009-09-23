@@ -24,13 +24,13 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
     protected $schema = array();
     protected $trigger = array();
 
-    protected $select = array('*');
-    protected $from = array();
-    protected $join = array();
-
     protected $into = array();
     protected $values = array();
     protected $joinvalues = array();
+
+    protected $select = array('*');
+    protected $from = array();
+    protected $join = array();
 
     protected $where = array();
     protected $group_by = array();
@@ -104,6 +104,12 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
     static function is_valid(){
         return (bool)self::$sql->link;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function link(){
+        return self::$sql->link;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -243,7 +249,7 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function hash($prefix = ''){        // Заебался. То тут не то, то там не так.        return $prefix.'_'.spl_object_hash($this);
+    protected function hash($prefix = ''){        // Заебался. То тут не то, то там не так.        return $this->table.'['.$prefix.']'.spl_object_hash($this);
         ob_start();
             var_dump($this);
         return $prefix.'_'.md5(ob_get_clean());

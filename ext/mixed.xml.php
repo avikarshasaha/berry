@@ -36,7 +36,7 @@ function container_opml($attr){
         }
     }
 
-    return tags::parse_lvars($att, arr::unhtml($array), true);
+    return tags::parse_vars($att, arr::unhtml($array), true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,7 +47,7 @@ function container_xml($attr){
 	if ($attr['xpath'])
 	    $xml = $xml->xpath($attr['xpath']);
 
-	return tags::parse_lvars($attr, simplexml2array($xml), true);
+	return tags::parse_vars($attr, simplexml2array($xml), true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

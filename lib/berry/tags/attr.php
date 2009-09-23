@@ -56,12 +56,12 @@ class Attr {
             unset($attr[$k]);
             $n = str_replace(array(':', '-', '.'), '_', $k);
             $orig[$n] = $k;
-            $attr[$n] = tags::unsux($v);
+            $attr[$n] = tags::_unsux($v);
         }
 
         foreach ($attr as $k => $v)
-            if (tags::function_exists($func = 'attr_'.$k))
-                $attr = tags::call($func, $attr);
+            if (b::function_exists($func = 'attr_'.$k))
+                $attr = b::call($func, $attr);
 
         if ($symbols)
             foreach ($attr as $k => $v)

@@ -86,7 +86,7 @@ function container_show($attr){
         return tags::parse($output);
 
     $result = tags::parse_else($output, $attr['#text']);
-    return tags::parse_lvars($output, 'show', $result);
+    return tags::parse_vars($output, 'show', $result);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ function container_code($attr){
 
 function tag_msg($attr){	if ($attr['#text']){		html::msg($attr['id'], $attr['#text']);		return;	}
 
-    return tags::parse_lvars(b::show('tag.msg.'.str_replace('.', '\.', $attr['id'])), 'msg', html::msg($attr['id']));
+    return tags::parse_vars(b::show('tag.msg.'.str_replace('.', '\.', $attr['id'])), 'msg', html::msg($attr['id']));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -136,13 +136,13 @@ function tag_quote($attr){	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote
 	    	unset($attr['cite']);
 	}
 
-    return tags::parse_lvars(b::show('tag.quote'), 'quote', $attr);
+    return tags::parse_vars(b::show('tag.quote'), 'quote', $attr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 function container_theme($attr){    if (is_file($file = file::path('show/theme.ini')))
-        return tags::parse_lvars($attr, parse_ini_file($file, true));
+        return tags::parse_vars($attr, parse_ini_file($file, true));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -181,7 +181,7 @@ function tag_toc($attr){    $uri = b::q(1, 0);
             $toc = formatter::textile($toc);
     }
 
-	return tags::parse_lvars($attr, compact('toc', 'ref'));
+	return tags::parse_vars($attr, compact('toc', 'ref'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -213,5 +213,5 @@ function container_tabs($attr){
     foreach ($tabs as $k => $v)
     	$tabs[$k]['click'] = $click;
 
-	return tags::parse_lvars(b::show('tag.tabs'), 'tabs', $tabs);
+	return tags::parse_vars(b::show('tag.tabs'), 'tabs', $tabs);
 }

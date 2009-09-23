@@ -39,7 +39,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
     function offsetUnset($offset){
         if ($name = self::_is_HABTM($offset))
-            unset($this->joinvalues[$name], self::$cache['HABTM_'.$offset]);
+            unset($this->joinvalues[$name]);
         else
             unset($this->values[$offset]);
     }
@@ -105,8 +105,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
             return self::$cache[$key.$name];
         }
 
-        if (!array_key_exists($key, self::$cache)){
-            $class = clone $this;
+        if (!array_key_exists($key, self::$cache)){            $class = clone $this;
 
             foreach ($class->select as $k => $v){
                 if (preg_match('/(^|\.)('.$this->table.'\.'.$name.')(\.|$)/', $v, $match))
@@ -124,12 +123,10 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
             ($relation = $this->relations[$_name]) and
             !isset(self::$cache[$key][$name])
         )
-            if ($id = self::$cache[$key][$relation['local']['field']]){
-                $foreign = $relation['foreign'];
-                self::$cache[$key][$name] = self::$sql->selectCol(
-                    self::build('HABTM_IDs'),
-                    $foreign['field3'], $foreign['table1'], $foreign['field1'], $id
-                );
+            if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = self::table($foreign['table1'])->
+                    select($foreign['field3'])->
+                    where($foreign['field1'].' = ?', $id)->
+                    col();
             } else {
                 self::$cache[$key][$name] = array();
             }
@@ -164,7 +161,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
         } else {
             if (is_int($value)){                $tmp = $value;
                 $tmp -= self::_get($name);
-                $this->values[$name] = $this->raw('`'.$name.'`'.($tmp >= 0 ? ' + ' : ' ').$tmp);
+                $this->values[$name] = self::raw($this->table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
             } elseif (is_object($value)){
                 $this->values[$name] = ($value->id ? $value->id : $value->save());
             } else {                $this->values[$name] = $value;            }
@@ -187,11 +184,11 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _multisave($name){
-        if (is_null($name))            return $this->multisave[] = $this->table($this->table);
+        if (is_null($name))            return $this->multisave[] = self::table($this->table);
 
         if (is_int($name)){
             if (!isset($this->multisave[$name]))
-                $this->multisave[$name] = $this->table($this->table, $name);
+                $this->multisave[$name] = self::table($this->table, $name);
 
             return $this->multisave[$name];
         }
@@ -206,26 +203,26 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
         $name = inflector::singular($name);
 
         if ($relation['type'] == 'has_one')
-            return $this->table($name, $this[$relation['local']['field']]);
+            return self::table($name, $this[$relation['local']['field']]);
 
         if ($relation['type'] == 'belongs_to')
-            return $this->table($name)->limit(1)->where(
+            return self::table($name)->limit(1)->where(
                 $foreign['alias'].'.'.$foreign['field'].' = ?',
                 $this[$local['field']]
             );
 
         if ($relation['type'] == 'has_many')
-            return $this->table($name)->where(
+            return self::table($name)->where(
                 inflector::singular($foreign['alias']).'.'.$foreign['field'].' = ?',
                 $this[$local['field']]
             );
 
-        return $this->table($name)->where(
+        return self::table($name)->where(
             $foreign['alias2'].'.'.$foreign['field2'].' in (?a)',
-            self::$sql->selectCol(
-                self::build('HABTM_IDs'),
-                $foreign['field3'], $foreign['table1'], $foreign['field1'], $this[$local['field']]
-            )
+            self::table($foreign['table1'])->
+                select($foreign['field3'])->
+                where($foreign['field1'].' = ?', $id)->
+                col()
         );
     }
 

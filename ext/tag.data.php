@@ -23,4 +23,4 @@ function container_data($attr){    preg_match_all('/%(\w+)?{'.$attr['#tag'].'.(
                 call_user_method($k, $table, $match[$i]);
         } else {            $table->$k($v);        }
 
-    return tags::parse_lvars($attr, $table->as_array(), true);}
+    return tags::parse_vars($attr, $table->as_array(), true);}

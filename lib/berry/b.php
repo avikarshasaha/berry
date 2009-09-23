@@ -74,7 +74,7 @@ class B {    static $path = array('');
 
     static function l(){
         $args = func_get_args();
-        return self::call('*tags::vars', $args);
+        return self::call('*tags::variable', $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

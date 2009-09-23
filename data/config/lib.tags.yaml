@@ -1,0 +1,101 @@
+ns:
+var: $GLOBALS
+
+has_close_tag:
+    - a
+    - abbr
+    - acronym
+    - address
+    - applet
+    - b
+    - bdo
+    - bgsound
+    - big
+    - blink
+    - blockquote
+    - body
+    - button
+    - caption
+    - center
+    - cite
+    - code
+    - colgroup
+    - comment
+    - dd
+    - del
+    - dfn
+    - dir
+    - div
+    - dl
+    - dt
+    - em
+    - fieldset
+    - font
+    - form
+    - frameset
+    - h1
+    - h2
+    - h3
+    - h4
+    - head
+    - html
+    - i
+    - iframe
+    - ilayer
+    - ins
+    - kbd
+    - label
+    - layer
+    - legend
+    # - li
+    - listing
+    - map
+    - marquee
+    - menu
+    - multicol
+    - nobr
+    - noembed
+    - noframes
+    - nolayer
+    - noscript
+    - object
+    - ol
+    # - optgroup
+    - option
+    # - p
+    - plaintext
+    - pre
+    - q
+    - rb
+    - rbc
+    - rp
+    - rt
+    - ruby
+    - s
+    - samp
+    - script
+    - select
+    - small
+    - span
+    - strike
+    - strong
+    - style
+    - sub
+    - sup
+    - table
+    - tbody
+    # - td
+    - textarea
+    - tfoot
+    # - th
+    - thead
+    - title
+    # - tr
+    - tt
+    - u
+    - ul
+    - var
+    - xml
+    - xmp
+    - noindex
+    - berry

@@ -81,7 +81,7 @@ function tag_pager($attr){
     if (!$attr['#text'])
         return $result;
 
-    return tags::parse_lvars($attr, array(
+    return tags::parse_vars($attr, array(
         'pages'   => ceil($attr['count'] / $attr['limit']),
         'current' => max(1, ($is_offset ? ($attr['offset'] / $attr['limit'] + 1) : $attr['page'])),
         'pager'   => $result

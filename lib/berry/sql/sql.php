@@ -12,7 +12,7 @@ class SQL extends SQL_control {
 
     function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
         $this->_table = ($this->table ? $this->table : inflector::tableize($class));
-        $from = (($this->table and $this->table != $class) ? $this->table.' as ' : '');        $this->from($from.$class)->table = $class;
+        $from = (($this->table and $this->table != $class) ? $this->table.' as ' : '');        self::from($from.$class)->table = $class;
 
         foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
             foreach ($this->$has as $key => $table){
@@ -21,8 +21,37 @@ class SQL extends SQL_control {
                 $this->relations[$alias] = $relation;
             }
 
-        if ($id)
-            $this->where($class.'.'.$this->primary_key.' = ?', ($this->id = $id));
+        if ($id){            if (is_array($id))
+                list($this->primary_key, $id) = array(key($id), reset($id));
+
+            self::where($class.'.'.$this->primary_key.' = ?', ($this->id = $id));
+        }
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function into(){
+        if (!$this->into)
+            $this->into = func_get_args();
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function values(){
+        $args = func_get_args();
+
+        if (!is_array($args[0])){
+            $this->values[] = $args;
+            return $this;
+        }
+
+        if (!$this->into)
+            $this->into = array_keys($args[0]);
+
+        $this->values[] = array_values($args[0]);
+        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,6 +119,24 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function group_by(){
+        $args = func_get_args();
+        $this->group_by = array_merge($this->group_by, $args);
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function having(){
+        $args = func_get_args();
+        $this->having = array_merge($this->having, $args);
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function order_by(){
         foreach (func_get_args() as $arg)
             $this->order_by[] = ($arg[0] == '-' ? substr($arg, 1).' desc' : $arg);
@@ -106,33 +153,16 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function page($page){
-        $this->offset(max(0, $page * $this->limit - $this->limit));
-        return $this;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     function offset($offset){
         $this->offset = (int)$offset;
         return $this;
     }
 
-////////////////////////////////////////////////////////////////////////////////
-
-    function group_by(){
-        $args = func_get_args();
-        $this->group_by = array_merge($this->group_by, $args);
-
-        return $this;
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function having(){
-        $args = func_get_args();
-        $this->having = array_merge($this->having, $args);
-
+    function page($page){
+        $this->offset(max(0, $page * $this->limit - $this->limit));
         return $this;
     }
 
@@ -152,7 +182,7 @@ class SQL extends SQL_control {
             }
 
             foreach ($params as $param)
-                $this->where(join('.', $select).' = ?'.(is_array($param) ? 'a' : ''), $param);
+                self::where(join('.', $select).' = ?'.(is_array($param) ? 'a' : ''), $param);
 
             return $this;
         }

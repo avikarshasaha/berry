@@ -37,49 +37,38 @@ class SQL_control extends SQL_vars implements Countable {
 
             return $result;
         }
-        if (!$this->values){            foreach (self::build('HABTM') as $query)
-                self::$sql->query($query);
+        if ($this->into){            $args = $this->values;
+            array_unshift($args, self::build('insert'));
+            $result[] = call_user_method_array('query', self::$sql, $args);
 
             return $result;
         }
-        if ($this->into){            $args = $this->values;
-            array_unshift($args, self::build('insert'));
-            return call_user_method_array('query', self::$sql, $args);
-        }
-        if (!$this->where)
-            $args = array_merge(array($this->values), array($this->values));
-        else
-            $args = array_merge(array($this->values), $this->placeholders);
 
-        array_unshift($args, self::build('save'));
-        $result[] = call_user_method_array('query', self::$sql, $args);
-        foreach (self::build('HABTM') as $query)
-            self::$sql->query($query);
+        if ($this->values){            if (!$this->where)
+                $args = array_merge(array($this->values), array($this->values));
+            else
+                $args = array_merge(array($this->values), $this->placeholders);
+
+            array_unshift($args, self::build('save'));
+            $result[] = call_user_method_array('query', self::$sql, $args);
+        }
+        $id = ($this->id ? $this->id : self::last_id());
+
+        foreach ($this->joinvalues as $k => $v){
+            $foreign = $this->relations[$k]['foreign'];
+            $table = self::table($foreign['table1'])->where($foreign['field1'].' = ?', $id);
+
+            foreach ($v as $i)
+                $table->values(array(
+                    $foreign['field1'] => $id,
+                    $foreign['field3'] => $i
+                ));
+
+            $table->delete();
+            $table->save();
+        }
 
         return $result;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function into(){        if (!$this->into)
-            $this->into = func_get_args();
-
-        return $this;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function values(){        $args = func_get_args();
-
-        if (!is_array($args[0])){
-            $this->values[] = $args;
-            return $this;
-        }
-        if (!$this->into)
-            $this->into = array_keys($args[0]);
-
-        $this->values[] = array_values($args[0]);
-        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +82,7 @@ class SQL_control extends SQL_vars implements Countable {
 
     function create(){
         if (self::$sql->query(self::build('create')) !== null)
-            return $this->alter();
+            return self::alter();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -102,8 +91,10 @@ class SQL_control extends SQL_vars implements Countable {
     }
 ////////////////////////////////////////////////////////////////////////////////
 
-    function get($method = ''){        if (!$this){            $args = func_get_args();
-            return call_user_method_array('query', self::$sql, $args);
+    function get(){
+        if (!$this){
+            $args = func_get_args();
+            return call_user_method_array('select', self::$sql, $args);
         }
 
         $key = self::hash('get');
@@ -111,29 +102,29 @@ class SQL_control extends SQL_vars implements Countable {
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
 
-        $method = strtolower($method);
+        //$method = strtolower($method);
+        //$method = 'select'.(in_array($method, array('cell', 'col', 'row')) ? $method : '');
+        $query = self::build('get');
 
-        if (in_array($method, array('array', 'object')))
-            return $this->{'as_'.$method}();
-        elseif ($method == 'count')
-            return $this->count();
+        if ($this->multiple and ($this->limit or $this->where)){            $class = clone $this;            $class->select = array($this->primary_key);
+            $class->group_by = array($this->primary_key);
 
-        $method = 'select'.(in_array($method, array('cell', 'col', 'row')) ? $method : '');
-
-        if ($query = self::build('subquery')){
             $args = $this->placeholders;
-            array_unshift($args, $query);
+            array_unshift($args, $class->build('get'));
 
             if (!$ids = call_user_method_array('selectCol', self::$sql, $args))
                 return array();
 
-            $this->where = array($this->table.'.'.$this->primary_key.' in (?a)');
+            $this->where = array($this->primary_key.' in (?a)');
+            $this->group_by = $this->having = array();
+            $this->limit = $this->offset = 0;
             $this->placeholders = array($ids);
+            $query = self::build('get');
         }
 
         $args = $this->placeholders;
-        array_unshift($args, self::build('get'));
-        return self::$cache[$key] = call_user_method_array($method, self::$sql, $args);
+        array_unshift($args, $query);
+        return self::$cache[$key] = call_user_method_array('select', self::$sql, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -142,12 +133,12 @@ class SQL_control extends SQL_vars implements Countable {
 
         if ($this->parent_key){            $this->select[] = $this->table.'.'.$this->parent_key.' as parent_key';
 
-            foreach (arr::tree($this->get()) as $k => $v){
+            foreach (arr::tree(self::get()) as $k => $v){
                 unset($array[$k]);
                 $array[$k][] = $v;
             }
         } else {            $this->select[] = 'null as array_key_2';
-            $array = $this->get();        }
+            $array = self::get();        }
 
         foreach ($array as $id => $tmp)
             foreach ($tmp as $i => $row)
@@ -172,7 +163,7 @@ class SQL_control extends SQL_vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function as_object(){        $result = array();
-        $array = ($this->id ? array($this->id => $this->as_array()) : $this->as_array());
+        $array = ($this->id ? array($this->id => self::as_array()) : self::as_array());
 
         foreach ($array as $id => $row)
             foreach ($row as $k => $v)
@@ -185,31 +176,43 @@ class SQL_control extends SQL_vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function cell(){        if ($this)
-            return $this->get('cell');
+    function cell(){        if (!$this){            $args = func_get_args();
+            return call_user_method_array('selectCell', self::$sql, $args);
+        }
 
-        $args = func_get_args();
-        return call_user_method_array('selectCell', self::$sql, $args);
+        return reset(self::col());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function col(){
-        if ($this)
-            return $this->get('col');
+        if (!$this){
+            $args = func_get_args();
+            return call_user_method_array('selectCol', self::$sql, $args);
+        }
 
-        $args = func_get_args();
-        return call_user_method_array('selectCol', self::$sql, $args);
+        $array = self::get();
+        self::_col($array);
+
+        return $array;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function row(){
-        if ($this)
-            return $this->get('row');
+    protected static function _col(&$v){        if (!is_array($cell = reset($v)))
+            $v = $cell;
+        else
+            array_walk($v, array('self', '_col'));    }
 
-        $args = func_get_args();
-        return call_user_method_array('selectRow', self::$sql, $args);
+////////////////////////////////////////////////////////////////////////////////
+
+    function row(){
+        if (!$this){
+            $args = func_get_args();
+            return call_user_method_array('selectRow', self::$sql, $args);
+        }
+
+        return reset(self::get());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -220,17 +223,28 @@ class SQL_control extends SQL_vars implements Countable {
         $class->order_by = array();
 
         return $class->cell();
-
-        $key = self::hash('count');
-
-        if (!array_key_exists($key, self::$cache)){
-            $args = $this->placeholders;
-            array_unshift($args, self::build('count'));
-            self::$cache[$key] = call_user_method_array('selectCell', self::$sql, $args);
-        }
-
-        return self::$cache[$key];
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    /*function begin(){        return self::$sql->transaction();    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function commit(){
+        $result = self::save();
+
+        if (!self::$sql->commit())
+            throw new Exception;
+
+        return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function rollback(){
+        return self::$sql->rollback();
+    }*/
 
 ////////////////////////////////////////////////////////////////////////////////
 }
