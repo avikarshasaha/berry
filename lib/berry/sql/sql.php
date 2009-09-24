@@ -59,8 +59,11 @@ class SQL extends SQL_control {
     function select(){        if ($this->select[0] == '*')
             $this->select = array();
 
-        $args = func_get_args();
-        $this->select = array_merge($this->select, $args);
+        foreach (func_get_args() as $arg)
+        if (is_object($arg))
+            $this->select[] = $arg->build('select_in_select', $this);
+        else
+            $this->select[] = $arg;
 
         return $this;
     }
@@ -78,7 +81,7 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('select_in_join', $this->relations);                continue;            }
+    function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('select_in_join', $this);                continue;            }
             $arg = strtolower($arg);
 
             if (strpos($arg, '.')){                $args = explode('.', $arg);

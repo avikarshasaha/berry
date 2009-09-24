@@ -265,12 +265,33 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_select_in_join($relations){        if (!$relation = $relations[$table = $this->table]){
+    protected function _build_select_in_select($parent){        if (!$parent->relations[$table = $this->table])
             $table = inflector::tableize($table);
-            $relation = $relations[$table];
+
+        foreach ($this->where as $k => $v)
+            $this->where[$k] = preg_replace('/(.*?)('.$parent->table.'\.(.*?))$/e', "self::_prepare_fields('\\1').'\\2'", $v);
+
+        $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
+        $query[] = '(';
+        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `select_(.*?)`/'), array('`select_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_get());
+        $query[] = ') as `_'.$table.'`';
+
+        return join("\r\n", $query);    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _build_select_in_join($parent){        if (!$relation = $parent->relations[$table = $this->table]){
+            $table = inflector::tableize($table);
+            $relation = $parent->relations[$table];
         }
 
+        foreach ($parent->select as $k => $v)
+            if (substr_count($v, '.') > 1 and substr($v, 0, b::len('_'.$table.'.')) == '_'.$table.'.')
+                $parent->select[$k] = '`'.$v.'`';
+
         $this->select[] = $relation['foreign']['field'];
+        $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
+
         $query[] = '(';
         $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `join_(.*?)`/'), array('`join_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_get());
         $query[] = ') as `_'.$table.'` on (';
