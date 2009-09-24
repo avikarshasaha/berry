@@ -102,8 +102,6 @@ class SQL_control extends SQL_vars implements Countable {
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
 
-        //$method = strtolower($method);
-        //$method = 'select'.(in_array($method, array('cell', 'col', 'row')) ? $method : '');
         $query = self::build('get');
 
         if ($this->multiple and ($this->limit or $this->where)){            $class = clone $this;            $class->select = array($this->primary_key);

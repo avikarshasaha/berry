@@ -240,7 +240,7 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function build(){
+    function build(){
         $args = func_get_args();
         $type = array_shift($args);
 

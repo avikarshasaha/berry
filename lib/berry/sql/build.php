@@ -97,8 +97,8 @@ class SQL_build {
         foreach (array('where', 'group_by', 'having', 'order_by') as $v)
             $this->$v = array_map(array('self', '_prepare_fields'), $this->$v);
 
-        $this->select = $select;
-        $this->from = $from;
+        $this->select = array_unique($select);
+        $this->from = array_unique($from);
         $this->join = array_unique($this->join);
     }
 
@@ -229,7 +229,8 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_join($relation){        if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
+    protected function _build_join($relation){        $join = array();
+        if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
             $join[] = str::format('
                 [%foreign.table] as `%foreign.alias` on (
                     `%foreign.alias`.%foreign.field = `%local.alias`.%local.field
@@ -260,6 +261,23 @@ class SQL_build {
 
     protected function _build_childrens(){
         return 'select ?# as array_key, ?# as parent_key from ?_';
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _build_select_in_join($relations){        if (!$relation = $relations[$table = $this->table]){
+            $table = inflector::tableize($table);
+            $relation = $relations[$table];
+        }
+
+        $this->select[] = $relation['foreign']['field'];
+        $query[] = '(';
+        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `join_(.*?)`/'), array('`join_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_get());
+        $query[] = ') as `_'.$table.'` on (';
+        $query[] = str::format('`_%foreign.alias`.%foreign.field = `%local.alias`.%local.field', $relation);
+        $query[] = ')';
+
+        return join("\r\n", $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

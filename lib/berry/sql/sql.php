@@ -78,7 +78,8 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function join(){        foreach (func_get_args() as $arg){            $arg = strtolower($arg);
+    function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('select_in_join', $this->relations);                continue;            }
+            $arg = strtolower($arg);
 
             if (strpos($arg, '.')){                $args = explode('.', $arg);
                 $table = array_pop($args);
