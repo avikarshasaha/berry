@@ -85,7 +85,8 @@ class Check {
 
     protected function _is_valid($check, $data){        $result = array();
 
-        foreach ($check as $k => $v){
+        foreach ($check as $k => $v){            $v = (array)$v;
+
             if (!self::is_valid($k, $v[0], $data)){
                 if (is_array($need = str::json($v[1])))
                     $v[1] = $need[end(self::$error)];
@@ -294,7 +295,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function width($value, $params = array(), $name, $array){
+    static function width($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[0];
@@ -307,7 +308,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function height($value, $params = array(), $name, $array){
+    static function height($value, $params, $name, $array){
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[1];
@@ -342,6 +343,11 @@ class Check {
             return (($sum % 10) == 0);
         }
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function same_as($value, $params, $name, $array){
+        return ($value == $array[$params[0]]);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
