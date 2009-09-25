@@ -16,8 +16,8 @@ class Tags extends Attr {
     protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function parse($output, $is_final = false){        self::$ns = b::config('ns');
-        self::$var = b::config('var');
+    static function parse($output, $is_final = false){        self::$ns = b::config('lib.tags.ns');
+        self::$var = b::config('lib.tags.var');
 
         $output = self::_vars($output);
         $output = self::_supadupa($output, $is_final);
@@ -129,13 +129,11 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function varname($string, $ns = ''){        static $array = array();
+    static function varname($string, $ns = ''){        if (!$ns)
+            $ns = b::config('lib.tags.var');
 
-        if (!$ns)
-            $ns = self::$var;
-
-        if (isset($array[$ns][$string]))
-            return $array[$ns][$string];
+        if (isset(self::$cache['varname'][$ns][$string]))
+            return self::$cache['varname'][$ns][$string];
 
         $var  = $string;
         $vars = array(
@@ -160,7 +158,7 @@ class Tags extends Attr {
         $var = str_replace("['']", '[]', $var);
         $var = str_replace(self::char('.'), '.', $var);
 
-        return $array[$ns][$string] = $var;
+        return self::$cache['varname'][$ns][$string] = $var;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
