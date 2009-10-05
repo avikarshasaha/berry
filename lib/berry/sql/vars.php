@@ -60,31 +60,31 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     function rewind(){
-        $this->iterator = 0;
+        $this->iterator = array(0, array_values($this->as_array()));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function current(){
-        return $this[$this->iterator + 1];
+        return $this->iterator[1][$this->iterator[0]];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function key(){
-        return $this->iterator;
+        return $this->iterator[0];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function next(){
-        ++$this->iterator;
+        ++$this->iterator[0];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function valid(){
-        return ($this->iterator < b::len($this));
+        return ($this->iterator[0] < b::len($this->iterator[1]));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -207,21 +207,21 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
         if ($relation['type'] == 'belongs_to')
             return self::table($name)->limit(1)->where(
-                $foreign['alias'].'.'.$foreign['field'].' = ?',
+                $name.'.'.$foreign['field'].' = ?',
                 $this[$local['field']]
             );
 
         if ($relation['type'] == 'has_many')
             return self::table($name)->where(
-                inflector::singular($foreign['alias']).'.'.$foreign['field'].' = ?',
+                $name.'.'.$foreign['field'].' = ?',
                 $this[$local['field']]
             );
 
         return self::table($name)->where(
-            $foreign['alias2'].'.'.$foreign['field2'].' in (?a)',
+            $name.'.'.$foreign['field2'].' in (?a)',
             self::table($foreign['table1'])->
                 select($foreign['field3'])->
-                where($foreign['field1'].' = ?', $id)->
+                where($foreign['field1'].' = ?', $this->id)->
                 col()
         );
     }

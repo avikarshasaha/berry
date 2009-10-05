@@ -225,10 +225,11 @@ class SQL_control extends SQL_vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    /*function begin(){        return self::$sql->transaction();    }
+    function begin(){        return self::$sql->transaction();    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    // ???
     function commit(){
         $result = self::save();
 
@@ -242,7 +243,7 @@ class SQL_control extends SQL_vars implements Countable {
 
     function rollback(){
         return self::$sql->rollback();
-    }*/
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 }

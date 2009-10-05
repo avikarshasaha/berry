@@ -43,7 +43,7 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
     protected $relations = array();
     protected $placeholders = array();
     protected $multisave = array();
-    protected $iterator = 0;
+    protected $iterator = array();
 
     protected static $sql;
     protected static $cache = array();

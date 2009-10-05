@@ -1,13 +1,13 @@
 body {
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-size: 12px;
+    line-height: 20px;
     background: #fff;
     margin: 10px;
 }
 
-body, td {
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 12px;
-    line-height: 20px;
-}
+h2 {    border-bottom: solid 1px #ccc;
+    padding-bottom: 5px;}
 
 .check_error {    border: solid 1px #c60000;}
 
