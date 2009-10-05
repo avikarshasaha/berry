@@ -8,7 +8,7 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 $config = b::config();
-//$member = auth(http::cookie('aid'), http::cookie('password'));
+//$member = b::call('auth', http::cookie('aid'), http::cookie('password'));
 
 ////////////////////////////////////////////////////////////////////////////////
 

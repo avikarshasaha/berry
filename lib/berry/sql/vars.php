@@ -59,32 +59,35 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rewind(){
-        $this->iterator = array(0, array_values($this->as_array()));
+    function rewind(){        if ($this->iterator)
+            return reset($this->iterator);
+
+        $class = clone $this;
+        $this->iterator = $class->select($class->primary_key)->col();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function current(){
-        return $this->iterator[1][$this->iterator[0]];
+        return $this[(int)current($this->iterator)];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function key(){
-        return $this->iterator[0];
+        return key($this->iterator);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function next(){
-        ++$this->iterator[0];
+        next($this->iterator);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function valid(){
-        return ($this->iterator[0] < b::len($this->iterator[1]));
+        return (current($this->iterator) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

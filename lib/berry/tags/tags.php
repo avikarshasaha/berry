@@ -28,7 +28,7 @@ class Tags extends Attr {
         xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
 
         if (!xml_parse_into_struct($parser, $output, $values))
-            throw new exception(self::_trace($parser, $output));
+            throw new Tags_Except($parser, $output);
 
         xml_parser_free($parser);
 
@@ -322,7 +322,7 @@ protected static function _sux($output){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // Используется Attr
+    // Используется в Attr и Tags_Except
     static function _unsux($output){
         $output = str_replace(self::char('&'), '&', $output);
         $output = str_replace(self::char('$'), '$', $output);
@@ -332,51 +332,6 @@ protected static function _sux($output){
         $output = str_replace(self::char('<'), '<', $output);
 
         return $output;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected static function _trace($parser, $output){
-        $lines = array();
-        $code = xml_get_error_code($parser);
-
-        libxml_use_internal_errors(true);
-        simplexml_load_string($output);
-
-        foreach (libxml_get_errors() as $error)
-            if ($error->code == $code){
-                if (preg_match('/line (\d+)/', $error->message, $match))
-                    $lines[] = $match[1];
-                else
-                    $lines[] = $error->line;
-            }
-
-        sort($lines);
-
-        foreach ($lines as $line)
-            $href[] = '<a href="#'.$line.'">'.$line.'</a>';
-
-        $result = '<h1>'.xml_error_string($code).'</h1>';
-
-        if ($lines)
-            $result .= '<h2>Line'.(b::len($lines) > 1 ? 's' : '').': '.join(', ', $href).'</h2>';
-
-        $result .= '<table>';
-
-        foreach (explode("\n", self::_unsux($output)) as $k => $v){
-            $i  = ($k + 1);
-            $bg = (in_array($i, $lines)  ? 'ffe6e6' : 'f3f3f3');
-
-            $result .= '<tr>';
-            $result .= '<td style="background: #ccc; padding: 5px;">';
-            $result .= '<a name="'.($i + 1).'"></a>'.$i;
-            $result .= '<td style="background: #'.$bg.'; padding: 5px;">';
-            $result .= '<pre>'.self::unhtml($v).'</pre>';
-        }
-
-        $result .= '</table>';
-
-        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
