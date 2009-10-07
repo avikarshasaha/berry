@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
+abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
     protected $id;
     protected $table;
@@ -38,6 +38,7 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
     protected $order_by = array();
     protected $limit = 0;
     protected $offset = 0;
+    protected $union = array();
 
     protected $multiple = array();
     protected $relations = array();
@@ -228,6 +229,22 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function build(){
+        $args = func_get_args();
+        $type = array_shift($args);
+
+        return call_user_func_array(array(($this ? $this : 'self'), '_build_'.$type), $args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function union(){
+        $union = func_get_args();
+        return new SQL_union($union);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function __call($method, $params){        if (!$trigger = $this->trigger[$method])
             trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
 
@@ -236,15 +253,6 @@ class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
                 $this->placeholders = array_merge($this->placeholders, $params);
 
         return $this;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function build(){
-        $args = func_get_args();
-        $type = array_shift($args);
-
-        return call_user_func_array(array(($this ? $this : 'self'), '_build_'.$type), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

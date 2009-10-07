@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_control extends SQL_vars implements Countable {
+abstract class SQL_control extends SQL_vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function save(){
@@ -178,7 +178,10 @@ class SQL_control extends SQL_vars implements Countable {
             return call_user_method_array('selectCell', self::$sql, $args);
         }
 
-        return reset(self::col());
+        if (is_array($array = self::col()))
+            return reset($array);
+
+        return $array;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +237,7 @@ class SQL_control extends SQL_vars implements Countable {
         $result = self::save();
 
         if (!self::$sql->commit())
-            throw new Exception;
+            throw new SQL_Except;
 
         return $result;
     }

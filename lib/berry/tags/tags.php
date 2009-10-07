@@ -21,7 +21,7 @@ class Tags extends Attr {
 
         $output = self::_vars($output);
         $output = self::_supadupa($output, $is_final);
-        $output = self::_sux('<berry>'.$output.'</berry>');
+        $output = self::sux('<berry>'.$output.'</berry>');
 
         $values = array();
         $parser = xml_parser_create();
@@ -34,7 +34,7 @@ class Tags extends Attr {
 
         $result = self::_values($values, $is_final);
         $result = str_replace(array('<berry>', '</berry>', '<berry />'), '', $result);
-        $result = ($is_final ? self::_unsux($result) : $result);
+        $result = ($is_final ? self::unsux($result) : $result);
 
         return $result;
     }
@@ -80,7 +80,7 @@ class Tags extends Attr {
             $tag  = $attr['#tag'];
         }
 
-        $cont = (array_key_exists('#text', $attr) or self::has_end_tag($tag));
+        $cont = (array_key_exists('#text', $attr) or self::has_close_tag($tag));
 
         foreach ($attr as $k => $v)
             if (is_array($v))
@@ -313,7 +313,7 @@ class Tags extends Attr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-protected static function _sux($output){
+    static function sux($output){
         $output = str_replace('&', self::char('&'), $output);
         $output = preg_replace('/\<([^a-z^\/])/ie', "str_replace('<', self::char('<'), '<\\1')", $output);
 
@@ -322,8 +322,7 @@ protected static function _sux($output){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // Используется в Attr и Tags_Except
-    static function _unsux($output){
+    static function unsux($output){
         $output = str_replace(self::char('&'), '&', $output);
         $output = str_replace(self::char('$'), '$', $output);
         $output = str_replace(self::char('#'), '#', $output);
@@ -425,9 +424,12 @@ protected static function _sux($output){
                 unset($result);
             }
 
+            if (isset($it['attr']['#text']))
+                $it['value'] = $it['attr']['#text'];
+
             if (!$tmp[$it['tag']][$it['level']]){
                 $attr = '';
-                $has_end_tag = ($it['value'] or self::has_close_tag($it['attr']['#tag']));
+                $has_close_tag = ($it['value'] or self::has_close_tag($it['attr']['#tag']));
 
                 foreach ($it['attr'] as $k => $v)
                     if ($k[0] != '#'){
@@ -435,14 +437,14 @@ protected static function _sux($output){
                         $attr .= ' '.$k.'='.$quote.$v.$quote;
                     }
 
-                if ($it['type'] == 'open' or ($it['type'] == 'complete' and $has_end_tag))
+                if ($it['type'] == 'open' or ($it['type'] == 'complete' and $has_close_tag))
                     $result .= '<'.$it['tag'].$attr.'>';
                 elseif ($it['type'] == 'complete' and !$it['value'])
                     $result .= '<'.$it['tag'].$attr.' />';
 
                 $result .= $it['value'];
 
-                if ($it['type'] == 'close' or ($it['type'] == 'complete' and $has_end_tag))
+                if ($it['type'] == 'close' or ($it['type'] == 'complete' and $has_close_tag))
                     $result .= '</'.$it['tag'].'>';
             } else {
                 $result .= $it['value'];
@@ -453,7 +455,7 @@ protected static function _sux($output){
                     $tmp[$it['tag']][$it['level']]['attr']['#text'] = $result;
 
                 foreach ($tmp[$it['tag']][$it['level']]['attr'] as $k => $v)
-                    $tmp[$it['tag']][$it['level']]['attr'][$k] = self::_unsux($v);
+                    $tmp[$it['tag']][$it['level']]['attr'][$k] = self::unsux($v);
 
                 $result  = $tmp[$it['tag']][$it['level']]['result'];
                 $result .= b::call($func, parent::normalize($tmp[$it['tag']][$it['level']]['attr'], false));

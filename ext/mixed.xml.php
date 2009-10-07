@@ -36,7 +36,7 @@ function container_opml($attr){
         }
     }
 
-    return tags::parse_vars($att, arr::unhtml($array), true);
+    return tags::parse_vars($attr, arr::unhtml($array), true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

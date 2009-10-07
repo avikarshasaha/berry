@@ -56,7 +56,7 @@ class Attr {
             unset($attr[$k]);
             $n = str_replace(array(':', '-', '.'), '_', $k);
             $orig[$n] = $k;
-            $attr[$n] = tags::_unsux($v);
+            $attr[$n] = tags::unsux($v);
         }
 
         foreach ($attr as $k => $v)

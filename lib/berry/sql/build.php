@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_build {
+abstract class SQL_build {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _append_join($v){        if ($pos = strrpos($v, '.')){
@@ -24,7 +24,7 @@ class SQL_build {
         foreach ($array as &$v){            self::_append_join($v);
 
             if (strpos($v, '`') === false){                if (!strpos($v, '.') and !stripos($v, ' as '))
-                    $v = $this->table.'.'.$v;
+                    $v = ($v[0] == '_' ? $v : $this->table.'.'.$v);
 
                 $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
             }
@@ -54,7 +54,8 @@ class SQL_build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _prepare_bulid(){
+    protected function _prepare_bulid(){        $select = $from = array();
+
         foreach ($this->select as $v){
             self::_append_join($v);
 
@@ -106,13 +107,21 @@ class SQL_build {
 
     protected function _build_get(){        self::_prepare_bulid();
 
-        $query[] = 'select '.join(', ', $this->select);
-        $query[] = 'from '.join(', ', $this->from);
+        $query[] = ($this->select? 'select '.join(', ', $this->select) : '');
+        $query[] = ($this->from ? 'from '.join(', ', $this->from) : '');
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
         $query[] = ($this->group_by ? 'group by '.join(', ', $this->group_by): '');
         $query[] = ($this->having ? 'having '.join(', ', $this->having): '');
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
+        $query[] = ($this->limit ? 'limit '.$this->limit : '');
+        $query[] = ($this->offset ? 'offset '.$this->offset : '');
+
+        if (!$this->union)
+            return join("\r\n", $query);
+
+        $query = array('('.join(') union (', $this->union).')');
+        $query[] = ($this->order_by ? 'order by '.str_replace($this->table.'.', '', join(', ', $this->order_by)) : '');
         $query[] = ($this->limit ? 'limit '.$this->limit : '');
         $query[] = ($this->offset ? 'offset '.$this->offset : '');
 

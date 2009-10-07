@@ -16,7 +16,7 @@ function tag_formatter($attr){
       $attr['#text'] = str::unhtml($attr['#text']);
 	elseif ($format == 'html+br')
       $attr['#text'] = nl2br($attr['#text']);
-    elseif ($format != 'html')
+    elseif ($format != 'html' and method_exists('formatter', $format))
         $attr['#text'] = b::call('formatter::'.$format, $attr['#text']);
 
     return $attr['#text'];

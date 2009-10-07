@@ -13,7 +13,7 @@ class Tags_Except extends Except {
 
     function __construct($parser, $output){        $this->line = array();
         $this->code = xml_get_error_code($parser);
-        $this->string = substr(tags::_unsux($output), 7, -8);
+        $this->string = substr(tags::unsux($output), 7, -8);
         $this->message = xml_error_string($this->code);
 
         libxml_use_internal_errors(true);

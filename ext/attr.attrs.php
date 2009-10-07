@@ -174,7 +174,7 @@ function attr_mailto($attr){
 	    $result .= '&#'.ord($attr['mailto'][$i]).';';
 
     $attr['href'] = '&#109;&#97;&#105;&#108;&#116;&#111;&#58;'.$result;
-    $attr['#text'] = ($attr['#text'] == $attr['mailto'] ? $result : $attr['#text']);
+    $attr['#text'] = ((!$attr['#text'] or $attr['#text'] == $attr['mailto']) ? $result : $attr['#text']);
 
     unset($attr['mailto']);
 	return $attr;
