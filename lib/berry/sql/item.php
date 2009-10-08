@@ -7,13 +7,11 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_item extends SQL_vars implements ArrayAccess, Countable, Iterator {    protected $parent;
-    protected $array = array();
+class SQL_item implements ArrayAccess, Countable, Iterator {    protected $data = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($parent, $array){        $this->parent = $parent;
-        $this->array = arr::assoc($array);    }
+    function __construct($data){        $this->data = arr::assoc($data);    }
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
@@ -38,40 +36,42 @@ class SQL_item extends SQL_vars implements ArrayAccess, Countable, Iterator {  
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetExists($offset){        return array_key_exists($offset, $this->array);
+    function offsetExists($offset){        return isset($this->data[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetUnset($offset){        unset($this->array[$offset]);
+    function offsetUnset($offset){        unset($this->data[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        if ($this->parent->_is_HABTM($offset))
-            return $this->array[$offset];        elseif (!is_array($this->array[$offset]))
-            return $this->array[$offset];
+    function offsetGet($offset){        if ($this->data[$offset] instanceof ArrayObject)
+            return (array)$this->data[$offset];
+        elseif (!is_array($this->data[$offset]))
+            return $this->data[$offset];
         $class = clone $this;
-        $class->array = &$this->array[$offset];
+        $class->data = &$this->data[$offset];
 
         return $class;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if ($offset === null)
-            return $this->array[] = $value;
+    function offsetSet($offset, $value){        if ($this->data[$offset] instanceof ArrayObject)
+            return $this->data[$offset] = $value;        elseif ($offset === null)
+            return $this->data[] = $value;
 
-        $this->array[$offset] = $value;
+        $this->data[$offset] = $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function count(){        return b::len($this->array);    }
+    function count(){        return b::len($this->data);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rewind(){        reset($this->array);
+    function rewind(){        reset($this->data);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,19 +83,19 @@ class SQL_item extends SQL_vars implements ArrayAccess, Countable, Iterator {  
 ////////////////////////////////////////////////////////////////////////////////
 
     function key(){
-        return key($this->array);
+        return key($this->data);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function next(){
-        next($this->array);
+        next($this->data);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function valid(){
-        return (current($this->array) !== false);
+        return (current($this->data) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

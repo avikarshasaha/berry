@@ -117,7 +117,7 @@ abstract class SQL_control extends SQL_vars implements Countable {
                 return array();
 
             $this->where = array($this->primary_key.' in (?a)');
-            $this->group_by = $this->having = array();
+            $this->having = array();
             $this->limit = $this->offset = 0;
             $this->placeholders = array($ids);
             $query = self::build('get');

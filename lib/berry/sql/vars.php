@@ -62,7 +62,9 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
     function rewind(){        if ($this->iterator)
             return reset($this->iterator);
 
-        $this->iterator = self::table($this->table)->select($this->primary_key)->col();
+        $class = clone $this;
+        $class->select = array($class->primary_key);
+        $this->iterator = $class->group_by($class->primary_key)->col();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,8 +97,8 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
         if ($class = self::_multisave($name)){            if (!$this->select)
                 return $class;
 
-            $array = $this->get();
-            return new SQL_item($this, $array[$name - 1]);
+            $array = $this->as_array();
+            return new SQL_item($array[$name]);
         }
 
         if (!$this->where)
@@ -113,7 +115,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                     $class->select[] = $name;
             }
 
-            self::$cache[$key] = new SQL_item($class, $class->as_array());
+            self::$cache[$key] = new SQL_item($class->as_array());
         }
 
         if ($this->relations[$name]){
@@ -130,12 +132,12 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
             ($relation = $this->relations[$_name]) and
             !isset(self::$cache[$key][$name])
         )
-            if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = self::table($foreign['table1'])->
+            if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = new ArrayObject(self::table($foreign['table1'])->
                     select($foreign['field3'])->
                     where($foreign['field1'].' = ?', $id)->
-                    col();
+                    col());
             } else {
-                self::$cache[$key][$name] = array();
+                self::$cache[$key][$name] = new ArrayObject;
             }
 
         return self::$cache[$key][$name];
@@ -159,7 +161,10 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                 sort($value);
         }
 
-        if ($this->where and ($value == self::_get($name) or !self::_get($this->primary_key)))
+        if (($tmp = self::_get($name)) instanceof ArrayObject)
+            $tmp = (array)$tmp;
+
+        if ($this->where and ($value == $tmp or !self::_get($this->primary_key)))
             return $value;
 
         if ($_name = self::_is_HABTM($name)){
