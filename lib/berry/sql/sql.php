@@ -56,14 +56,11 @@ class SQL extends SQL_control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function select(){        if ($this->select[0] == '*')
-            $this->select = array();
-
-        foreach (func_get_args() as $arg)
-        if (is_object($arg))
-            $this->select[] = $arg->build('select_in_select', $this);
-        else
-            $this->select[] = $arg;
+    function select(){        foreach (func_get_args() as $arg)
+            if (is_object($arg))
+                $this->select[] = $arg->build('select_in_select', $this);
+            else
+                $this->select[] = $arg;
 
         return $this;
     }

@@ -28,7 +28,7 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
     protected $values = array();
     protected $joinvalues = array();
 
-    protected $select = array('*');
+    protected $select = array();
     protected $from = array();
     protected $join = array();
 

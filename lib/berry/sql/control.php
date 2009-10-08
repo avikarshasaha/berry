@@ -26,7 +26,7 @@ abstract class SQL_control extends SQL_vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _save($result = array()){        foreach (self::$cache as $key => $value){            if (
-                !is_object($value) or
+                !$value instanceof SQL or
                 (($key = '_save'.spl_object_hash($value)) and isset(self::$cache[$key]))
             )
                 continue;
@@ -102,6 +102,9 @@ abstract class SQL_control extends SQL_vars implements Countable {
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
 
+        if (!$this->select)
+            $this->select[] = '*';
+
         $query = self::build('get');
 
         if ($this->multiple and ($this->limit or $this->where)){            $class = clone $this;            $class->select = array($this->primary_key);
@@ -127,7 +130,9 @@ abstract class SQL_control extends SQL_vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function as_array(){        $result = array();        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
+    function as_array(){        if (!$this->select)
+            $this->select[] = '*';
+        $result = array();        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
 
         if ($this->parent_key){            $this->select[] = $this->table.'.'.$this->parent_key.' as parent_key';
 

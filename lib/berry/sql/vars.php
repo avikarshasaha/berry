@@ -62,8 +62,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
     function rewind(){        if ($this->iterator)
             return reset($this->iterator);
 
-        $class = clone $this;
-        $this->iterator = $class->select($class->primary_key)->col();
+        $this->iterator = self::table($this->table)->select($this->primary_key)->col();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -93,32 +92,37 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _get($name){
-        if ($class = self::_multisave($name))
-            return $class;
+        if ($class = self::_multisave($name)){            if (!$this->select)
+                return $class;
+
+            $array = $this->get();
+            return new SQL_item($this, $array[$name - 1]);
+        }
 
         if (!$this->where)
             return;
 
         $key = self::hash('_get');
 
+        if (!array_key_exists($key, self::$cache)){            $class = clone $this;
+
+            if ($class->select){
+                $class->select[] = $class->primary_key;
+
+                if (substr($name, -3) == '_id' and ($relation = $this->relations[substr($name, 0, -3)]))
+                    $class->select[] = $name;
+            }
+
+            self::$cache[$key] = new SQL_item($class, $class->as_array());
+        }
+
         if ($this->relations[$name]){
-            if (!isset(self::$cache[$key.$name]))
+            if (isset(self::$cache[$key][$name]))
+                return self::$cache[$key][$name];
+            elseif (!isset(self::$cache[$key.$name]))
                 return self::$cache[$key.$name] = self::_object($name);
 
             return self::$cache[$key.$name];
-        }
-
-        if (!array_key_exists($key, self::$cache)){            $class = clone $this;
-
-            foreach ($class->select as $k => $v){
-                if (preg_match('/(^|\.)('.$this->table.'\.'.$name.')(\.|$)/', $v, $match))
-                    $class->select[$k] = $match[2];
-                else
-                    unset($class->select[$k]);
-            }
-
-            $class->select = ($class->select ? $class->select : array($class->table.'.*'));
-            self::$cache[$key] = $class->as_array();
         }
 
         if (
