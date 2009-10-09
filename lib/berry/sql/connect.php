@@ -10,8 +10,23 @@
 class SQL_connect extends DbSimple_Mysql {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($dsn){        $dsn = DbSimple_Generic::parseDSN($dsn);
-
+    function __construct($dsn){        define('DBSIMPLE_SKIP', SQL::SKIP);
+        define('DBSIMPLE_ARRAY_KEY', 'array_key');
+        define('DBSIMPLE_PARENT_KEY', 'parent_key');
+        if (is_array($dsn)){
+            $pos = strrpos($dsn['database'], '/');
+            $host = substr($dsn['database'], 0, $pos);
+            $path = substr($dsn['database'], ($pos + 1));
+            $dsn = array(
+                'scheme' => 'mysql',
+                'host' => $host,
+                'path' => $path,
+                'user' => $dsn['username'],
+                'pass' => $dsn['password'],
+                'prefix' => $dsn['prefix'],
+            );
+        }
+        $dsn = DbSimple_Generic::parseDSN($dsn);
         $this->setIdentPrefix($this->prefix = $dsn['prefix']);        parent::__construct($dsn);
 
         if ($this->error){
@@ -23,12 +38,8 @@ class SQL_connect extends DbSimple_Mysql {
 
 ////////////////////////////////////////////////////////////////////////////////
     function _query($query, &$total){        foreach ($query as $k => $v)
-            if (is_array($v)){
-                foreach ($v as $k2 => $v2)
-                    $query[$k][$k2] = self::_toBerry($v2, false);
-            } else {
-                $query[$k] = ((is_object($v) or $v === SQL::SKIP) ? $v : self::_toBerry($v));
-            }
+            if (!is_array($v))
+                $query[$k] = ((is_object($v) or $v === DBSIMPLE_SKIP) ? $v : self::_toBerry($v));
 
         return parent::_query($query, $total);    }
 
@@ -42,12 +53,7 @@ class SQL_connect extends DbSimple_Mysql {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _toBerry($query, $use_prefix = true){
-        $withas = (strtolower(substr($query, 0, 6)) == 'select' or strtolower(substr($query, 0, 6)) == 'update');
-
-        if (!$use_prefix)
-            return $query;
-
-        if ($withas){            $query = preg_replace('/\[(\w+\.)(\w+)\](?!\s+as )/i', '\\1\\2 as `\\2`', $query);
+        if (strtolower(substr($query, 0, 6)) == 'select' or strtolower(substr($query, 0, 6)) == 'update'){            $query = preg_replace('/\[(\w+\.)(\w+)\](?!\s+as )/i', '\\1\\2 as `\\2`', $query);
             $query = preg_replace('/\[(\w+)\](?!\s+as )/ie', "self::prefix('\\1').' as `\\1`'", $query);
 
             $query = preg_replace('/\[(\w+\.)(\w+)\]/i', '\\1`\\2`', $query);
@@ -68,7 +74,7 @@ class SQL_connect extends DbSimple_Mysql {
         if (!$m[2] or !$this->_placeholderArgs or !in_array($m[3], array('', '_', 'a')))
             return parent::_expandPlaceholdersCallback($m);
 
-        if (!($value = array_pop($this->_placeholderArgs)) or $value === SQL::SKIP)
+        if (!($value = array_pop($this->_placeholderArgs)) or $value === DBSIMPLE_SKIP)
             $this->_placeholderNoValueFound = true;
 
         if ($m[3] == '_')
@@ -77,7 +83,7 @@ class SQL_connect extends DbSimple_Mysql {
         if (!$m[3]){
             if ($value === null)
                 return 'null';
-            elseif (!self::_is_subclass_of($value) and !is_scalar($value))
+            elseif (!$value instanceof SQL_raw and !is_scalar($value))
                 return 'DBSIMPLE_ERROR_VALUE_NOT_SCALAR';
 
             return (is_object($value) ? (string)$value : $this->escape($value));
@@ -88,9 +94,9 @@ class SQL_connect extends DbSimple_Mysql {
 
         $parts = array();
 
-        foreach ($value as $k => $v){            if (($tmp = self::_is_subclass_of($v)) === null)
+        foreach ($value as $k => $v){            if (!is_object($v))
                 $v = ($v === null ? 'null' : $this->escape($v));
-            elseif (!$tmp)
+            elseif (!$v instanceof SQL_raw)
                 continue;
 
             $parts[] = (!is_int($k) ? $this->escape($k, true).' = ' : '').$v;
@@ -99,15 +105,27 @@ class SQL_connect extends DbSimple_Mysql {
         return join(', ', $parts);
     }
 
+////////////////////////////////////////////////////////////////////////////////
+
+    function _performTransaction(){
+        $this->query('SET AUTOCOMMIT = 0');
+        return $this->query('BEGIN');
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _is_subclass_of($mixed){
-        if (!is_object($mixed))
-            return;
+    function _performCommit(){
+        $result = $this->query('COMMIT');
+        $this->query('SET AUTOCOMMIT = 1');
+        return $result;
+    }
 
-        $class = strtolower(get_class($mixed));
-        return ($class == 'sql_raw' or is_subclass_of($class, 'sql_raw'));
+////////////////////////////////////////////////////////////////////////////////
+
+    function _performRollback(){
+        $result = $this->query('ROLLBACK');
+        $this->query('SET AUTOCOMMIT = 1');
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

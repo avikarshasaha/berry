@@ -50,44 +50,37 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
     protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function connect($dsn){        define('DBSIMPLE_SKIP', self::SKIP);
-        define('DBSIMPLE_ARRAY_KEY', 'array_key');
-        define('DBSIMPLE_PARENT_KEY', 'parent_key');
-
-        $dsn = (array)$dsn;
-
-        $class = new SQL_connect(reset($dsn));
-        $class->using = array(key($dsn) => $class->link);
-        $class->dsn = $dsn;
-
-        return self::$sql = $class;
+    static function connect($dsn){
+        self::$sql = new SQL_connect($dsn);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function using($dsn = ''){
+    /* Хуйню какую-то выдаёт. Надо спать идти
+    static function using($key = ''){
         static $last;
 
-        if (!$dsn)
-            return key(self::$sql->using);
+        if (!$last)
+            $last = key(self::$sql->using);
 
-        if (!self::$sql->dsn[$dsn])
+        if (!$key)
+            return $last;
+
+        if (!self::$sql->dsn[$key])
             return;
 
-        if (!$current = $last)
-            $current = key(self::$sql->using);
-
-        if (!self::$sql->using[$dsn]){
-            $class = new SQL_connect(self::$sql->dsn[$dsn]);
-            self::$sql->using[$dsn] = $class->link;
+        if (!self::$sql->using[$key]){
+            $class = new SQL_connect(self::$sql->dsn[$key]);
+            self::$sql->using[$key] = $class->link;
             self::$sql->_statistics['time'] += $class->_statistics['time'];
         }
 
-        $last = $dsn;
-        self::$sql->link = self::$sql->using[$dsn];
+        $current = $last;
+        $last = $key;
+        self::$sql->link = self::$sql->using[$key];
 
         return $current;
-    }
+    }*/
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -104,7 +97,7 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_valid(){
-        return (bool)self::$sql->link;
+        return (bool)self::link();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
