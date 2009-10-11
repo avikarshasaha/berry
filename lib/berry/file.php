@@ -92,7 +92,7 @@ class File {
 
     static function dir($filename, $child_first = false){
         $map = array(
-            RecursiveIteratorIterator::SELF_FIRST
+            RecursiveIteratorIterator::SELF_FIRST,
             RecursiveIteratorIterator::CHILD_FIRST
         );
 
