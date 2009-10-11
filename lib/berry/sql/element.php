@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_item implements ArrayAccess, Countable, Iterator {    protected $data = array();
+class SQL_element implements ArrayAccess, Countable, Iterator {    protected $data = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 

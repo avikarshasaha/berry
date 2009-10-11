@@ -91,9 +91,13 @@ class File {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function dir($filename, $child_first = false){
+        $map = array(
+            RecursiveIteratorIterator::SELF_FIRST
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
         return new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($filename),
-            ($child_first ? RecursiveIteratorIterator::CHILD_FIRST : RecursiveIteratorIterator::SELF_FIRST)
+            new RecursiveDirectoryIterator($filename), $map[(bool)$child_first]
         );
     }
 

@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
+abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
     protected $id;
     protected $table;
@@ -51,7 +51,7 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 ////////////////////////////////////////////////////////////////////////////////
 
     static function connect($dsn){
-        self::$sql = new SQL_connect($dsn);
+        self::$sql = new SQL_Connect($dsn);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
             return;
 
         if (!self::$sql->using[$key]){
-            $class = new SQL_connect(self::$sql->dsn[$key]);
+            $class = new SQL_Connect(self::$sql->dsn[$key]);
             self::$sql->using[$key] = $class->link;
             self::$sql->_statistics['time'] += $class->_statistics['time'];
         }
@@ -179,7 +179,7 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function raw($raw){        return new SQL_raw($raw);    }
+    static function raw($raw){        return new SQL_Raw($raw);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -233,7 +233,7 @@ abstract class SQL_etc extends SQL_build {    const SKIP = 7.2e83;
 
     static function union(){
         $union = func_get_args();
-        return new SQL_union($union);
+        return new SQL_Union($union);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

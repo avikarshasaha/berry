@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL extends SQL_control {
+class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));

@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_build {
+abstract class SQL_Build {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _append_join($v){        if ($pos = strrpos($v, '.')){

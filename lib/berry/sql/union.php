@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_union extends SQL_etc {    protected $table = '<union>';
+class SQL_Union extends SQL_Etc {    protected $table = '<union>';
     protected $select = array();
 
 ////////////////////////////////////////////////////////////////////////////////

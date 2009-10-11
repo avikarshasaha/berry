@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
+abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
@@ -98,7 +98,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                 return $class;
 
             $array = $this->as_array();
-            return new SQL_item($array[$name]);
+            return new SQL_Element($array[$name]);
         }
 
         if (!$this->where)
@@ -115,7 +115,7 @@ abstract class SQL_vars extends SQL_etc implements ArrayAccess, Iterator {
                     $class->select[] = $name;
             }
 
-            self::$cache[$key] = new SQL_item($class->as_array());
+            self::$cache[$key] = new SQL_Element($class->as_array());
         }
 
         if ($this->relations[$name]){

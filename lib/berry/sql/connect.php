@@ -7,10 +7,10 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_connect extends DbSimple_Mysql {
+class SQL_Connect extends DbSimple_Mysql {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($dsn){        define('DBSIMPLE_SKIP', SQL::SKIP);
+    function __construct($dsn){        define('DBSIMPLE_SKIP', log(0));
         define('DBSIMPLE_ARRAY_KEY', 'array_key');
         define('DBSIMPLE_PARENT_KEY', 'parent_key');
         if (is_array($dsn)){
@@ -83,7 +83,7 @@ class SQL_connect extends DbSimple_Mysql {
         if (!$m[3]){
             if ($value === null)
                 return 'null';
-            elseif (!$value instanceof SQL_raw and !is_scalar($value))
+            elseif (!$value instanceof SQL_Raw and !is_scalar($value))
                 return 'DBSIMPLE_ERROR_VALUE_NOT_SCALAR';
 
             return (is_object($value) ? (string)$value : $this->escape($value));
@@ -96,7 +96,7 @@ class SQL_connect extends DbSimple_Mysql {
 
         foreach ($value as $k => $v){            if (!is_object($v))
                 $v = ($v === null ? 'null' : $this->escape($v));
-            elseif (!$v instanceof SQL_raw)
+            elseif (!$v instanceof SQL_Raw)
                 continue;
 
             $parts[] = (!is_int($k) ? $this->escape($k, true).' = ' : '').$v;
