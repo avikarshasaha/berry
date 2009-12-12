@@ -13,21 +13,6 @@ class Date {
     static function now(){        return date('Y-m-d H:i:s');    }
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function arr($timestamp = 0){
-        $date = self::time($timestamp);
-
-        $array['year']   = date('Y', $date);
-        $array['month']  = date('m', $date);
-        $array['day']    = date('d', $date);
-        $array['hour']   = date('H', $date);
-        $array['minute'] = date('m', $date);
-        $array['second'] = date('s', $date);
-
-        return $array;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function format($format, $timestamp = 0){
         return strftime($format, self::time($timestamp));
     }

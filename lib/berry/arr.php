@@ -135,32 +135,6 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function date($array, $timestamp = false){
-        if ($array['year'])
-            $date[] = $array['year'];
-        if ($array['month'])
-            $date[] = $array['month'];
-        if ($array['day'])
-            $date[] = $array['day'];
-
-        if ($array['hour'])
-            $time[] = $array['hour'];
-        if ($array['minute'])
-            $time[] = $array['minute'];
-        if ($array['second'])
-            $time[] = $array['second'];
-
-        if ($date)
-            $date = join('-', $date);
-        if ($time)
-            $time = join(':', $time);
-
-        $result = ($date ? $date : '').(($date and $time) ? ' ' : '').($time ? $time : '');
-        return ($timestamp ? date::time($result) : $result);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function merge(){        $args = func_get_args();        $result = array();
 
         foreach (array_reverse($args) as $array)
