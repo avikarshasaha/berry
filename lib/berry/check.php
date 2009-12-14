@@ -117,7 +117,7 @@ class Check {
         if (
             $array and
             //self::is_valid_session() and
-            (!self::$error or !array_intersect_key(self::$error, arr::flat($_GET)))
+            (!self::$error or !array_intersect_key(self::$error, arr::flat($array)))
         )
             return $array;
 
@@ -132,7 +132,7 @@ class Check {
         if (
             $array and
             //self::is_valid_session() and
-            (!self::$error or !array_intersect_key(self::$error, arr::flat($_POST)))
+            (!self::$error or !array_intersect_key(self::$error, arr::flat($array)))
         )
             return $array;
 
@@ -144,7 +144,7 @@ class Check {
     static function is_valid_files($array = null){        if (!is_array($array))
             $array = b::l('_files'.($array ? '.'.$array : ''));
 
-        if ($array /*and self::is_valid_session()*/){            foreach (array_keys(arr::flat(arr::files($_FILES))) as $k)
+        if ($array /*and self::is_valid_session()*/){            foreach (array_keys(arr::flat(arr::files($array))) as $k)
                 $files[substr($k, 0, strrpos($k, '.'))] = $k;
 
             if (!self::$error or !array_intersect_key(self::$error, $files))

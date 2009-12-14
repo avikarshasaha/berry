@@ -164,4 +164,14 @@ class Arr {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    static function object($array, $class = 'stdClass'){
+		$object = new $class;
+
+		foreach ($array as $k => $v)            $object->{$k} = (is_array($v) ? self::object($v, $class) : $v);
+
+		return $object;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

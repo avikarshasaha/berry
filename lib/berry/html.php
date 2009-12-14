@@ -17,7 +17,9 @@ class HTML {
             $sorts[$key][] = $sort;
             return $block[$key][] = $value;
         } elseif ($value === null and $block[$key]){
-            array_multisort($sorts[$key], SORT_ASC, $block[$key]);
+            if ($sorts[$key])
+                array_multisort($sorts[$key], SORT_ASC, $block[$key]);
+
             return $block[$key];
         }
 
@@ -36,8 +38,10 @@ class HTML {
         } elseif ($value === null and $_SESSION['html']['msg'][$key]){
             $msg[$key] = $_SESSION['html']['msg'][$key];
 
+            if ($sorts[$key])
+                array_multisort($sorts[$key], SORT_ASC, $msg[$key]);
+
             unset($_SESSION['html']['msg'][$key]);
-            array_multisort($sorts[$key], SORT_ASC, $msg[$key]);
             return $msg[$key];
         }
 

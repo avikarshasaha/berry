@@ -285,13 +285,13 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         if ($type == 'has_one'){
             $local['field'] = inflector::singular($foreign['table']).'_'.$local['field'];
             $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::plural($foreign['table']));
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::tableize($foreign['table']));
         }
 
         if ($type == 'belongs_to'){
             $foreign['field'] = $local['alias'].'_'.$foreign['field'];
             $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
-            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::plural($foreign['table']));
+            $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::tableize($foreign['table']));
         }
 
         if ($type == 'has_many'){

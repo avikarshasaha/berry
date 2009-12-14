@@ -7,18 +7,20 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class archive {
+class Archive {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($filename){
         $this->filename = $filename;
         $this->ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-        if ($this->ext == 'zip'){            $this->type = $this->ext;            $this->object = new zip;
-        } elseif ($this->ext == 'rar'){            $this->type = $this->ext;
+        if ($this->ext == 'zip'){            $this->type = $this->ext;            $this->object = new ZIP;
         } elseif (in_array($this->ext, array('tar', 'bz', 'bz2', 'gz', 'tgz'))){
             $this->type = 'tar';
-            $this->object = new tar;
+            $this->object = new TAR;
+        } elseif ($this->ext == 'rar'){
+            $this->type = $this->ext;
+            $this->object = new RAR;
         }
     }
 
@@ -50,8 +52,11 @@ class archive {
     function files(){
         if ($this->type == 'zip'){
             return $this->_get_list($this->filename);
-         } elseif ($this->type == 'tar'){             $this->_setArchive($this->filename);
+         } elseif ($this->type == 'tar'){
+             $this->_setArchive($this->filename);
              return $this->_listContents();
+         } elseif ($this->type == 'rar'){
+             return $this->_getFileList($this->filename);
          }
     }
 

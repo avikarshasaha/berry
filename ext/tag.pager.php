@@ -25,6 +25,8 @@ function tag_pager($attr){
 
     $pattern = str::format(preg_quote($attr['href'], '/'), array('i' => '(\d+)'));
     $attr['href'] = preg_replace('/'.$pattern.'/', '', $_SERVER['REQUEST_URI']).(strpos($_SERVER['REQUEST_URI'], '?') ? '&' : '?').$attr['href'];
+    $attr['href'] = str_replace('?&', '?', $attr['href']);
+    $attr['href'] = str_replace('&&', '&', $attr['href']);
 
     for ($i = 1, $c = (ceil($attr['count'] / $attr['limit']) + 1); $i < $c; $i++){
         if ($attr['type'] == 1 or $attr['type'] == 3)
