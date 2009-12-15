@@ -14,7 +14,8 @@ class Date {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function format($format, $timestamp = 0){
-        return strftime($format, self::time($timestamp));
+        $date = strftime($format, self::time($timestamp));
+        return (b::is_windows() ? str::iconv($date) : $date);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

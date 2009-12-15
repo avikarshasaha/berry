@@ -159,7 +159,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             $table = $this->_table;
         };
 
-        if (!$schema = cache::get('schema/'.$table.'.php', array('db' => $table))){            $schema = array();
+        if (!$schema = cache::get('sql/schema/'.$table.'.php', array('db' => $table))){            $schema = array();
             $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
             foreach (self::$sql->query(self::build('schema'), $table) as $info)
@@ -258,7 +258,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function relations($table1, $table2, $type){
+    protected static function relations($table1, $type, $table2){
         if (is_array($table2)){
             $key = key($table2);
 
@@ -322,6 +322,45 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         }
 
         return compact('local', 'type', 'foreign', 'table');
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function deep_throat($class, $parent = '', $main = '', $result = array()){
+        $current = inflector::singular(substr($parent, strrpos($parent, '.')));
+        $parent .= ($parent ? '.' : '');
+        $main = ($main ? $main : $class);
+        $vars = get_class_vars($class);
+
+        foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
+            foreach ((array)$vars[$has] as $key => $table){
+                if ($table == $main)
+                    continue;
+
+                $relation = self::relations($class, $has, array($key => $table));
+                $foreign = &$relation['foreign'];
+
+                if ($foreign['alias1']){
+                    $alias = $foreign['alias2'];
+                    $foreign['alias1'] = $parent.$foreign['alias1'];
+                    $foreign['alias2'] = $parent.$foreign['alias2'];
+                } else {
+                    $alias = $foreign['alias'];
+                    $foreign['alias'] = $parent.$foreign['alias'];
+                }
+
+                if ($parent and substr($relation['type'], -4) == 'many')
+                    $relation['local']['alias'] = inflector::tableize($relation['local']['alias']);
+
+                $table = inflector::singular($alias);
+                $alias = $parent.$alias;
+                $result[$alias] = $relation;
+
+                if ($class != $current)
+                    $result = array_merge($result, self::deep_throat($table, $alias, $main, $result));
+            }
+
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -13,7 +13,7 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($array){        foreach ($array as $object){
-            $this->union[] = $object->build('get');
+            $this->union[] = $object->build('fetch');
             $this->placeholders = array_merge($this->placeholders, $object->placeholders);
         }
     }
@@ -50,36 +50,19 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function get(){        $key = self::hash('get');
+    function fetch(){        $key = self::hash('fetch');
 
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
 
         $args = $this->placeholders;
-        array_unshift($args, self::build('get'));
+        array_unshift($args, self::build('fetch'));
         return self::$cache[$key] = call_user_method_array('select', self::$sql, $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function as_array(){        return arr::assoc(self::get());    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function as_object(){
-        $result = array();
-
-        foreach (self::as_array() as $id => $row)
-            foreach ($row as $k => $v)
-                if (is_array($v[0])){
-                    foreach ($v as $i => $value)
-                        $result[$id]->{$k}[$i] = (object)$value;
-                } else {
-                    $result[$id]->$k = (is_array($v) ? (object)$v : $v);
-                }
-
-        return $result;
-    }
+    function fetch_array(){        return arr::assoc(self::fetch());    }
 
 ////////////////////////////////////////////////////////////////////////////////
 }

@@ -106,4 +106,14 @@ class Int {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    static function format($format, $number, $decimals = 2){        $format = array_reverse(array_slice(explode('#', $format, 4), 1, -1));
+        $number = preg_replace('/([^\d\.]+)/', '', str_replace(',', '.', $number));
+
+        array_unshift($format, $decimals);
+        array_unshift($format, $number);
+
+        return b::call('*number_format', $format);    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

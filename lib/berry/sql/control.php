@@ -91,13 +91,13 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     }
 ////////////////////////////////////////////////////////////////////////////////
 
-    function get(){
+    function fetch(){
         if (!$this){
             $args = func_get_args();
             return call_user_method_array('select', self::$sql, $args);
         }
 
-        $key = self::hash('get');
+        $key = self::hash('fetch');
 
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
@@ -105,13 +105,12 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!$this->select)
             $this->select[] = '*';
 
-        $query = self::build('get');
+        $query = self::build('fetch');
 
-        if ($this->multiple and ($this->limit or $this->where)){            $class = clone $this;            $class->select = array($this->primary_key);
-            $class->group_by = array($this->primary_key);
-
+        if ($this->multiple and ($this->limit or $this->where)){            $class = clone $this;
+            $class->select = $class->group_by = array($this->primary_key);
             $args = $this->placeholders;
-            array_unshift($args, $class->build('get'));
+            array_unshift($args, $class->build('fetch'));
 
             if (!$ids = call_user_method_array('selectCol', self::$sql, $args))
                 return array();
@@ -120,7 +119,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $this->having = array();
             $this->limit = $this->offset = 0;
             $this->placeholders = array($ids);
-            $query = self::build('get');
+            $query = self::build('fetch');
         }
 
         $args = $this->placeholders;
@@ -130,60 +129,69 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function as_array(){        if (!$this->select)
-            $this->select[] = '*';
-        $result = array();        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
+    function fetch_array(){        if (!$this->select)            $this->select[] = '*';
+
+        $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
 
         if ($this->parent_key){            $this->select[] = $this->table.'.'.$this->parent_key.' as parent_key';
 
-            foreach (arr::tree(self::get()) as $k => $v){
+            foreach (arr::tree(self::fetch()) as $k => $v){
                 unset($array[$k]);
                 $array[$k][] = $v;
             }
-        } else {            $this->select[] = 'null as array_key_2';
-            $array = self::get();        }
+        } else {            self::build('fetch');
 
-        foreach ($array as $id => $tmp)
-            foreach ($tmp as $i => $row)
-                foreach ($row as $k => $v){
-                    if (strpos($k, '.'))
-                        list($t, $f) = explode('.', $k);
-                    else
-                        unset($t, $f);
+            if ($multiple = array_unique($this->multiple)){                foreach ($multiple as $k => $v){                    $vars = get_class_vars(inflector::singular(end(explode('.', $v))));
+                    $field = $v.'.'.($vars['parent_key'] ? $vars['parent_key'] : 'id');
+                    $this->select[] = $field.' as array_key_'.($k + 2);
+                }
+            } else {                $multiple = array('Красивый-красивый мистер Биглз');
+                $this->select[] = 'null as array_key_2';
+            }
 
-                    if ($t and in_array($t, $this->multiple)){
-                        if ($v !== null)
-                            $result[$id][$t][$i][$f] = $v;
-                    } elseif ($v !== null){
-                        $result[$id][$k] = $v;
-                    }
+            $array = self::fetch();        }
+
+        $result = array();
+        $multiple = array_reverse($multiple);
+        $len = b::len($multiple);
+
+        foreach (arr::flat($array) as $k => $v){            $k = str_replace('\.', '.', $k);
+            $keys = explode('.', $k, ($len + 2));
+
+            foreach ($multiple as $i => $w){                $i = ($len - $i);
+                $current = $keys[$len + 1];
+                if (strpos($current, $w) === 0){                    $w_len = b::len($w);                    $keys[$len + 1] = substr($current, 0, $w_len).'.'.$keys[$i].substr($current, $w_len);
                 }
 
-        $result = arr::assoc($result);
-        return ($this->id ? $result[$this->id] : $result);
+                unset($keys[$i]);
+            }
+            $result[join('.', $keys)] = $v;        }
+
+        $result = self::_fetch_array(arr::assoc($result));
+        return (($result and $this->id) ? $result[$this->id] : $result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function as_object(){        $result = array();
-        $array = ($this->id ? array($this->id => self::as_array()) : self::as_array());
+    protected static function _fetch_array($array){        $result = array();
 
-        foreach ($array as $id => $row)
-            foreach ($row as $k => $v)
-                if (is_array($v[0])){                    foreach ($v as $i => $value)
-                        $result[$id]->{$k}[$i] = (object)$value;
-                } else {                    $result[$id]->$k = (is_array($v) ? (object)$v : $v);                }
+        foreach ($array as $k => $v){            if (is_array($v)){                $v = self::_fetch_array(is_int(key($v)) ? array_values($v) : $v);            }
+            $result[$k] = $v;        }
 
-        return ($this->id ? $result[$this->id] : $result);
+        return $result;    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function fetch_object(){        return arr::object(self::fetch_array());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function cell(){        if (!$this){            $args = func_get_args();
+    function fetch_cell(){        if (!$this){            $args = func_get_args();
             return call_user_method_array('selectCell', self::$sql, $args);
         }
 
-        if (is_array($array = self::col()))
+        if (is_array($array = self::fetch_col()))
             return reset($array);
 
         return $array;
@@ -191,34 +199,34 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function col(){
+    function fetch_col(){
         if (!$this){
             $args = func_get_args();
             return call_user_method_array('selectCol', self::$sql, $args);
         }
 
-        $array = self::get();
-        self::_col($array);
+        $array = self::fetch();
+        self::_fetch_col($array);
 
         return $array;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _col(&$v){        if (!is_array($cell = reset($v)))
+    protected static function _fetch_col(&$v){        if (!is_array($cell = reset($v)))
             $v = $cell;
         else
-            array_walk($v, array('self', '_col'));    }
+            array_walk($v, array('self', '_fetch_col'));    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function row(){
+    function fetch_row(){
         if (!$this){
             $args = func_get_args();
             return call_user_method_array('selectRow', self::$sql, $args);
         }
 
-        return reset(self::get());
+        return reset(self::fetch());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +236,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         $class->select = array('count(*)');
         $class->order_by = array();
 
-        return $class->cell();
+        return $class->fetch_cell();
     }
 
 ////////////////////////////////////////////////////////////////////////////////

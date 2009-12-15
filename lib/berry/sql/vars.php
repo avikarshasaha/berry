@@ -64,7 +64,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
         $class = clone $this;
         $class->select = array($class->primary_key);
-        $this->iterator = $class->group_by($class->primary_key)->col();
+        $this->iterator = $class->group_by($class->primary_key)->fetch_col();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +97,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if ($class = self::_multisave($name)){            if (!$this->select)
                 return $class;
 
-            $array = $this->as_array();
+            $array = $this->fetch_array();
             return new SQL_Element($array[$name]);
         }
 
@@ -115,7 +115,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                     $class->select[] = $name;
             }
 
-            self::$cache[$key] = new SQL_Element($class->as_array());
+            self::$cache[$key] = new SQL_Element($class->fetch_array());
         }
 
         if ($this->relations[$name]){
@@ -135,7 +135,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = new ArrayObject(self::table($foreign['table1'])->
                     select($foreign['field3'])->
                     where($foreign['field1'].' = ?', $id)->
-                    col());
+                    fetch_col());
             } else {
                 self::$cache[$key][$name] = new ArrayObject;
             }
@@ -234,7 +234,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             self::table($foreign['table1'])->
                 select($foreign['field3'])->
                 where($foreign['field1'].' = ?', $this->id)->
-                col()
+                fetch_col()
         );
     }
 

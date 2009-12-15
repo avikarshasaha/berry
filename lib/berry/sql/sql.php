@@ -12,14 +12,9 @@ class SQL extends SQL_Control {
 
     function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
         $this->_table = ($this->table ? $this->table : inflector::tableize($class));
-        $from = (($this->table and $this->table != $class) ? $this->table.' as ' : '');        self::from($from.$class)->table = $class;
-
-        foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
-            foreach ($this->$has as $key => $table){
-                $relation = self::relations($class, array($key => $table), $has);
-                $alias = ($relation['foreign']['alias2'] ? $relation['foreign']['alias2'] : $relation['foreign']['alias']);
-                $this->relations[$alias] = $relation;
-            }
+        $from = (($this->table and $this->table != $class) ? $this->table.' as ' : '');
+        self::from($from.$class)->table = $class;
+        $this->relations = self::deep_throat($class);
 
         if ($id){            if (is_array($id))
                 list($this->primary_key, $id) = array(key($id), reset($id));
@@ -79,25 +74,7 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('select_in_join', $this);                continue;            }
-            $arg = strtolower($arg);
-
-            if (strpos($arg, '.')){                $args = explode('.', $arg);
-                $table = array_pop($args);
-                $class = array_pop($args);
-                $vars = get_class_vars($class);
-
-                if (!$vars['has_one'])
-                    continue;
-
-                if ($key = array_search($table, $vars['has_one']))
-                    $table = $vars['has_one'][$key];
-                else
-                    $table = $vars['has_one'][$key = $table];
-
-                $relation = self::relations($class, array($key => $table), 'has_one');
-                $relation['foreign']['alias'] = $arg;
-                $this->relations[$relation['foreign']['alias']] = $relation;            }
-            $relation = $this->relations[$arg];
+            $relation = $this->relations[strtolower($arg)];
             $this->join = array_merge($this->join, self::build('join', $relation));
 
             if (substr($relation['type'], -4) == 'many')

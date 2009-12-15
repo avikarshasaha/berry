@@ -105,7 +105,7 @@ abstract class SQL_Build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_get(){        self::_prepare_bulid();
+    protected function _build_fetch(){        self::_prepare_bulid();
 
         $query[] = ($this->select? 'select '.join(', ', $this->select) : '');
         $query[] = ($this->from ? 'from '.join(', ', $this->from) : '');
@@ -282,7 +282,7 @@ abstract class SQL_Build {
 
         $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
         $query[] = '(';
-        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `select_(.*?)`/'), array('`select_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_get());
+        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `select_(.*?)`/'), array('`select_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_fetch());
         $query[] = ') as `_'.$table.'`';
 
         return join("\r\n", $query);    }
@@ -302,7 +302,7 @@ abstract class SQL_Build {
         $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
 
         $query[] = '(';
-        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `join_(.*?)`/'), array('`join_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_get());
+        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `join_(.*?)`/'), array('`join_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_fetch());
         $query[] = ') as `_'.$table.'` on (';
         $query[] = str::format('`_%foreign.alias`.%foreign.field = `%local.alias`.%local.field', $relation);
         $query[] = ')';
