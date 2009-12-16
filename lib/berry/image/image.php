@@ -33,29 +33,23 @@ class Image {
 
         $func = 'imagecreatefrom'.$this->file['type'];
         $this->im = $func($filename);
-        $this->file['new'] = 'test/_'.$this->file['name'].'.thumb';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function jpg($quality = 80){
+    function save($filename, $quality = null){        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $file = str::format($filename, $this->file);
+        $map = array(
+            'png' => 'png',
+            'gif' => 'gif',
+            'jpg' => 'jpeg',
+            'jpeg' => 'jpeg',
+        );
+
         unset($this->text);
-        return imagejpeg($this->im, $this->file['new'].'.jpg', $quality);
-    }
 
-////////////////////////////////////////////////////////////////////////////////
-
-    function png($quality = 9){
-        unset($this->text);
-        return imagepng($this->im, $this->file['new'].'.png', $quality);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function gif(){
-        unset($this->text);
-        return imagegif($this->im, $this->file['new'].'.gif');
-    }
+        if (b::call('*image'.$map[$ext], array($this->im, $file, $quality)))
+            return $file;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -86,8 +80,7 @@ class Image {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function merge($filename, $pos = 'tl'){        unset($this->text);
-        $merge = new self($filename);        $x = $y = 0;
+    function merge($filename, $pos = 'tl'){        $merge = new self($filename);        $x = $y = 0;
         $width = ($this->file['resize'] ? $this->file['resize']['width'] : $this->file['width']);
         $height = ($this->file['resize'] ? $this->file['resize']['height'] : $this->file['height']);
 
@@ -96,8 +89,10 @@ class Image {
         if (strpos($pos, 'b') !== false)
             $y = ($height - $merge->file['height']);
 
+        unset($this->text);
         imagecopy($this->im, $merge->im, $x, $y, 0, 0, $merge->file['width'], $merge->file['height']);
         unset($merge);
+
         return $this;
     }
 

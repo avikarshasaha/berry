@@ -15,7 +15,7 @@ class Image_Text {
         $this->width = imagesx($im);
         $this->height = imagesy($im);
 
-        self::color()->pos()->size()->padding()->background();
+        self::color()->pos()->size()->padding()->margin()->background();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +56,13 @@ class Image_Text {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function margin(){
+        $this->margin = func_get_args();
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function background($color = 0, $alpha = 100){        $this->background = array(
             ($color ? b::call('*imagecolorallocate', array_merge(array($this->im), self::hex($color))) : imagecolortransparent($this->im)),
             (!$color ? 0 : $alpha)
@@ -73,7 +80,9 @@ class Image_Text {
         if (strpos($this->pos, 'b') !== false)
             $y = ($this->height - $height);
 
-        if (($padding = $this->padding) and ($len = b::len($padding)) != 3){            $padding = ($len == 1 ? array($padding[0], $padding[0]) : $padding);            $padding = (b::len($padding) == 2 ? array($padding[0], $padding[1], $padding[0], $padding[1]) : $padding);
+        if (($padding = $this->padding) and ($len = b::len($padding)) != 3){
+            $padding = ($len == 1 ? array($padding[0], $padding[0]) : $padding);
+            $padding = (b::len($padding) == 2 ? array($padding[0], $padding[1], $padding[0], $padding[1]) : $padding);
 
             $pos_x = ($x ? ($x - $padding[3] * 2) : 0);
             $x = ($x ? ($x - $padding[3]) : $padding[1]);
@@ -82,6 +91,27 @@ class Image_Text {
             $pos_y = ($y ? ($y - $padding[2] * 2) : 0);
             $y = ($y ? ($y - $padding[2]) : $padding[0]);
             $height += ($padding[2] + $padding[0]);
+        }
+
+        if (($margin = $this->margin) and ($len = b::len($margin)) != 3){
+            $margin = ($len == 1 ? array($margin[0], $margin[0]) : $margin);
+            $margin = (b::len($margin) == 2 ? array($margin[0], $margin[1], $margin[0], $margin[1]) : $margin);
+
+            if (strpos($this->pos, 'r') === false){
+                $pos_x += $margin[3];
+                $x += $margin[3];
+            } else {
+                $pos_x -= $margin[1];
+                $x -= $margin[1];
+            }
+
+            if (strpos($this->pos, 'b') === false){
+                $pos_y += $margin[0];
+                $y += $margin[0];
+            } else {
+                $pos_y -= $margin[2];
+                $y -= $margin[2];
+            }
         }
 
         $im = imagecreatetruecolor($width, $height);
