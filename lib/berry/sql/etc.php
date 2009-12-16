@@ -326,11 +326,13 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function deep_throat($class, $parent = '', $main = '', $result = array()){
+    protected static function deep_throat($class, $parent = '', $main = '', $result = array()){        if (is_array($class))
+            list($class, $vars) = array(key($class), reset($class));
+
         $current = inflector::singular(substr($parent, strrpos($parent, '.')));
         $parent .= ($parent ? '.' : '');
         $main = ($main ? $main : $class);
-        $vars = get_class_vars($class);
+        $vars = ($vars ? $vars : get_class_vars($class));
 
         foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
             foreach ((array)$vars[$has] as $key => $table){

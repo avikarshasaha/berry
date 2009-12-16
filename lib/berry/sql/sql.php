@@ -73,7 +73,7 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('select_in_join', $this);                continue;            }
+    function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('select_in_join', $this);                continue;            } elseif (is_array($arg)){                list($arg, $vars) = array($this->table, $arg);                $this->relations = array_merge($this->relations, self::deep_throat(array($arg => $vars)));            }
             $relation = $this->relations[strtolower($arg)];
             $this->join = array_merge($this->join, self::build('join', $relation));
 
