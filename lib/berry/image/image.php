@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Image {
+class Image extends Image_Merge {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($filename){        $info = pathinfo($filename);
@@ -37,7 +37,7 @@ class Image {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function save($filename, $quality = null){        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    function save($filename, $quality = 80){        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $file = str::format($filename, $this->file);
         $map = array(
             'png' => 'png',
@@ -46,14 +46,17 @@ class Image {
             'jpeg' => 'jpeg',
         );
 
-        unset($this->text);
+        if ($quality < 0)
+            $quality = 10;
+
+        if ($quality and $ext == 'png')            $quality = round(($quality > 0 ? $quality : 10) / -10 + 10);
 
         if (b::call('*image'.$map[$ext], array($this->im, $file, $quality)))
             return $file;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function resize($width, $height){        unset($this->text);        list($_width, $_height) = array(imagesx($this->im), imagesy($this->im));
+    function resize($width, $height){        list($_width, $_height) = array(imagesx($this->im), imagesy($this->im));
 
         if (substr($width, -1) == '%')
             $width = (($_width / 100) * substr($width, 0, -1));
@@ -74,24 +77,46 @@ class Image {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function text($text){
-        return $this->text = new Image_Text($this->im, str::format($text, $this->file));
+    function merge($filename, $params = array()){
+        if (is_resource($filename)){
+            $merge = new parent($this->im, $filename);
+        } else {
+            $image = new self($filename);
+            $merge = new parent($this->im, $image->im);
+        }
+
+        foreach ($params as $k => $v)
+            if (method_exists($merge, $k))
+                call_user_method($k, $merge, $v);
+
+        unset($merge);
+        unset($image);
+        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function merge($filename, $pos = 'tl'){        $merge = new self($filename);        $x = $y = 0;
-        $width = ($this->file['resize'] ? $this->file['resize']['width'] : $this->file['width']);
-        $height = ($this->file['resize'] ? $this->file['resize']['height'] : $this->file['height']);
+    function text($text, $params = array()){        $text = str::format($text, $this->file);
+        $size = 2;
 
-        if (strpos($pos, 'r') !== false)
-            $x = ($width - $merge->file['width']);
-        if (strpos($pos, 'b') !== false)
-            $y = ($height - $merge->file['height']);
+        if ($params['font'])
+            foreach (explode(' ', $params['font']) as $v){
+                $v = trim($v);
 
-        unset($this->text);
-        imagecopy($this->im, $merge->im, $x, $y, 0, 0, $merge->file['width'], $merge->file['height']);
-        unset($merge);
+                if ($v[0] == '#')
+                    $color = $v;
+                elseif (is_numeric($v))
+                    $size = (int)$v;
+            }
+        $width = (b::len($text) * imagefontwidth($size));
+        $height = imagefontheight($size);
+
+        $im = imagecreatetruecolor($width, $height);
+        imagefill($im, 0, 0, -1);
+        imagestring($im, $size, 0, 0, $text, self::color($color, $im));
+
+        self::merge($im, $params);
+        imagedestroy($im);
 
         return $this;
     }
