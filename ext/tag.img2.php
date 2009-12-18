@@ -7,56 +7,53 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-// http://www.verot.net/php_class_upload_samples.htm
 function tag_img2($attr){    $attr = array_merge(array(
         'filter' => 'default'
     ), $attr);
-    if (!$src = strstr($attr['src'], '~/upload/'))
-        return tags::fill('img', $attr);
-
-    $file = file::path('data'.substr($src, 1));
-    $upload = new upload($file);
-    $new = $upload->file_src_name_body.'.'.$attr['filter'].'.'.$upload->file_src_name_ext;
-
-    if (is_file(dirname($file).'/'.$new) and !$attr['nocache']){        foreach ($attr as $k => $v)
-            if (property_exists($upload, $k))
-                unset($attr[$k]);
-        $attr['src'] = str_replace($upload->file_src_name, $new, $attr['src']);
-
-        unset($attr['filter'], $attr['nocache']);
-        return tags::fill('img', $attr);    }
+    $image = new image(reset(explode('?', $attr['src'])));
+    $query = parse_url($attr['src']);
+    $query = ($query['query'] ? '?' : '').$query['query'];
 
     if ($filter = b::config('tag.img2.'.$attr['filter']))
-        $attr = array_merge($filter, $attr);
+        $attr += $filter;
 
-    $upload->file_name_body_add = '.'.$attr['filter'];
-    $upload->file_auto_rename = false;
-    $upload->file_overwrite = true;
-    $upload->file_safe_name = false;
-    $upload->image_resize = true;
+    if ($image->file['dir'] != '.' and $image->file['dir'] != '..')
+        $dir = $image->file['dir'];
 
-    if ($attr['width'] and $attr['height']){        $upload->image_x = $attr['width'];
-        $upload->image_y = $attr['height'];
-    } elseif ($attr['width']){
-        $upload->image_x = $attr['width'];
-        $upload->image_ratio_y = true;
-    } elseif ($attr['height']){
-        $upload->image_y = $attr['height'];
-        $upload->image_ratio_x = true;
-    } else {        $upload->image_ratio_y = true;    }
+    $file = array(file::path('cache'));
+    $file[] = 'tag/img2';
+    $file[] = ($dir[0] == '.' ? substr($dir, strpos($dir, '/')) : $dir);
+    $file[] = $image->file['name'].'.'.$image->file['ext'];
 
-    foreach ($attr as $k => $v)
-        if (property_exists($upload, $k)){
-            $upload->$k = str_replace('\n', "\n", $v);
+    if (is_file($tmp = join('/', $file)) and !$attr['nocache']){        foreach ($filter as $k => $v)
             unset($attr[$k]);
-        }
 
-    if ($upload->process(dirname($file)))
-        $upload->clear();
+        $tmp = getimagesize($tmp);
+        $attr['width'] = $tmp[0];
+        $attr['height'] = $tmp[1];        $attr['src'] = '~/'.$file[1].'/'.$file[2].'/'.$file[3].$query;
 
-    $attr['src'] = str_replace($upload->file_src_name, $upload->file_dst_name, $attr['src']);
-    $attr['width'] = $upload->image_dst_x;
-    $attr['height'] = $upload->image_dst_y;
+        $image->close();
+        return tags::fill('img', $attr);    }
 
-    unset($attr['filter'], $attr['nocache']);
+    if (!$attr['text'] and $attr['#text'])
+        $attr['text'] = $attr['#text'];
+
+    foreach (array_keys($attr) as $k)
+        if ($k == 'text'){            $image->text($attr['text'], $attr);
+            $save = true;
+        } elseif (in_array($k, array('width', 'height'))){            $image->resize($attr['width'], $attr['height']);
+            $save = true;        }
+
+    if ($save){        foreach ($filter as $k => $v)
+            unset($attr[$k]);
+
+        file::mkdir($file[0].'/'.$file[1].'/'.$file[2]);
+
+        $tmp = getimagesize(join('/', $file));
+        $attr['width'] = $tmp[0];
+        $attr['height'] = $tmp[1];
+        $attr['src'] = str_replace($file[0], '~', $image->save(join('/', $file), 80)).$query;
+    }
+
+    $image->close();
     return tags::fill('img', $attr);}

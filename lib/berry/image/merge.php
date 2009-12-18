@@ -162,7 +162,7 @@ class Image_Merge {
             list($im, $this->im1) = array($this->im1, imagecreatetruecolor($width1, $height1));
             imagefill($this->im1, 0, 0, -1);
             imagesavealpha($this->im1, true);
-            imagecopy($this->im1, $im, ($is_left_pos ? ($margin[3] < 0 ? abs($margin[3]) : 0) : $margin[1]), ($is_top_pos ?  ($margin[0] < 0 ? abs($margin[0]) : 0) : $margin[2]), 0, 0, imagesx($im), imagesy($im));
+            imagecopy($this->im1, $im, ($is_left_pos ? ($margin[3] < 0 ? abs($margin[3]) : 0) : ($margin[1] < 0 ? $margin[1] : 0)), ($is_top_pos ?  ($margin[0] < 0 ? abs($margin[0]) : 0) : ($margin[2] < 0 ? $margin[2] : 0)), 0, 0, imagesx($im), imagesy($im));
             imagedestroy($im);
         }
 

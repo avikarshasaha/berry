@@ -37,8 +37,9 @@ class Image extends Image_Merge {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function save($filename, $quality = 80){        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    function save($filename, $quality = 80){
         $file = str::format($filename, $this->file);
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         $map = array(
             'png' => 'png',
             'gif' => 'gif',
@@ -98,6 +99,7 @@ class Image extends Image_Merge {
 
     function text($text, $params = array()){        $text = str::format($text, $this->file);
         $size = 2;
+        $ims = $width = $height = array();
 
         if ($params['font'])
             foreach (explode(' ', $params['font']) as $v){
@@ -108,12 +110,22 @@ class Image extends Image_Merge {
                 elseif (is_numeric($v))
                     $size = (int)$v;
             }
-        $width = (b::len($text) * imagefontwidth($size));
-        $height = imagefontheight($size);
 
-        $im = imagecreatetruecolor($width, $height);
+        foreach (explode("\n", str_replace("\r", '', $text)) as $v){            $width[] = (b::len($v) * imagefontwidth($size));
+            $height[] = imagefontheight($size);
+
+            $ims[] = $im = imagecreatetruecolor(end($width), end($height));
+            imagefill($im, 0, 0, -1);
+            imagestring($im, $size, 0, 0, $v, self::color($color, $im));
+        }
+
+        $im = imagecreatetruecolor(max($width), array_sum($height));
         imagefill($im, 0, 0, -1);
-        imagestring($im, $size, 0, 0, $text, self::color($color, $im));
+
+        foreach ($ims as $k => $v){
+            imagecopy($im, $v, 0, ($k ? ($height[$k] * $k) : 0), 0, 0, $width[$k], $height[$k]);
+            imagedestroy($v);
+        }
 
         self::merge($im, $params);
         imagedestroy($im);

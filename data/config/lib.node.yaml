@@ -1,0 +1,8 @@
+default:
+    image_text: '[src_x]x[src_y] [src_size_human]'
+    image_text_color: '#ffffff'
+    image_text_background: '#000000'
+    image_text_background_percent: 50
+    image_text_position: br
+    image_text_padding: 5
+    image_text_font: 2
