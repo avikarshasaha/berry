@@ -105,7 +105,8 @@ function container_code($attr){
 
 function tag_msg($attr){	if ($attr['#text']){		html::msg($attr['id'], $attr['#text']);		return;	}
 
-    return tags::parse_vars(b::show('tag.msg.'.str_replace('.', '\.', $attr['id'])), 'msg', html::msg($attr['id']));
+	if ($messages = html::msg($attr['id']))
+        return b::show('tag.msg.'.$attr['id'], compact('messages'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,16 +128,16 @@ function tag_noindex($attr){    if ($attr['#is_final'])
 function tag_quote($attr){	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote';
 	if ($attr['cite']){	    $pos = strpos($attr['cite'], 'http://');
 	    $href = substr($attr['cite'], $pos);
-	    $cite = substr($attr['cite'], 0, $pos);
-	    $cite = ($cite ? $cite : $href);
+	    $text = substr($attr['cite'], 0, $pos);
+	    $text = ($text ? $text : $href);
 
 	    if (is_int($pos))
-	        $attr['cite'] = array('href' => $href, 'text' => $cite);
+	        $attr['cite'] = compact('href', 'text');
 	    else
 	    	unset($attr['cite']);
 	}
 
-    return tags::parse_vars(b::show('tag.quote'), 'quote', $attr);
+    return b::show('tag.quote', compact('attr'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -190,28 +191,4 @@ function tag_cdata($attr){    if (!$attr['#is_final'])
         return tags::fill($attr);
 
     return '<![CDATA['.$attr['#text'].']]>';
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function container_tabs($attr){
-    if (preg_match_all('/<tab( (.*?))?>(.*?)<\/tab>/is', $attr['#text'], $match))
-        for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
-        	preg_match_all('/ (open|title)=("|\')(.*?)\\2/i', $match[1][$i], $tmp);
-        	$tmp = array_combine($tmp[1], $tmp[3]);
-            $tmp['#text'] = $match[3][$i];
-            $tabs[] = $tmp;
-        }
-
-    foreach ($tabs as $k => $v){
-    	$click[] = "$('tag_tabs[tab_".$k."]').hide()";
-    	$click[] = "$('tag_tabs[menu_".$k."]').removeClassName('on').addClassName('off')";
-    }
-
-    $click = join(';', $click);
-
-    foreach ($tabs as $k => $v)
-    	$tabs[$k]['click'] = $click;
-
-	return tags::parse_vars(b::show('tag.tabs'), 'tabs', $tabs);
 }

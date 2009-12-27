@@ -14,7 +14,7 @@ function tag_captcha($attr){	$attr = array_merge(array(
 	    'align'  => 'absmiddle'
 	), $attr);
 
-	$_SESSION['captcha'] = md5(rand().microtime());
+	$_SESSION['lib']['captcha'] = md5(rand().microtime());
 	$_SESSION['tag']['captcha'] = $attr;
 
 	$attr['src'] = 'tag/captcha/'.$attr['img'].'?'.rand();	return tags::parse(str::format('

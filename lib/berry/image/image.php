@@ -68,7 +68,7 @@ class Image extends Image_Merge {
             $height = ($_height / ($_width / $width));
 
         list($im, $this->im) = array($this->im, imagecreatetruecolor($width, $height));
-        imagecopyresized($this->im, $im, 0, 0, 0, 0, $width, $height, $_width, $_height);
+        imagecopyresampled($this->im, $im, 0, 0, 0, 0, $width, $height, $_width, $_height);
         imagedestroy($im);
 
         $this->file['resize'] = compact('width', 'height');
@@ -97,7 +97,7 @@ class Image extends Image_Merge {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function text($text, $params = array()){        $text = str::format($text, $this->file);
+    function text($text, $params = array()){        $text = strtr(str::format($text, $this->file), array("\r" => '', "\t" => '    '));
         $size = 2;
         $ims = $width = $height = array();
 
@@ -109,14 +109,20 @@ class Image extends Image_Merge {
                     $color = $v;
                 elseif (is_numeric($v))
                     $size = (int)$v;
+                elseif ($v)
+                    $font = $v;
             }
 
-        foreach (explode("\n", str_replace("\r", '', $text)) as $v){            $width[] = (b::len($v) * imagefontwidth($size));
+        foreach (explode("\n", $text) as $v){            $width[] = (b::len($v) * imagefontwidth($size));
             $height[] = imagefontheight($size);
 
             $ims[] = $im = imagecreatetruecolor(end($width), end($height));
             imagefill($im, 0, 0, -1);
-            imagestring($im, $size, 0, 0, $v, self::color($color, $im));
+
+            if ($font)
+                imagettftext($im, $size, 0, 0, ($size + 1), self::color($color, $im), $font, $v);
+            else
+                imagestring($im, $size, 0, 0, $v, self::color($color, $im));
         }
 
         $im = imagecreatetruecolor(max($width), array_sum($height));

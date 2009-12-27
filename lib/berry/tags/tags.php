@@ -108,7 +108,7 @@ class Tags extends Attr {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function unhtml($string){
-        $string = str::unhtml($string, $quote_style);
+        $string = str::unhtml($string);
         $string = preg_replace(
             array('/#(\w+)?{/', '/\$(\w+)?{/', '/%(\w+)?{/', '/@(\w+)?{/'),
             array('&#35;\\1{', '&#36;\\1{', '&#37;\\1{', '&#64;\\1{'),
@@ -151,8 +151,10 @@ class Tags extends Attr {
         $var = str_replace('\.', self::char('.'), $var);
         $var = explode('.', $var);
 
-        if ($vars[$var[0]])
-            $var[0] = $vars[$var[0]];
+        if ($vars[$var[0]]){
+            $ns = '$'.$vars[$var[0]];
+            unset($var[0]);
+        }
 
         $var = $ns.($var ? "['".join("']['", $var)."']" : '');
         $var = str_replace("['']", '[]', $var);

@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path = array('');
+class B {    static $path = array();
     static $lang = 'ru';
     static $autoload = array();
     protected static $cache = array();
@@ -19,8 +19,8 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        if (!self::$path[0])
-            self::$path[0] = realpath(dirname(__file__).'/../../');
+    static function init(){        if (!isset(self::$path[0]))
+            self::$path[0] = realpath(dirname(__file__).'/../..');
 
         ini_set('docref_root', 'http://php.net/');
         ini_set('session.use_trans_sid', false);
@@ -35,16 +35,16 @@ class B {    static $path = array('');
         self::$lang = $lang;
 
         date_default_timezone_set(self::config('lib.b.timezone'));
-        setlocale(LC_ALL, self::lang('lib.b.init.locale'));
+        setlocale(LC_ALL, self::lang('lib.b.locale'));
         session_start();
 
-        $_GET['q'] = ($_GET['q'] ? str::clean($_GET['q']) : 'home');
+        $_GET['berry'] = ($_GET['berry'] ? str::clean($_GET['berry']) : 'home');
         self::router();
     }
 ////////////////////////////////////////////////////////////////////////////////
 
     static function q($i = '', $c = '', $s = '/'){
-        $q = explode('/', $_GET['q']);
+        $q = explode('/', $_GET['berry']);
 
         if (is_int($pos = strpos($_SERVER['REQUEST_URI'], '?')))
             $uri = substr($_SERVER['REQUEST_URI'], 0, $pos);
@@ -288,7 +288,6 @@ class B {    static $path = array('');
         extract($_);
 
         $string = ($string ? $string : b::config('lib.b.load'));
-
         $_['string'] = $string;
         $_['files']  = array(
             str_replace('.', '/', $string),
@@ -308,23 +307,10 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($string = '', $_ = array(), $is_main = false){        static $_main;
+    static function show($string = '', $_ = array()){        extract($_);
 
         $string = ($string ? $string : b::config('lib.b.show'));
-
-        if (!is_array($_))
-            list($_, $is_main) = array(array(), $_);        else            extract($_);
-
-        if ($is_main){
-            $_main = $string;
-            return;
-        }
-
-        if ($_main and $string == self::config('lib.b.show'))
-            $string = $_main;
-
         $_['string'] = $string;
-        $_['is_main'] = $is_main;
         $string = str_replace('.', '/', $string);
 
         if (
@@ -339,7 +325,7 @@ class B {    static $path = array('');
                         include $funcs[$token[1]];
                 }
 
-            unset($string, $is_main, $func, $token);
+            unset($string, $funcs, $token);
 
             ob_start();
                 include $_['file'];
@@ -377,11 +363,11 @@ class B {    static $path = array('');
         '), $rules);
 
         foreach ($rules as $k => $v)
-            $_GET['q'] = preg_replace($v['re'], $v['route'], $_GET['q']);
+            $_GET['berry'] = preg_replace($v['re'], $v['route'], $_GET['berry']);
 
-        if (($url = parse_url($_GET['q'])) and $url['query']){
+        if (($url = parse_url($_GET['berry'])) and $url['query']){
             parse_str($url['query'], $query);
-            $_GET['q'] = $url['path'];
+            $_GET['berry'] = $url['path'];
             $_GET = array_merge($_GET, $query);
         }
     }

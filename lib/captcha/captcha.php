@@ -20,7 +20,7 @@ class captcha {    const LEN = 4;
         $captcha = new zz;
         $captcha->width = ($len * 25);
         $captcha->size = 18;
-        $_SESSION['captcha'] = $rand;
+        $_SESSION['lib']['captcha'] = $rand;
         $captcha->makeimg($rand);
     }
 
@@ -31,14 +31,14 @@ class captcha {    const LEN = 4;
         $captcha->width = ($len * 25);
         $captcha->allowed_symbols = $symbols;
         $captcha->genstring($len);
-        $_SESSION['captcha'] = $captcha->keystring;
+        $_SESSION['lib']['captcha'] = $captcha->keystring;
         $captcha->genimage();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function checker($check){
-        return ($check == $_SESSION['captcha']);
+        return ($check == $_SESSION['lib']['captcha']);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,11 +50,11 @@ class captcha {    const LEN = 4;
 ////////////////////////////////////////////////////////////////////////////////
 
     static function captcha3D($len = 'easy'){        $url = 'http://blockspam.ru/Captcha.ashx?type='.$len;        list($url, $texr) = explode("\r\n", file_get_contents($url));
-        $_SESSION['captcha'] = strtolower($texr);        http::go($url);    }
+        $_SESSION['lib']['captcha'] = strtolower($texr);        http::go($url);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function hight($len = self::LEN, $symbols = self::SYMBOLS){        $captcha = new hight($len, $symbols);
-        $_SESSION['captcha'] = $captcha->key;
+        $_SESSION['lib']['captcha'] = $captcha->key;
     }
 }

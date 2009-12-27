@@ -1,6 +1,6 @@
-<fieldset class="msg e" if="%b{msg}">
+<fieldset class="msg e">
     <legend>Ошибка <a href="#" onclick="Element.hide(this.parentNode.parentNode); return false;" title="Спрятать">x</a></legend>
-    <loop each="v in %{msg}">
-        <li>%{v}</li>
-    </loop>
+    <? foreach ($messages as $message){ ?>
+        <li><?=$message; ?></li>
+    <? } ?>
 </fieldset>

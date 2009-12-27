@@ -11,15 +11,13 @@ class HTML {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function block($key, $value = null, $sort = 50){
-        static $block, $sorts;
+        static $block, $sort;
 
         if ($value !== null and !in_array($value, (array)$block[$key])){
-            $sorts[$key][] = $sort;
+            $sort[$key][] = $sort;
             return $block[$key][] = $value;
         } elseif ($value === null and $block[$key]){
-            if ($sorts[$key])
-                array_multisort($sorts[$key], SORT_ASC, $block[$key]);
-
+            array_multisort($sort[$key], SORT_ASC, $block[$key]);
             return $block[$key];
         }
 
@@ -28,21 +26,17 @@ class HTML {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function msg($key, $value = null, $sort = 50){
-        static $sorts;
+    static function msg($key, $value = null, $sort = 50){        $msg = &$_SESSION['lib']['html']['msg'];
 
-        if ($value !== null and !in_array($value, (array)$_SESSION['html']['msg'][$key])){
-            $sorts[$key][] = $sort;
+        if ($value !== null and !in_array($value, (array)$msg['block'][$key])){
+            $msg['#'.$key][] = $sort;
+            return $msg[$key][] = $value;
+        } elseif ($value === null and $msg[$key]){            $array = $msg[$key];
 
-            return $_SESSION['html']['msg'][$key][] = $value;
-        } elseif ($value === null and $_SESSION['html']['msg'][$key]){
-            $msg[$key] = $_SESSION['html']['msg'][$key];
+            array_multisort($msg['#'.$key], SORT_ASC, $array);
+            unset($msg[$key], $msg['#'.$key]);
 
-            if ($sorts[$key])
-                array_multisort($sorts[$key], SORT_ASC, $msg[$key]);
-
-            unset($_SESSION['html']['msg'][$key]);
-            return $msg[$key];
+            return $array;
         }
 
         return array();

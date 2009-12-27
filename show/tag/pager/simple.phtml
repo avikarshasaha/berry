@@ -1,0 +1,43 @@
+<? if ($prev){ ?>
+    <a href="<?=$prev; ?>">←</a>
+<? } else { ?>
+    ←
+<? } ?>
+
+<? if ($pages[0]){ ?>
+    <? foreach ($pages[0] as $page => $href){ ?>
+        <? if ($page == $current){ ?>
+            <b>[<?=$page; ?>]</b>
+        <? } else { ?>
+            <a href="<?=$href; ?>">[<?=$page; ?>]</a>
+        <? } ?>
+    <? } ?>
+
+    ...
+<? } ?>
+
+<? foreach ($pages[1] as $page => $href){ ?>
+    <? if ($page == $current){ ?>
+        <b>[<?=$page; ?>]</b>
+    <? } else { ?>
+        <a href="<?=$href; ?>">[<?=$page; ?>]</a>
+    <? } ?>
+<? } ?>
+
+<? if ($pages[2]){ ?>
+    ...
+
+    <? foreach ($pages[2] as $page => $href){ ?>
+        <? if ($page == $current){ ?>
+            <b>[<?=$page; ?>]</b>
+        <? } else { ?>
+            <a href="<?=$href; ?>">[<?=$page; ?>]</a>
+        <? } ?>
+    <? } ?>
+<? } ?>
+
+<? if ($next){ ?>
+    <a href="<?=$next; ?>">→</a>
+<? } else { ?>
+    →
+<? } ?>

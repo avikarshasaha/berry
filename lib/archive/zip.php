@@ -262,9 +262,9 @@ class zip
    }*/
 
    if (substr($header['filename'], -1) == '/')
-       l_mkdir($pth = $to.$header['filename']);
+       file::mkdir($pth = $to.$header['filename']);
    else
-       l_mkdir($pth = dirname($to.$header['filename']));
+       file::mkdir($pth = dirname($to.$header['filename']));
 
   if (!($header['external']==0x41FF0010)&&!($header['external']==16))
   {

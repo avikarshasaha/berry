@@ -36,8 +36,8 @@ function supadupa_skip($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-hook::set('output', 'output_supadupa_skip');
-function output_supadupa_skip($output){
+hook::set('output', 'hook_output_supadupa_skip');
+function hook_output_supadupa_skip($output){
     if (preg_match_all('/<!--supadupa\[skip\]\[(.*)\]-->/', $output, $match))
         for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
             $output = str_replace($match[0][$i], $_SESSION['supadupa']['skip'][$match[1][$i]], $output);
@@ -67,8 +67,8 @@ function supadupa_cache($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-hook::set('output', 'output_supadupa_cache');
-function output_supadupa_cache($output){
+hook::set('output', 'hook_output_supadupa_cache');
+function hook_output_supadupa_cache($output){
     if (preg_match_all('/<!--supadupa\[cache\]\[(.*)\]-->/', $output, $match))
         for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
             if ($file = cache::exists($match[1][$i]))

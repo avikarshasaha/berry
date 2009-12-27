@@ -19,8 +19,8 @@ class Archive {
             $this->type = 'tar';
             $this->object = new TAR;
         } elseif ($this->ext == 'rar'){
-            $this->type = $this->ext;
-            $this->object = new RAR;
+            //$this->type = $this->ext;
+            //$this->object = new RAR;
         }
     }
 
@@ -56,7 +56,6 @@ class Archive {
              $this->_setArchive($this->filename);
              return $this->_listContents();
          } elseif ($this->type == 'rar'){
-             return $this->_getFileList($this->filename);
          }
     }
 
