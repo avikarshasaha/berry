@@ -46,15 +46,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        return (method_exists($this, $func = '_get_'.$offset) ? $this->$func() : self::_get($offset));
+    function offsetGet($offset){        return (method_exists($this, ($func = '_get_'.$offset)) ? $this->$func() : self::_get($offset));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if (method_exists($this, $func = '_set_'.$offset))
-            return $this->$func($value);
-
-        self::_set($offset, $value);
+    function offsetSet($offset, $value){
+        method_exists($this, ($func = '_set_'.$offset)) ? $this->$func($value) : self::_set($offset, $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -69,14 +67,14 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function current(){
-        return $this[(int)current($this->iterator)];
+    function key(){
+        return key($this->iterator);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function key(){
-        return key($this->iterator);
+    function current(){
+        return $this[(int)current($this->iterator)];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

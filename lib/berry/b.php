@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path = array();
+class B {    static $path = array('');
     static $lang = 'ru';
     static $autoload = array();
     protected static $cache = array();
@@ -19,7 +19,7 @@ class B {    static $path = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        if (!isset(self::$path[0]))
+    static function init(){        if (!self::$path[0])
             self::$path[0] = realpath(dirname(__file__).'/../..');
 
         ini_set('docref_root', 'http://php.net/');
@@ -329,19 +329,19 @@ class B {    static $path = array();
 
             ob_start();
                 include $_['file'];
-            return ob_get_clean();
+            return trim(ob_get_clean());
         }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function router(){
+    static function router(){
         $rules = self::config('lib.b.router');
 
         if (func_num_args()){
             list($key, $array) = func_get_args();
 
-            if(preg_match_all('/\[([^\]]*)\]/', $rules[$key]['url'], $match)){
+            if (preg_match_all('/\[([^\]]*)\]/', $rules[$key]['url'], $match)){
                 for ($i = 0, $c = self::len($match[0]); $i < $c; $i++)
                     $match[1][$i] = $rules[$match[1][$i]]['url'];
 
@@ -351,19 +351,13 @@ class B {    static $path = array();
             return str::format($rules[$key]['url'], ($array ? $array : array()));
         }
 
-        $rules = array_map(create_function('$rule', '
-            if (is_array($rule["re"])){
-                foreach ($rule["re"] as $k => $v)
-                    $rule["re"][$k] = "/^".str_replace("/", "\/", $v)."$/i";
-            } else {
-                $rule["re"] = "/^".str_replace("/", "\/", $rule["re"])."$/i";
-            }
+        foreach ($rules as $k => $v){
+            if (preg_match_all('/\[([^\]]*)\]/', $v['re'], $match))
+                for ($i = 0, $c = self::len($match[0]); $i < $c; $i++)
+                    $rules[$k]['re'] = str_replace($match[0][$i], $rules[$match[1][$i]]['re'], $v['re']);
+        }
 
-            return $rule;
-        '), $rules);
-
-        foreach ($rules as $k => $v)
-            $_GET['berry'] = preg_replace($v['re'], $v['route'], $_GET['berry']);
+        foreach ($rules as $rule)            $_GET['berry'] = preg_replace('/^'.str_replace('/', '\/', $rule['re']).'$/i', $rule['route'], $_GET['berry']);
 
         if (($url = parse_url($_GET['berry'])) and $url['query']){
             parse_str($url['query'], $query);

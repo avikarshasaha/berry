@@ -23,6 +23,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
     protected $schema = array();
     protected $trigger = array();
+    protected $checker = array();
 
     protected $into = array();
     protected $values = array();
@@ -47,40 +48,38 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected $iterator = array();
 
     protected static $sql;
+    protected static $using = array();
     protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function connect($dsn){
-        self::$sql = new SQL_Connect($dsn);
+    static function connect($dsn){        if (isset($dsn['database'])){            self::$sql = new SQL_Connect($dsn);
+            return;
+        }
+        self::$using += $dsn;
+        self::$sql = new SQL_Connect(current($dsn));
+        self::$using[key($dsn)] = self::$sql;
+
+        return key($dsn);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    /* Хуйню какую-то выдаёт. Надо спать идти
-    static function using($key = ''){
-        static $last;
+    static function using($key = ''){        static $last;
 
         if (!$last)
-            $last = key(self::$sql->using);
-
-        if (!$key)
+            $last = key(self::$using);
+        if (!$key or !isset(self::$using[$key]))
             return $last;
-
-        if (!self::$sql->dsn[$key])
-            return;
-
-        if (!self::$sql->using[$key]){
-            $class = new SQL_Connect(self::$sql->dsn[$key]);
-            self::$sql->using[$key] = $class->link;
-            self::$sql->_statistics['time'] += $class->_statistics['time'];
+        if (is_object($dsn = self::$using[$key])){            self::$sql = $dsn;
+        } elseif (is_array($dsn)){            $logger = self::$sql->_logger;
+            self::$sql = new SQL_Connect($dsn);
+            self::$sql->_logger = $logger;            self::$using[$key] = self::$sql;
         }
 
         $current = $last;
         $last = $key;
-        self::$sql->link = self::$sql->using[$key];
 
-        return $current;
-    }*/
+        return $current;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -12,8 +12,13 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_valid($name, $re = array(), $data = '_post'){        if (is_array($name))
-            return self::_is_valid($name, $re);
+    static function is_valid($name, $re = array(), $data = '_post'){        if (is_array($name)){            foreach ($name as $k => $v){                $v = (array)$v;
+
+                if (!self::is_valid($k, $v[0], $re))
+                    $error = true;
+            }
+
+            return !$error;        }
 
         $data = (!is_array($data) ? b::l($data) : $data);
         $array = arr::flat($data);
@@ -80,22 +85,6 @@ class Check {
         self::$error[$name] = $key;
         return false;
     }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function _is_valid($check, $data){        $result = array();
-
-        foreach ($check as $k => $v){            $v = (array)$v;
-
-            if (!self::is_valid($k, $v[0], $data)){
-                if (is_array($need = str::json($v[1])))
-                    $v[1] = $need[end(self::$error)];
-
-                $result[] = $v;
-            }
-        }
-
-        return $result;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -203,7 +192,9 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function string($value){
+    static function string($value, $params = array()){        if ($params)
+            return (b::len($value) >= $params[0] and b::len($value) <= $params[1]);
+
         return ($value !== '');
     }
 

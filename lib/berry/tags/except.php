@@ -48,8 +48,11 @@ class Tags_Except extends Except {
             $result .= '<tr>';
             $result .= '<td style="background: #'.$bg[0].'; padding: 5px; text-align: center;">';
             $result .= '<a name="'.$k.'"></a>'.$k;
+            $result .= '</td>';
             $result .= '<td style="background: #'.$bg[1].'; padding: 5px;">';
             $result .= '<pre>'.tags::unhtml($v).'</pre>';
+            $result .= '</td>';
+            $result .= '</tr>';
         }
 
         return $result.'</table>';    }

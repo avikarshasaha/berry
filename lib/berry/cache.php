@@ -87,7 +87,7 @@ class Cache {    static $file;
                         $v = substr($v, ($pos + 1));
                     }
 
-                    $query = sql::row('show table status { from ?_ } like "?_"', $tmp, $v);
+                    $query = sql::fetch_row('show table status { from ?_ } like "?_"', $tmp, $v);
                     $result[] = (strtotime($query['Update_time']) > $mtime);
                 }
 

@@ -24,8 +24,8 @@ class Debug {
         return (microtime(true) - $timer[$id]);
     }////////////////////////////////////////////////////////////////////////////////
 
-    static function info($save = false){
-        $file = file::path('cache').'/log/info.log';
+    static function info($save = true){
+        $file = file::path('cache').'/debug/info.log';
 
         if (!$save)
             return file_get_contents($file);
@@ -51,10 +51,13 @@ class Debug {
 
         file::mkdir(dirname($file));
 
-        $fp = fopen($file, 'w');
+        $fp = fopen($file, 'w+');
         fwrite($fp, b::q(0, 0));
         fwrite($fp, "\r\n\r\n");
         fwrite($fp, yaml::dump($array));
+        fclose($fp);
+
+        return file_get_contents($file);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,15 +65,15 @@ class Debug {
     static function sql($object = null, $string = ''){
         static $fp;
 
-        $file = file::path('cache').'/log/sql.log';
+        $file = file::path('cache').'/debug/sql.log';
 
         if (!is_object($object))
             return file_get_contents($file);
 
-        if (!$fp)
-            $fp = fopen($file, 'w');
+        if (!$fp){            file::mkdir(dirname($file));
+            $fp = fopen($file, 'w+');
+        }
 
-        file::mkdir(dirname($file));
         fwrite($fp, ($string = trim($string)));
 
         if (substr($string, 0, 3) != '-- '){

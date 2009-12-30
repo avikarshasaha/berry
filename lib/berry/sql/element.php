@@ -76,14 +76,14 @@ class SQL_element implements ArrayAccess, Countable, Iterator {    protected $d
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function current(){
-        return $this[self::key()];
+    function key(){
+        return key($this->data);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function key(){
-        return key($this->data);
+    function current(){
+        return $this[self::key()];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

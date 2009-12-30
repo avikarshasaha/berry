@@ -7,11 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-if ($_POST['test'] and $_SESSION['attr']['check']){
-    foreach (check::is_valid($_SESSION['attr']['check'], $_POST) as $array)
-        html::msg('e', $array[1]);
-
-    if (!check::is_valid_post('test'))
+if ($_POST['test'] and $_SESSION['attr']['check']){    if (!check::is_valid($_SESSION['attr']['check'], $_POST))
         html::msg('e', 'Форма не прошла валидацию.', 1);
     else
         html::msg('i', 'Форма прошла валидацию.');

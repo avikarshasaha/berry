@@ -44,7 +44,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             return $result;
         }
 
-        if ($this->values){            if (!$this->where)
+        if ($this->values){
+            if (!check::is_valid($this->checker, $this->values))
+                throw new Check_Except($this->checker, $this->table);
+            if (!$this->where)
                 $args = array_merge(array($this->values), array($this->values));
             else
                 $args = array_merge(array($this->values), $this->placeholders);
@@ -151,8 +154,11 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
             $array = self::fetch();        }
 
+        if (!$array)
+            return array();
+
         $result = array();
-        $multiple = array_reverse($multiple);
+        $multiple = ($multiple ? array_reverse($multiple) : array('Красивый-красивый мистер Биглз'));
         $len = b::len($multiple);
 
         foreach (arr::flat($array) as $k => $v){            $k = str_replace('\.', '.', $k);

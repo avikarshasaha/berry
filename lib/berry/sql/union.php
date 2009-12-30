@@ -8,7 +8,6 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class SQL_Union extends SQL_Etc {    protected $table = '<union>';
-    protected $select = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +43,7 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 ////////////////////////////////////////////////////////////////////////////////
 
     function page($page){
-        $this->offset(max(0, $page * $this->limit - $this->limit));
+        $this->offset(max(0, ($page * $this->limit - $this->limit)));
         return $this;
     }
 

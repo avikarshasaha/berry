@@ -16,8 +16,7 @@ class Mail {
             'attach' => array()
         ), (is_array($params) ? $params : self::bender($params)));
 
-        $tags = array_merge(array('config' => b::config(), 'q' => b::q()), $tags);
-
+        $tags = arr::merge(array('config' => b::config(), 'q' => b::q()), $tags);
         $params['subject'] = str::format($params['subject'], $tags);
 
         $mail = new Nomad_MimeMail;
@@ -50,7 +49,7 @@ class Mail {
             $mail->set_smtp_auth(b::config('lib.mail.smtp.user'), b::config('lib.mail.smtp.password'));
         }
 
-        foreach ($params['attach'] as $filename)
+        foreach ((array)$params['attach'] as $filename)
             $mail->add_attachment($filename, basename($filename));
 
         return $mail->send();
