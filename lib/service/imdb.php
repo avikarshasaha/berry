@@ -7,8 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Service_IMDb {
-
+class Service_IMDb {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($title){
@@ -18,26 +17,27 @@ class Service_IMDb {
         preg_match('/<b>Media from&nbsp;<a href="\/title\/tt(\d+)[^>]*>"(.*?)"<\/a>\s+\((\d+)\)<\/b>/', $page, $match);
         list($_, $this->id, $this->title, $this->year) = $match;
 
-        $this->page = file_get_contents('http://www.imdb.com/title/tt'.$this->id.'/');
-        $this->genre = $this->genre();
-        $this->cast = $this->cast();
-        $this->rating = $this->rating();
-        $this->poster = $this->poster();
-        $this->creators = $this->creators();
+        $page = file_get_contents('http://www.imdb.com/title/tt'.$this->id.'/');
+        $this->genre = $this->genre($page);
+        $this->cast = $this->cast($page);
+        $this->rating = $this->rating($page);
+        $this->poster = $this->poster($page);
+        $this->creators = $this->creators($page);
+        $this->episodes = $this->episodes();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function genre(){
-        preg_match_all('/<a href="\/Sections\/Genres\/[^\/]*\/">([^<]*)<\/a>/i', $this->page, $match);
+    protected function genre($page){
+        preg_match_all('/<a href="\/Sections\/Genres\/[^\/]*\/">([^<]*)<\/a>/i', $page, $match);
 
         return $match[1];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function cast(){
-        preg_match_all('/<td class="nm"><a href="\/name\/nm(\d+)\/">([^<]*)<\/a><\/td><td class="ddd"> ... <\/td><td class="char"><a href="\/character\/ch\d+\/">([^<]*)<\/a>/', $this->page, $match);
+    protected function cast($page){
+        preg_match_all('/<td class="nm"><a href="\/name\/nm(\d+)\/">([^<]*)<\/a><\/td><td class="ddd"> ... <\/td><td class="char"><a href="\/character\/ch\d+\/">([^<]*)<\/a>/', $page, $match);
 
         $result = array();
 
@@ -53,8 +53,8 @@ class Service_IMDb {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rating(){
-        preg_match('/<b>([^\/]*)\/10<\/b>\s+&nbsp;&nbsp;<a href="ratings" class="tn15more">([^\s]*) votes<\/a>/', $this->page, $match);
+    protected function rating($page){
+        preg_match('/<b>([^\/]*)\/10<\/b>\s+&nbsp;&nbsp;<a href="ratings" class="tn15more">([^\s]*) votes<\/a>/', $page, $match);
         return array(
             'total' => $match[1],
             'votes' => $match[2]
@@ -63,15 +63,15 @@ class Service_IMDb {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function poster(){
-        preg_match('/src="http:\/\/ia.media-imdb.com\/images\/([^\.]*)._V1._SX\d+_SY\d+_.jpg/', $this->page, $match);
+    protected function poster($page){
+        preg_match('/src="http:\/\/ia.media-imdb.com\/images\/([^\.]*)._V1._SX\d+_SY\d+_.jpg/', $page, $match);
         return 'http://ia.media-imdb.com/images/'.$match[1].'._V1._SX%d_SY%d_.jpg';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function creators(){
-        preg_match('/<h5>Creator(s)?:<\/h5>(.*?)<\/div>/s', $this->page, $match);
+    protected function creators($page){
+        preg_match('/<h5>Creator(s)?:<\/h5>(.*?)<\/div>/s', $page, $match);
         preg_match_all('/<a href="\/name\/nm(\d+)[^>]*>([^<]*)<\/a>/', $match[2], $match);
 
         $result = array();
@@ -84,7 +84,7 @@ class Service_IMDb {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function episodes(){
+    protected function episodes(){
         $page = file_get_contents('http://www.imdb.com/title/tt'.$this->id.'/episodes');
         $page = urldecode(preg_replace('/&#x(\d+);/', '%\\1', $page));
 

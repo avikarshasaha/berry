@@ -9,7 +9,6 @@
                                                                    \/|*/
 class B {    static $path = array('');
     static $lang = 'ru';
-    static $autoload = array();
     protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -74,7 +73,14 @@ class B {    static $path = array('');
 
     static function l(){
         $args = func_get_args();
-        return self::call('*tags::variable', $args);
+        $var = piles::varname($args[0], '$GLOBALS');
+
+        if (func_num_args() == 1){            if ($func = create_function('', 'if (isset('.$var.')) return '.$var.';'))
+                return $func();
+        } else {
+            if ($func = create_function('$def', 'return '.$var.' = $def;'))
+                return $func($args[1]);
+        }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,15 +98,12 @@ class B {    static $path = array('');
             $dir = '/data/config';
             $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
 
-            if (!$config = cache::get('config.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.yaml', $dirs[1].'/*.yaml');
+            if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.yaml', $dirs[1].'/*.yaml');
 
-                foreach ($files as $k => $v){
-                    $k = substr(basename($v), 0, -5);
-                    $k = explode('.', $k);
-                    $yaml = yaml::load($v);
-                    $array = array($k[0] => (self::len($k) == 2 ? array($k[1] => $yaml) : $yaml));
-                    $config = arr::merge($config, $array);
-                }
+                foreach (array_reverse($files) as $v)
+                    $config = arr::merge($config, arr::assoc(array(
+                        substr(basename($v), 0, -5) => arr::flat(yaml::load($v))
+                    )));
 
                 cache::set($config);
             }
@@ -111,7 +114,7 @@ class B {    static $path = array('');
         if (func_num_args() == 1){            if (isset(self::$cache['config'][$args[0]]))
                 return self::$cache['config'][$args[0]];
 
-            $var = tags::varname($args[0], '$config');
+            $var = piles::varname($args[0], '$config');
 
             if ($func = create_function('$config', 'if (isset('.$var.')) return '.$var.';'))
                 return self::$cache['config'][$args[0]] = $func($config);
@@ -132,7 +135,7 @@ class B {    static $path = array('');
                 $dirs = array_merge($dirs, array(self::$path[0].$dir, self::$path[1].$dir));
             }
 
-            if (!$lang = cache::get('lang/'.self::$lang.'.php', array('file' => $dirs))){
+            if (!$lang = cache::get('b/lang/'.self::$lang.'.php', array('file' => $dirs))){
                 $func = create_function('$v', 'return $v."/*.yaml";');
                 $dirs = array_map($func, $dirs);
                 $files = call_user_func_array(array('file', 'glob'), $dirs);
@@ -148,13 +151,13 @@ class B {    static $path = array('');
         if (isset(self::$cache['lang'][$text]))
             return self::$cache['lang'][$text];
 
-        $var = tags::varname($text, '$lang');
+        $var = piles::varname($text, '$lang');
 
         if ($func = create_function('$lang', 'if (isset('.$var.')) return '.$var.';'))
             $result = $func($lang);
 
         if (is_array($result))
-            return $result;
+            return self::$cache['lang'][$text] = $result;
 
         return self::$cache['lang'][$text] = str::format($result, $array);
     }
@@ -177,9 +180,11 @@ class B {    static $path = array('');
 
         if (!$call){            $dir = '/ext';
             $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
-            if (!$call = cache::get('ext.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
+            if (!$call = cache::get('b/call.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
 
-                foreach ($files as $k => $v)                    foreach (token_get_all(file_get_contents($v)) as $token){
+                foreach ($files as $k => $v)                    foreach (token_get_all(file_get_contents($v)) as $token){                        if ($token[0] == T_CLASS)
+                            break;
+
                         if ($token[0] == T_FUNCTION)
                             $line = $token[2];
 
@@ -216,9 +221,9 @@ class B {    static $path = array('');
         if (function_exists($func))
             return true;
 
-        !cache::exists('ext.php') and self::call('#');
+        !cache::exists('b/call.php') and self::call('#');
 
-        if (!$funcs and ($file = cache::exists('ext.php')))
+        if (!$funcs and ($file = cache::exists('b/call.php')))
             $funcs = include $file;
 
         return isset($funcs[$func]);
@@ -229,16 +234,22 @@ class B {    static $path = array('');
     static function autoload($Name){
         static $prev;
 
-        if (is_file($cache = self::$path[0].'/cache/autoload.php'))
-            self::$autoload = array_merge(
+        if (!isset(self::$cache['autoload']))
+            self::$cache['autoload'] = array();
+
+        if (!is_dir($dir = self::$path[1].'/cache'))
+            $dir = self::$path[0].'/cache';
+
+        if (is_file($cache = $dir.'/b/autoload.php'))
+            self::$cache['autoload'] = array_merge(
                 include $cache,
-                self::$autoload
+                self::$cache['autoload']
             );
 
         $name = strtolower($Name);
 
-        if (isset(self::$autoload[$name]))
-            return include $prev = self::$autoload[$name];
+        if (isset(self::$cache['autoload'][$name]))
+            return include $prev = self::$cache['autoload'][$name];
 
         $file = array(
              str_replace('_', '/', $name),
@@ -271,12 +282,13 @@ class B {    static $path = array('');
                 is_file($path = self::$path[0].'/lib/berry/'.$try.'.php') or
                 is_file($path = self::$path[0].'/lib/'.$try.'.php')
             ){
-                include self::$autoload[$name] = $prev = $path;
+                include self::$cache['autoload'][$name] = $prev = $path;
 
                 $contents  = "<?php\r\n";
-                $contents .= 'return '.var_export(self::$autoload, true);
+                $contents .= 'return '.var_export(self::$cache['autoload'], true);
                 $contents .= ";\r\n";
 
+                file::mkdir(dirname($cache));
                 file_put_contents($cache, $contents);
                 return true;
             }
@@ -285,50 +297,46 @@ class B {    static $path = array('');
 ////////////////////////////////////////////////////////////////////////////////
 
     static function load($string = '', $_ = array()){
-        extract($_);
-
         $string = ($string ? $string : b::config('lib.b.load'));
-        $_['string'] = $string;
-        $_['files']  = array(
+        $files = array(
             str_replace('.', '/', $string),
             str_replace('.', '/', substr($string, 0, strrpos($string, '.'))).strrchr($string, '.')
         );
 
-        foreach ($_['files'] as $file)
+        foreach ($files as $file)
             if (
-                is_file($_['file'] = file::path('load/'.$file.'.php')) or
-                is_file($_['file'] = file::path('load/'.$file.'/index.php'))
+                is_file(self::$cache['load'] = file::path('load/'.$file.'.php')) or
+                is_file(self::$cache['load'] = file::path('load/'.$file.'/index.php'))
             ){
-                unset($string, $file);
-                include_once $_['file'];
-                return $_['file'];
+                unset($string, $files, $file);
+                extract($_);
+                include_once self::$cache['load'];
+                return self::$cache['load'];
             }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($string = '', $_ = array()){        extract($_);
-
+    static function show($string = '', $_ = array()){
         $string = ($string ? $string : b::config('lib.b.show'));
-        $_['string'] = $string;
         $string = str_replace('.', '/', $string);
 
         if (
-            is_file($_['file'] = file::path('show/'.$string.'.phtml')) or
-            is_file($_['file'] = file::path('show/'.$string.'/index.phtml'))
-        ){            !cache::exists('ext.php') and self::call('#');
-            $funcs = include cache::exists('ext.php');
+            is_file(self::$cache['show'] = file::path('show/'.$string.'.phtml')) or
+            is_file(self::$cache['show'] = file::path('show/'.$string.'/index.phtml'))
+        ){            !cache::exists('b/call.php') and self::call('#');
+            $funcs = include cache::exists('b/call.php');
 
-            foreach (token_get_all(file_get_contents($_['file'])) as $token)
+            foreach (token_get_all(file_get_contents($file)) as $token)
                 if ($token[0] == T_STRING){
                     if (!function_exists($token[1]) and $funcs[$token[1]])
                         include $funcs[$token[1]];
                 }
 
-            unset($string, $funcs, $token);
-
             ob_start();
-                include $_['file'];
+                unset($string, $funcs, $token);
+                extract($_);
+                include self::$cache['show'];
             return trim(ob_get_clean());
         }
     }

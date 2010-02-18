@@ -59,7 +59,11 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         foreach ($this->joinvalues as $k => $v){
             $foreign = $this->relations[$k]['foreign'];
+
             $table = self::table($foreign['table1'])->where($foreign['field1'].' = ?', $id);
+            $table->delete();
+
+            $table = self::table($foreign['table1']);
 
             foreach ($v as $i)
                 $table->values(array(
@@ -67,7 +71,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                     $foreign['field3'] => $i
                 ));
 
-            $table->delete();
             $table->save();
         }
 
@@ -214,7 +217,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         $array = self::fetch();
         self::_fetch_col($array);
 
-        return $array;
+        return ($array ? $array : array());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -232,7 +235,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             return call_user_method_array('selectRow', self::$sql, $args);
         }
 
-        return reset(self::fetch());
+        if ($array = reset(self::fetch()))
+            return $array;
+
+        return array();
     }
 
 ////////////////////////////////////////////////////////////////////////////////

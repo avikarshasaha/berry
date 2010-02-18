@@ -37,7 +37,7 @@ class captcha {    const LEN = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function checker($check){
+    static function validator($check){
         return ($check == $_SESSION['lib']['captcha']);
     }
 

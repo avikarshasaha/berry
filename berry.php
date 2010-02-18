@@ -20,9 +20,9 @@ html::block('body', ob_get_clean());
 
 ////////////////////////////////////////////////////////////////////////////////
 
-$output = preg_replace('/<block(_|\.|:|-)body(\s+)?\/>/ie', "tags::parse(join('', html::block('body')))", b::show());
-$output = hook::get('output', tags::parse($output, true));
-$output = preg_replace('/<block(_|\.|:|-)(.*?)(\s+)?\/>/ie', "tags::parse(join('', html::block('\\2')), true)", $output);
+$output = preg_replace('/<block_body(\s+)?\/>/i', join('', html::block('body')), piles::show());
+$output = hook::get('output', $output);
+$output = preg_replace('/<block_(.*?)(\s+)?\/>/ie', "join('', html::block('\\1'))", $output);
 
 ////////////////////////////////////////////////////////////////////////////////
 

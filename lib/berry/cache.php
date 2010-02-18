@@ -12,9 +12,11 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function get($key, $array = array(), $_array = array()){        self::$file = file::path('cache/').$key;
+    static function get($key, $array = array(), $_array = array()){
+        self::$file = file::path('cache/').$key;
 
-        if (!isset(self::$tags)){            if (!is_file($file = file::path('cache/').'cache.php'))
+        if (!isset(self::$tags)){
+            if (!is_file($file = file::path('cache/').'cache.php'))
                 arr::export($file, array());
 
             self::$tags = include $file;
@@ -33,14 +35,30 @@ class Cache {    static $file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    static function get_path($key, $array = array(), $_array = array()){
+        self::$file = file::path('cache/').$key;
+
+        if (!isset(self::$tags)){
+            if (!is_file($file = file::path('cache/').'cache.php'))
+                arr::export($file, array());
+
+            self::$tags = include $file;
+        }
+
+        if (!self::expired($key, $array))
+            return self::$file;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     static function set($value, $tags = array()){        $name = str_replace(file::path('cache/'), '', self::$file);
         $array = (isset(self::$tags[$name]) ? self::$tags[$name] : array());        self::$tags[$name] = array_merge($array, $tags);
 
         arr::export(file::path('cache/').'cache.php', self::$tags);
-        file::mkdir(dirname(self::$file));
+        file::mkdir(dirname($file = self::$file));
         b::call((is_array($value) ? 'arr::export' : 'file_put_contents'), self::$file, $value);
 
-        return self::$file;
+        return $file;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

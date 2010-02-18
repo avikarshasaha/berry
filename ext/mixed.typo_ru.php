@@ -57,9 +57,9 @@ function typo_ru($content, $skip = array()){    $skip = array_merge(array('code
             $content = str_replace($skip[0][$i], '<!--typo_ru['.$i.']-->', $content);
 
     $content = '<span>'.$content.'</span>';
-    $content = preg_replace('/<(!|\?)(.*?)(\?)?>/ies', "'¬'.base64_encode(stripslashes('<\\1\\2\\3>')).'¬*'", $content);
-    $content = preg_replace('/<([a-z]+([a-z\.:-]+)?[^>]*)>/ie', "'¬'.base64_encode(stripslashes('<\\1>')).'¬*'", $content);
-    $content = preg_replace('/(\$|\#|\%)(\w+)?\{(.*)\}/Use', "'¬'.base64_encode(stripslashes('\\1\\2{'.'\\3'.'}')).'¬*'", $content);
+    $content = preg_replace('/<(!|\?)(.*?)(\?)?>/ies', "'¬'.base64_encode('<\\1\\2\\3>').'¬*'", $content);
+    $content = preg_replace('/<([a-z]+([a-z\.:-]+)?[^>]*)>/ie', "'¬'.base64_encode('<\\1>').'¬*'", $content);
+    $content = preg_replace('/(\$|\#|\%)(\w+)?\{(.*)\}/Use', "'¬'.base64_encode('\\1\\2{'.'\\3'.'}').'¬*'", $content);
     $content = preg_replace('/¬([^¬]*)¬\*"([^"]*)"<\/([^>]*)>/s', '"¬\\1¬*\\2</\\3>"', $content);
     $content = preg_replace('/([>(\s\W])(")([^"]*)([^\s"(])(")/', '\\1«\\3\\4»', $content);
 
@@ -73,8 +73,10 @@ function typo_ru($content, $skip = array()){    $skip = array_merge(array('code
     $content = strtr($content, $replace['string']);
     $content = preg_replace(array_keys($replace['regexp']), array_values($replace['regexp']), $content);
 
+    $func = create_function('$v', 'return str_replace(\'\"\', \'"\', base64_decode($v));');
+
     if (preg_match_all('/¬(.*)¬\*/U', $content, $match))
-        $content = strtr($content, array_combine($match[0], array_map('base64_decode', $match[1])));
+        $content = strtr($content, array_combine($match[0], array_map($func, $match[1])));
 
     foreach ($skip[0] as $k => $v)
         $content = str_replace('<!--typo_ru['.$k.']-->', $v, $content);

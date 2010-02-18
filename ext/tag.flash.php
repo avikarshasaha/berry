@@ -18,7 +18,7 @@ function tag_flash($attr){
 	    'params_menu' => 'false'
 	), $attr);
 
-	foreach (attr::group('params', $attr) as $k => $v)
+	foreach (piles::attr_group('params', $attr) as $k => $v)
 	    $params .= '<param name="'.$k.'" value="'.$v.'" />';
 
     return preg_replace("/(\s{2,}|\r\n)/", '', str::format('
@@ -47,11 +47,11 @@ function tag_swfobject($attr){
 	html::block('head', html::js('~/tag/swfobject.js'));
 
 	$attr['id'] = 'tag_swfobject['.$i++.']';
-	$attr['params'] = arr::json(attr::group('params', $attr));
-	$attr['flashvars'] = arr::json(attr::group('flashvars', $attr));
+	$attr['params'] = arr::json(piles::attr_group('params', $attr));
+	$attr['flashvars'] = arr::json(piles::attr_group('flashvars', $attr));
 
     return str::format(
-        tags::fill('span', array('id' => '%id', '#text' => '%#text')).
+        piles::fill('span', array('id' => '%id', '#text' => '%#text')).
         html::js('swfobject.embedSWF("%src", "%id", "%width", "%height", "%version", null, %flashvars, %params);')
     , $attr);
 }

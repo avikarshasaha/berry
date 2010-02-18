@@ -41,10 +41,7 @@ function attr_if($attr){    if (preg_match('/("|\'|)(.*)\\1 (==|===|!=|!==|<|<=
         	case '>=':
         	    $skip = ($l >= $r);
         	break;        }
-    } elseif (preg_match('/(!)?("|\'|)(.*)\\2/', $attr['if'], $match)){        if (tags::is_array($match[3]))
-            $match[3] = tags::unserialize($match[3]);
-
-    	if ($match[1] == '!')
+    } elseif (preg_match('/(!)?("|\'|)(.*)\\2/', $attr['if'], $match)){    	if ($match[1] == '!')
     	    $skip = !$match[3];
     	else
     	    $skip = $match[3];
@@ -62,7 +59,7 @@ function attr_check_re($attr){
 	    'check_type' => 'e'
 	), $attr);
 
-	$_SESSION['attr']['check'][tags::elmname_parse($attr['name'])] = array(
+	$_SESSION['attr']['check'][piles::name2var($attr['name'])] = array(
 	    $attr['check_re'],
 	    str::format($attr['check_need'], $attr),
 	    $attr['check_type']
@@ -75,7 +72,7 @@ function attr_check_re($attr){
 ////////////////////////////////////////////////////////////////////////////////
 
 function attr_period_stop($attr){
-	if (strtotime($attr['period_stop']) <= time())
+	if (date::time($attr['period_stop']) <= time())
 	    $attr['#skip'] = true;
 
     unset($attr['period_stop']);
@@ -85,7 +82,7 @@ function attr_period_stop($attr){
 ////////////////////////////////////////////////////////////////////////////////
 
 function attr_period_start($attr){
-	if (strtotime($attr['period_start']) >= time())
+	if (date::time($attr['period_start']) >= time())
 	    $attr['#skip'] = true;
 
     unset($attr['period_start']);
@@ -95,7 +92,7 @@ function attr_period_start($attr){
 ////////////////////////////////////////////////////////////////////////////////
 
 function attr_confirm($attr){
-    $quote = (is_int(strpos($attr['confirm'], '"')) ? '"' : "'");
+    $quote = (strpos($attr['confirm'], '"') !== false ? '"' : "'");
     $attr['onclick'] = 'if (!confirm('.$quote.$attr['confirm'].$quote.')) return false;'.$attr['onclick'];
 
     unset($attr['confirm']);
@@ -115,7 +112,7 @@ function attr_default($attr){
 
 function attr_name($attr){
     if (
-        check::$error[tags::elmname_parse($attr['name'])] and
+        check::$errors[piles::name2var($attr['name'])] and
         strpos($attr['class'], 'check_error') === false
     )
         $attr['class'] .= ($attr['class'] ? ' ' : '').'check_error';
@@ -144,7 +141,7 @@ function attr_oddeven($attr){	static $i = 0;
 
 function attr_every($attr){	static $array = array();
 
-	if (!array_key_exists($attr['every'], $array))
+	if (!isset($array[$attr['every']]))
 	    $array[$attr['every']] = 1;
 
 	$every = (!is_numeric($attr['every'][0]) ? substr($attr['every'], 1) : $attr['every']);
@@ -157,7 +154,7 @@ function attr_every($attr){	static $array = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function attr_router($attr){    $group = attr::group('router', $attr);
+function attr_router($attr){    $group = piles::attr_group('router', $attr);
 	$attr['href'] = b::router($attr['router'], $group);
 
 	foreach ($group as $k => $v)

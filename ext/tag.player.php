@@ -28,7 +28,7 @@ function tag_player_audio($attr){    static $i = 0;
     $params['soundFile'] = $params['src'];
 
     unset($params['id'], $params['src'], $params['#is_final'], $params['#tag']);
-    return tags::fill('span', array('id' => $attr['id'], '#text' => $attr['#text'])).
+    return piles::fill('span', array('id' => $attr['id'], '#text' => $attr['#text'])).
            js('AudioPlayer.embed("'.$attr['id'].'", '.arr::json($params).');');
 }
 

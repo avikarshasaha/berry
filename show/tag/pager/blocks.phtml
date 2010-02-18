@@ -1,19 +1,11 @@
-<? if ($prev){ ?>
-    <a href="<?=$prev; ?>">←</a>
-<? } else { ?>
-    ←
-<? } ?>
+(${prev} ? '<a href="'.$prev.'">←</a>' : '←')
 
 <? foreach ($pages as $page => $href){ ?>
     <? if ($page == $current){ ?>
         <b>[<?=($page * $attr['limit'] - $attr['limit'] + 1).'-'.($page * $attr['limit']); ?>]</b>
     <? } else { ?>
-        <a href="<?=$href; ?>">[<?=($page * $attr['limit'] - $attr['limit'] + 1).'-'.($page * $attr['limit']); ?>]</a>
+        <a href="${href}">[<?=($page * $attr['limit'] - $attr['limit'] + 1).'-'.($page * $attr['limit']); ?>]</a>
     <? } ?>
 <? } ?>
 
-<? if ($next){ ?>
-    <a href="<?=$next; ?>">→</a>
-<? } else { ?>
-    →
-<? } ?>
+(${next} ? '<a href="'.$next.'">→</a>' : '→')

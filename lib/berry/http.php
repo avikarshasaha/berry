@@ -11,13 +11,18 @@ class HTTP {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function cookie($name = null, $value = null, $time = '+1 day'){
-        if ($name !== null and $value !== null)
-            return setcookie($name, $value, date::time($time), '/', '', false, true);
-        elseif ($name !== null)
-            return $_COOKIE[str_replace('.', '_', $name)];
-        else
-            return $_COOKIE;
+    static function cookie($name = null, $value = null, $expire = 0){        if (is_array($name))
+            extract($name);
+
+        if ($value === null)
+            return ($name !== null ? $_COOKIE[str_replace('.', '_', $name)] : $_COOKIE);
+
+        $expire = date::time($expire ? $expire : b::config('lib.http.cookie.expire'));
+        $path = ($path ? $path : b::config('lib.http.cookie.path'));
+        $domain = ($domain ? $domain : str::format(b::config('lib.http.cookie.domain'), array('current' => $_SERVER['SERVER_NAME'])));
+        $secure = (isset($secure) ? $secure : b::config('lib.http.cookie.secure'));
+
+        return setcookie($name, $value, $expire, $path, $domain, $secure, true);
     }////////////////////////////////////////////////////////////////////////////////
 
     static function go($location = '', $status = 303){        if (!$location)

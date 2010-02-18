@@ -55,24 +55,24 @@ class HTML {
 
         foreach ($array as $k => $v)
             if (is_array($v)){
-                $attr['#text'] .= tags::fill('optgroup', array('label' => $k));
+                $attr['#text'] .= piles::fill('optgroup', array('label' => $k));
 
                 foreach ($v as $a => $b){                    $array = array('value' => $a, '#text' => ($b !== '' ? $b : $a));
 
                     if (in_array($a, $selected))
                         $array['selected'] = 'selected';
 
-                    $attr['#text'] .= tags::fill('option', $array);
+                    $attr['#text'] .= piles::fill('option', $array);
                 }
             } else {                $array = array('value' => $k, '#text' => ($v !== '' ? $v : $k));
 
                 if (in_array($k, $selected))
                     $array['selected'] = 'selected';
 
-                $attr['#text'] .= tags::fill('option', $array);
+                $attr['#text'] .= piles::fill('option', $array);
             }
 
-        return tags::fill('select', $attr);
+        return piles::fill('select', $attr);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ class HTML {
         else
             $attr['src'] = $text;
 
-        return tags::fill('script', $attr);
+        return piles::fill('script', $attr);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +104,7 @@ class HTML {
         $attr['href'] = $text;
         $attr['rel'] = 'stylesheet';
 
-        return tags::fill('link', $attr);
+        return piles::fill('link', $attr);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

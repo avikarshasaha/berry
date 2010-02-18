@@ -7,36 +7,40 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Check_Except extends Except {
+class Piles_Except extends Except {
+////////////////////////////////////////////////////////////////////////////////
+
+    function __construct($message, $string){
+        $message = explode(':', trim(strip_tags($message)));
+
+        $this->message = $message[0];
+        $this->string = $string;
+        $this->code = preg_replace('/(.*?)(T\_([A-Z_]+))(.*?)/e', "constant('\\2')", $message[0]);
+        $this->file = 'eval()';
+        $this->line = strrchr(end($message), ' ');    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($message, $string = '_POST'){        $this->string = $string;
-        foreach ($message as $k => $v)
-            if ($error = check::$errors[$k]){                $v = (array)$v;
-                if (is_array($string = str::json($v[1])))
-                    $v[1] = $string[$error];
+    function __toString(){
+        $result  = '<h2>'.$this->message.'</h2>';
+        $result .= '<h3>Line: <a href="#'.$this->line.'">'.$this->line.'</a>.</h3>';
+        $result .= '<table>';
 
-                $this->message[$k] = $v;
-            }
-    }
+        foreach (explode("\n", $this->string) as $k => $v){
+            $bg = $this->colors[++$k == $this->line];
 
-////////////////////////////////////////////////////////////////////////////////
-
-    function __toString(){        $bg = $this->colors[1];
-
-        foreach ($this->message as $k => $v){
             $result .= '<tr>';
-            $result .= '<td style="background: #'.$bg[0].'; padding: 5px;">';
-            $result .= '<b>'.piles::var2name($this->string.'.'.$k).'</b>';
+            $result .= '<td style="background: #'.$bg[0].'; padding: 5px; text-align: center;">';
+            $result .= '<a name="'.$k.'"></a>'.$k;
             $result .= '</td>';
             $result .= '<td style="background: #'.$bg[1].'; padding: 5px;">';
-            $result .= ($v[1] ? $v[1] : 'must be '.$v[0]);
+            $result .= '<pre>'.str::unhtml($v).'</pre>';
             $result .= '</td>';
             $result .= '</tr>';
         }
 
-        return '<table>'.$result.'</table>';    }
+        return $result.'</table>';
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -8,7 +8,7 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Check {
-    static $error = array();
+    static $errors = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -22,7 +22,7 @@ class Check {
 
         $data = (!is_array($data) ? b::l($data) : $data);
         $array = arr::flat($data);
-        $name = tags::elmname_parse($name);
+        $name = piles::name2var($name);
         $value = $array[$name];
         $check = array();
 
@@ -41,32 +41,17 @@ class Check {
         if (preg_match_all('/(or\s+empty|!?\w+)(\((.*?)\))?(\s+)?/is', $re, $match))
             for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
                 $func = strtolower($match[1][$i]);
-                $params = array();
+                $args = array($value, self::_params($match[3][$i]), $name, $array, $data);
 
                 if ($func[0] == '!'){
                     $func = substr($func, 1);
                     $not[$func] = true;
                 }
 
-                if ($match[3][$i])
-                    $params = array_map(create_function('$item', '
-                        if (
-                            ($item[0] == "\'" and substr($item, -1) == "\'") or
-                            ($item[0] == \'"\' and substr($item, -1) == \'"\')
-                        )
-                            return substr($item, 1, -1);
-
-                        return $item;
-                    '), arr::trim(explode(',', $match[3][$i])));
-
-                $args = array($value, $params, $name, $array, $data);
-
                 if (b::function_exists($call = 'check_'.$func)){
                     $check[$func] = b::call('*'.$call, $args);
                     continue;
-                }
-
-                if (method_exists('check', $func) and substr($func, 0, 3) != 'is_'){
+                } elseif (method_exists('check', $func) and substr($func, 0, 3) != 'is_'){
                     $check[$func] = call_user_func_array(array('check', $func), $args);
                     continue;
                 }
@@ -82,9 +67,25 @@ class Check {
         if (!$key = array_search(false, $check))
             return true;
 
-        self::$error[$name] = $key;
+        self::$errors[$name] = $key;
         return false;
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function _params($params = ''){        if (!$params)
+            return array();
+        $params = str_replace('\"', '"', preg_replace('/(\'|")(.*?)\\1/es', "'\\1'.str_replace(',', '¬', '\\2').'\\1'", $params));
+        $params = explode(',', $params);
+
+        foreach ($params as &$v){
+            $v = trim(str_replace('¬', ',', $v));
+
+            if (($v[0] == "'" and substr($v, -1) == "'") or ($v[0] == '"' and substr($v, -1) == '"'))
+                $v = substr($v, 1, -1);
+        }
+
+        return $params;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -106,7 +107,7 @@ class Check {
         if (
             $array and
             //self::is_valid_session() and
-            (!self::$error or !array_intersect_key(self::$error, arr::flat($array)))
+            (!self::$errors or !array_intersect_key(self::$errors, arr::flat($array)))
         )
             return $array;
 
@@ -121,7 +122,7 @@ class Check {
         if (
             $array and
             //self::is_valid_session() and
-            (!self::$error or !array_intersect_key(self::$error, arr::flat($array)))
+            (!self::$errors or !array_intersect_key(self::$errors, arr::flat($array)))
         )
             return $array;
 
@@ -136,7 +137,7 @@ class Check {
         if ($array /*and self::is_valid_session()*/){            foreach (array_keys(arr::flat(arr::files($array))) as $k)
                 $files[substr($k, 0, strrpos($k, '.'))] = $k;
 
-            if (!self::$error or !array_intersect_key(self::$error, $files))
+            if (!self::$errors or !array_intersect_key(self::$errors, $files))
                 return $array;
         }
 
@@ -206,13 +207,8 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function url($value, $params){
-        $check = (filter_var($value, FILTER_VALIDATE_URL) !== false);
-
-        if ($params)
-            $check = ($check and preg_match('/^('.join('|', $params).')\:\/\//i', $value));
-
-        return $check;
+    static function url($value, $params = array()){
+        return (filter_var($value, FILTER_VALIDATE_URL) !== false and (!$params or preg_match('/^('.join('|', $params).')\:\/\//i', $value)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -230,7 +226,7 @@ class Check {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function checker($value, $params){
-        return self::call($params[0], $value);
+        return (bool)self::call($params[0], $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -241,7 +237,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function unique($value, $params){        $tmp = explode('.', $params[0]);
+    static function unique($value, $params = array()){        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
         return !sql::query(

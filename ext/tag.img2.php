@@ -33,7 +33,7 @@ function tag_img2($attr){    $attr = array_merge(array(
         $attr['height'] = $tmp[1];        $attr['src'] = '~/'.$file[1].'/'.$file[2].'/'.$file[3].$query;
 
         $image->close();
-        return tags::fill('img', $attr);    }
+        return piles::fill('img', $attr);    }
 
     if (!$attr['text'] and $attr['#text'])
         $attr['text'] = $attr['#text'];
@@ -56,4 +56,4 @@ function tag_img2($attr){    $attr = array_merge(array(
     }
 
     $image->close();
-    return tags::fill('img', $attr);}
+    return piles::fill('img', $attr);}

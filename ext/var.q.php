@@ -7,6 +7,6 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function var_q($var){
-    return call_user_func_array(array('b', 'q'), explode('.', $var, 3));
+function var_q($string){
+    return b::call('*b::q', explode('.', $string, 3));
 }

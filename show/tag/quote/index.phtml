@@ -1,13 +1,15 @@
-<? html::block('head', html::css('~/tag/quote/style.css')); ?>
+<block id="head">
+    <link href="~/tag/quote/style.css" rel="stylesheet" type="text/css" media="screen" />
+</block>
 
-<? if ($attr['cite']){ ?>
-    <blockquote class="<?=$attr['class']; ?>" cite="<?=$attr['cite']['href']; ?>">
-        <?=$attr['#text']; ?>
+<? if (${attr.cite}){ ?>
+    <blockquote class="${attr.class}" cite="${attr.cite.href}">
+        ${attr.#text}
 
         <div align="right">
-            <a href="<?=$attr['cite']['href']; ?>"><?=$attr['cite']['text']; ?></a>
+            <a href="${attr.cite.href}">${attr.cite.text}</a>
         </div>
     </blockquote>
 <? } else { ?>
-    <blockquote class="<?=$attr['class']; ?>"><?=$attr['#text']; ?></blockquote>
+    <blockquote class="${attr.class}">${attr.#text}</blockquote>
 <? } ?>

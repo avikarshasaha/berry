@@ -7,46 +7,40 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function type_a($var, $value){    return tags::serialize((array)$value);}
+function type_a($value){    return (array)$value;}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_b($var, $value){
+function type_b($value){
     return (bool)$value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_e($var, $value){
+function type_e($value){
     return mysql_real_escape_string($value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_f($var, $value){
+function type_f($value){
     return (float)$value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_i($var, $value){
+function type_i($value){
     return (int)$value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_s($var, $value){
-    return tags::unhtml($value);
+function type_s($value){
+    return str::unhtml($value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_u($var, $value){
+function type_u($value){
     return urlencode($value);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function type_h($var, $value){
-    return supadupa_htmlize(array('#text' => $value));
 }

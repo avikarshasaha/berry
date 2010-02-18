@@ -166,14 +166,19 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             return $value;
 
         if ($_name = self::_is_HABTM($name)){
-            foreach ($value as $v)
-                $this->joinvalues[$_name][] = (is_object($v) ? ($v->id ? $v->id : $v->save()) : $v);
+            foreach ($value as $v)                if (is_object($v)){                    $vars = get_class_vars($v);
+                    $key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
+                    $this->joinvalues[$_name][] = ($v[$key] ? $v[$key] : $v->save());
+                } else {
+                    $this->joinvalues[$_name][] = $v;
+                }
         } else {
             if (is_int($value)){                $tmp = $value;
                 $tmp -= self::_get($name);
                 $this->values[$name] = self::raw($this->table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
-            } elseif (is_object($value)){
-                $this->values[$name] = ($value->id ? $value->id : $value->save());
+            } elseif (is_object($value)){                $vars = get_class_vars($value);
+                $key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
+                $this->values[$name] = ($value[$key] ? $value[$key] : $value->save());
             } else {                $this->values[$name] = $value;            }
         }
 

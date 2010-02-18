@@ -37,6 +37,11 @@ class SQL extends SQL_Control {
     function values(){
         $args = func_get_args();
 
+        if ($this->where){            foreach ($args[0] as $k => $v)
+                $this[$k] = $v;
+
+            return $this;        }
+
         if (!is_array($args[0])){
             $this->values[] = $args;
             return $this;

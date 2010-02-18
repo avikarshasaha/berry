@@ -71,12 +71,12 @@ class Arr {
         $keys  = array_keys($array);
 
         foreach ($keys as $k){
-            $k2 = str_replace('\\.', tags::char('.'), $k);
+            $k2 = str_replace('\\.', piles::char('.'), $k);
             $k2 = str_replace('\.', '.', $k2);
-            $k2 = str_replace(tags::char('.'), '.', $k2);
+            $k2 = str_replace(piles::char('.'), '.', $k2);
             $k  = str_replace('\\.', '\\\.', $k);
 
-            $result .= tags::varname($k2, '$_').' = $array["'.$k.'"];';
+            $result .= piles::varname($k2, '$_').' = $array["'.$k.'"];';
         }
 
         if ($result and ($func = create_function('$array', $result.'return $_;')))

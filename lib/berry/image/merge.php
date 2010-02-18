@@ -75,7 +75,7 @@ class Image_Merge {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function background($background = '#000 0'){        $background = str_replace('px', '', strtolower($background));
+    protected function background($background = '100'){        $background = str_replace('px', '', strtolower($background));
 
         foreach (explode(' ', $background) as $v){            $v = trim($v);
 
@@ -85,7 +85,7 @@ class Image_Merge {
                 $alpha = $v;
         }
 
-        $this->background = array($color, ($alpha ? (100 - $alpha + 1) : 100));
+        $this->background = array($color, (100 - $alpha));
         return $this;
     }
 
