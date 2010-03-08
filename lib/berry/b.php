@@ -174,9 +174,14 @@ class B {    static $path = array('');
         if ($name[0] == '*'){            $name = substr($name, 1);
             $args = $args[0];        }
 
-        if (!$call){            $dir = '/ext';
-            $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
-            if (!$call = cache::get('b/call.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.php', $dirs[1].'/*.php');
+        if (!$call){            $dirs = array();
+
+            foreach (self::$path as $path)
+                $dirs[] = $path.'/ext';
+            if (!$call = cache::get('b/call.php', array('file' => $dirs))){                $files = array();
+
+                foreach ($dirs as $dir)
+                    $files = array_merge($files, file::glob($dir.'/*.php'));
 
                 foreach ($files as $k => $v)                    foreach (token_get_all(file_get_contents($v)) as $token){                        if ($token[0] == T_CLASS)
                             break;
@@ -233,7 +238,7 @@ class B {    static $path = array('');
         if (!isset(self::$cache['autoload']))
             self::$cache['autoload'] = array();
 
-        if (!is_dir($dir = self::$path[1].'/tmp'))
+        if (!self::$path[1] or !is_dir($dir = self::$path[1].'/tmp'))
             $dir = self::$path[0].'/tmp';
 
         if (is_file($cache = $dir.'/b/autoload.php'))

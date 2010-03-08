@@ -127,7 +127,7 @@ class Cache {
                     } else {                        $tmp = SQL::SKIP;
                     }
 
-                    $query = sql::fetch_row('show table status { from ?_ } like "?_"', $tmp, $v);
+                    $query = sql::query('show table status { from ?_ } like "?_"', $tmp, $v)->fetch_row();
                     $result[] = (strtotime($query['Update_time']) > $mtime);
                 }
 

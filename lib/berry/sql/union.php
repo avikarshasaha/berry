@@ -11,7 +11,9 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($array){        foreach ($array as $object){
+    function __construct($array){        foreach ($array as $object){            if (!$object->select)
+                $object->select[] = '*';
+
             $this->union[] = $object->build('select');
             $this->placeholders = array_merge($this->placeholders, $object->placeholders);
         }
@@ -61,7 +63,39 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch_array(){        return arr::assoc(self::fetch());    }
+    function fetch_cell(){
+        if (is_array($array = self::fetch_col()))
+            return reset($array);
+
+        return $array;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function fetch_col(){
+        $array = self::fetch();
+        self::_fetch_col($array);
+
+        return ($array ? $array : array());
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function _fetch_col(&$v){
+        if (!is_array($cell = reset($v)))
+            $v = $cell;
+        else
+            array_walk($v, array('self', '_fetch_col'));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function fetch_row(){
+        if ($array = reset(self::fetch()))
+            return $array;
+
+        return array();
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 }

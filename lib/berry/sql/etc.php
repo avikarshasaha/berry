@@ -88,9 +88,13 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function query(){
-        $args = func_get_args();
-        return call_user_method_array('query', self::$sql, $args);
+    static function query(){        $args = func_get_args();        return new SQL_Query($args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function raw($raw){
+        return new SQL_Raw($raw);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -175,10 +179,6 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
         return $schema;
     }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function raw($raw){        return new SQL_Raw($raw);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -71,11 +71,11 @@ class Archive {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function __call($method, $args){
+    protected function __call($method, $params){
         if (extension_loaded('mbstring') and ($encoding = mb_internal_encoding()))
             mb_internal_encoding('ASCII');
 
-        $result = call_user_func_array(array($this->object, substr($method, 1)), $args);
+        $result = call_user_func_array(array($this->object, substr($method, 1)), $params);
 
         if ($encoding)
             mb_internal_encoding($encoding);

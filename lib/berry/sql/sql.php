@@ -57,7 +57,10 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function select(){        foreach (func_get_args() as $arg)
-            $this->select[] = (is_object($arg) ? $arg->build('subquery_select', $this) : $arg);
+            if ($arg instanceof SQL or $arg instanceof SQL_Query)
+                $this->select[] = $arg->build('subquery_select', $this);
+            else
+                $this->select[] = $arg;
 
         return $this;
     }
@@ -75,7 +78,7 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function join(){        foreach (func_get_args() as $arg){            if (is_object($arg)){                $this->join[] = $arg->build('subquery_join', $this);                continue;            } elseif (is_array($arg)){                list($arg, $vars) = array($this->table, $arg);                $this->relations = array_merge($this->relations, self::deep_throat(array($arg => $vars)));            }
+    function join(){        foreach (func_get_args() as $arg){            if ($arg instanceof SQL or $arg instanceof SQL_Query){                $this->join[] = $arg->build('subquery_join', $this);                continue;            } elseif (is_array($arg)){                list($arg, $vars) = array($this->table, $arg);                $this->relations = array_merge($this->relations, self::deep_throat(array($arg => $vars)));            }
             $relation = $this->relations[strtolower($arg)];
             $this->join = array_merge($this->join, self::build('join', $relation));
 
@@ -94,13 +97,15 @@ class SQL extends SQL_Control {
         $key = (b::len($this->where) - 1);
 
         foreach ($args as $arg){
-            if ($arg instanceof SQL){
+            if ($arg instanceof SQL or $arg instanceof SQL_Query){
                 self::$sql->_placeholderArgs = array_reverse($arg->placeholders);
 
                 $class = clone $this;
                 $query = self::$sql->_toBerry($arg->build('subquery_select', $class));
                 $query = self::$sql->_expandPlaceholdersFlow($query);
-                $query = substr($query, 0, strrpos($query, ')')).')';
+
+                if ($arg instanceof SQL)
+                    $query = substr($query, 0, strrpos($query, ')')).')';
 
                 $this->placeholders[] = self::raw($query);
             } else {

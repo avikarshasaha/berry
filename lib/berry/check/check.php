@@ -246,7 +246,7 @@ class Check {
         return !sql::query(
             'select 1 from ?_ where lower(?#) = ? { and ? } limit 1',
             $table, $field, strtolower($value), ($params[1] ? sql::raw($params[1]) : sql::SKIP)
-        );
+        )->fetch();
     }
 
 ////////////////////////////////////////////////////////////////////////////////

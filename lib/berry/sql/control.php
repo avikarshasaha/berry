@@ -98,11 +98,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch(){
-        if (!$this){
-            $args = func_get_args();
-            return call_user_method_array('select', self::$sql, $args);
-        }
-
         $key = self::hash('fetch');
 
         if (array_key_exists($key, self::$cache))
@@ -191,16 +186,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch_object(){        return arr::object(self::fetch_array());
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function fetch_cell(){        if (!$this){            $args = func_get_args();
-            return call_user_method_array('selectCell', self::$sql, $args);
-        }
-
-        if (is_array($array = self::fetch_col()))
+    function fetch_cell(){        if (is_array($array = self::fetch_col()))
             return reset($array);
 
         return $array;
@@ -209,11 +195,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch_col(){
-        if (!$this){
-            $args = func_get_args();
-            return call_user_method_array('selectCol', self::$sql, $args);
-        }
-
         $array = self::fetch();
         self::_fetch_col($array);
 
@@ -230,11 +211,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch_row(){
-        if (!$this){
-            $args = func_get_args();
-            return call_user_method_array('selectRow', self::$sql, $args);
-        }
-
         if ($array = reset(self::fetch()))
             return $array;
 
