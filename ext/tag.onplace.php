@@ -7,9 +7,18 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-try {    if (!check::is_valid($_SESSION['attr']['check'], $_POST))
-        throw new Check_Except($_SESSION['attr']['check']);} catch (Check_Except $e){    echo $e;}
+function tag_onplace($attr){
+    $_SESSION['tag']['onplace'] = $attr;
+    $attr['#text'] = preg_replace('/<!--(.*?)-->/s', '', $attr['#text']);
+    return piles::fill('span', array_merge($attr, array('id' => 'ajax[onplace]')));
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-echo piles::show('home');
+function onplace($data){
+    if ($attr = $_SESSION['tag']['onplace']){        if ($_SESSION['attr']['check'])
+            check::is_valid($_SESSION['attr']['check'], $data);
+        $attr['#text'] = strtr($attr['#text'], array('<!--' => '', '-->'  => ''));
+        return piles::show(tag_onplace($attr));
+    }
+}

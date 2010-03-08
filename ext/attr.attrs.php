@@ -7,47 +7,14 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function attr_if($attr){    if (preg_match('/("|\'|)(.*)\\1 (==|===|!=|!==|<|<=|>|>=) ("|\'|)(.*)\\4/', $attr['if'], $match)){    	$l = $match[2];
-    	$r = $match[5];
+function attr_if($attr){    $result = '';
+    $token = token_get_all('<?php '.$attr['if']);
 
-        switch (trim($match[3])){        	case '==':
-        	    $skip = ($l == $r);
-        	break;
+    for ($i = 1, $c = b::len($token); $i < $c; $i++)        $result .= (is_array($token[$i]) ? $token[$i][1] : $token[$i]);
 
-        	case '===':
-        	    $skip = ($l === $r);
-        	break;
+    if ($func = @create_function('', 'return '.$result.';'))
+        $attr['#skip'] = !$func();
 
-        	case '!=':
-        	    $skip = ($l != $r);
-        	break;
-
-        	case '!==':
-        	    $skip = ($l !== $r);
-        	break;
-
-        	case '<':
-        	    $skip = ($l < $r);
-        	break;
-
-        	case '<=':
-        	    $skip = ($l <= $r);
-        	break;
-
-        	case '>':
-        	    $skip = ($l > $r);
-        	break;
-
-        	case '>=':
-        	    $skip = ($l >= $r);
-        	break;        }
-    } elseif (preg_match('/(!)?("|\'|)(.*)\\2/', $attr['if'], $match)){    	if ($match[1] == '!')
-    	    $skip = !$match[3];
-    	else
-    	    $skip = $match[3];
-    }
-
-    $attr['#skip'] = !$skip;
     unset($attr['if']);
     return $attr;
 }

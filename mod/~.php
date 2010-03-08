@@ -13,6 +13,10 @@ $qs = http_build_query($_GET);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-foreach (array('show', 'load', 'data', 'cache') as $dir)
+foreach (array('mod', 'ext', 'lib', 'tmp') as $dir)
     if (file_exists($path = file::path($dir = $dir.'/'.$q)))
         http::go(basename(str_replace($dir, '', $path)).'/'.$dir.($qs ? '?'.$qs : ''));
+
+////////////////////////////////////////////////////////////////////////////////
+
+http::status(404);

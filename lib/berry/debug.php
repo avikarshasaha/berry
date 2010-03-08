@@ -25,7 +25,7 @@ class Debug {
     }////////////////////////////////////////////////////////////////////////////////
 
     static function info($save = true){
-        $file = file::path('cache').'/debug/info.log';
+        $file = file::path('tmp').'/debug/info.log';
 
         if (!$save)
             return file_get_contents($file);
@@ -65,7 +65,7 @@ class Debug {
     static function sql($object = null, $string = ''){
         static $fp;
 
-        $file = file::path('cache').'/debug/sql.log';
+        $file = file::path('tmp').'/debug/sql.log';
 
         if (!is_object($object))
             return file_get_contents($file);

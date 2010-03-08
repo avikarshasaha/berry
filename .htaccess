@@ -4,8 +4,7 @@
 <IfModule mod_rewrite.c>
     RewriteEngine on
 
-    RewriteRule ^(cache|lang)/(.*)\.(eml|ini|php|phtml|yaml|html|tmp|log) ../home/%{REQUEST_URI} [QSA,L]
-    RewriteRule ^(lib|ext|load|show|data)/(.*)\.(eml|ini|php|phtml|yaml) ../home/%{REQUEST_URI} [QSA,L]
+    RewriteRule ^(mod|lib|ext|tmp)/(.*)\.(php|phtml|yaml|ini|eml|log|tmp) ../home/%{REQUEST_URI} [QSA,L]
 
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^.*$ ../home/%{REQUEST_URI} [QSA,L]

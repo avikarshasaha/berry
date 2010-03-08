@@ -15,8 +15,16 @@ class Piles {    protected static $cache = array();
         $string = str_replace('.', '/', $string);
 
         if (
-            is_file($file = file::path('show/'.$string.'.phtml')) or
-            is_file($file = file::path('show/'.$string.'/index.phtml'))
+            is_file($file = file::path('ext/'.$string.'.phtml')) or
+            is_file($file = file::path('ext/'.$string.'/index.phtml')) or
+
+            is_file($file = file::path('mod/'.$string.'.phtml')) or
+            is_file($file = file::path('mod/'.$string.'/index.phtml')) or
+
+            is_file($file = file::path('lib/berry/'.$string.'.phtml')) or
+            is_file($file = file::path('lib/berry/'.$string.'/index.phtml')) or
+            is_file($file = file::path('lib/'.$string.'.phtml')) or
+            is_file($file = file::path('lib/'.$string.'/index.phtml'))
         ){            if (!self::$cache['show'] = cache::get_path('piles/'.$string.'.php', compact('file')))                self::$cache['show'] = cache::set('<?php '.self::parse(file_get_contents($file)));
 
             unset($output, $string, $file);
@@ -53,6 +61,7 @@ class Piles {    protected static $cache = array();
             return self::$cache['varname'][$ns][$string];
         $var  = $string;
         $vars = array(
+            '_global'  => 'GLOBALS',
             '_get'     => '_GET',
             '_post'    => '_POST',
             '_files'   => '_FILES',
@@ -205,7 +214,20 @@ class Piles {    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _vars($output, $in_string = false){
+    protected static function _vars($output, $in_string = false){        if (preg_match_all('/\((\$|\$\w+){([^}]*)}(.*)\)/', $output, $match))            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){                if (preg_match_all('/(\$|\$\w+){([^}]*)}/sU', $match[0][$i], $m))                    for ($j = 0, $c2 = b::len($m[0]); $j < $c2; $j++){
+                        $match['_'][$i] = str_replace(
+                            $m[1][$j].'{'.$m[2][$j].'}',
+                            self::_var($m[1][$j].'{'.$m[2][$j]),
+                            ($match['_'][$i] ? $match['_'][$i] : $match[0][$i])
+                        );
+                    }
+
+                if ($in_string)
+                    $match['_'][$i] = '['.$in_string.']'.$match['_'][$i].'[/'.$in_string.']';
+
+                $output = str_replace($match[0][$i], $match['_'][$i], $output);
+            }
+
         if (preg_match_all('/(\$|\$\w+){([^}]*)}/sU', $output, $match))
             for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
                 $output = str_replace($match[0][$i], self::_var($match[1][$i].'{'.$match[2][$i], $in_string), $output);
@@ -215,7 +237,8 @@ class Piles {    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function parse($output){        $sux = array(
+    static function tokenize($output){
+        $sux = array(
             '/*' => '\/*',
             '//' => '\//',
             '#'  => '\#',
@@ -227,7 +250,8 @@ class Piles {    protected static $cache = array();
             '<script ' => '\<script ',
             '</script>' => '\</script>'
         );
-        $output = str_ireplace(array_keys($sux), array_values($sux), $output);
+
+        $output = str_ireplace(array_keys($sux), array_values($sux), $output);
         $output = preg_replace('/\\\\(\S)/e', "self::char('\\1')", trim($output));
         $token = token_get_all('<?php '.$output);
         $tags = $scope = array();
@@ -242,12 +266,14 @@ class Piles {    protected static $cache = array();
                 $tmp = 0;
                 $var = '';
 
-                for ($j = $i; $j < $c; $j++){                    if (
+                for ($j = $i; $j < $c; $j++){
+                    if (
                         $var and $token[$j + 1] == '{' and
                         ($token[$j] == '$' or (is_array($token[$j]) and $token[$j][1][0] == '$'))
                     )
                         $tmp++;
-                    elseif ($token[$j] == '}' and !$tmp--)                        break;
+                    elseif ($token[$j] == '}' and !$tmp--)
+                        break;
 
                     $var .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                 }
@@ -282,19 +308,26 @@ class Piles {    protected static $cache = array();
                     $tmp = '';
                     $n = 1;
 
-                    if ($token[$i + 1] == '='){                        $n += 1;
+                    if ($token[$i + 1] == '='){
+                        $n += 1;
                     } elseif (
                         in_array($token[$i + 1], array(':', '-', '.')) and
                         is_array($token[$i + 2]) and $token[$i + 3] == '='
-                    ){                        $token[$i][1] .= '_'.$token[$i + 2][1];
+                    ){
+                        $token[$i][1] .= '_'.$token[$i + 2][1];
                         $n += 3;
-                    } else {                        continue;                    }
+                    } else {
+                        continue;
+                    }
 
                     for ($j = ($i + $n); $j < $c; $j++){
                         if (is_array($token[$j]) and !trim($token[$j][1])){
                             break;
-                        } elseif ($token[$j] == '>'){                            $j -= 1;                            break;
-                        } elseif ($token[$j] == '/' and $token[$j + 1] == '>'){                            $j -= 2;
+                        } elseif ($token[$j] == '>'){
+                            $j -= 1;
+                            break;
+                        } elseif ($token[$j] == '/' and $token[$j + 1] == '>'){
+                            $j -= 2;
                             break;
                         }
 
@@ -315,7 +348,8 @@ class Piles {    protected static $cache = array();
                     $tags[$key] += array($token[$i] => $tmp);
                     $skip = 2;
                 }
-            } elseif ($token[$i] == '<'){                if ($token[$i + 1] == '!'){
+            } elseif ($token[$i] == '<'){
+                if ($token[$i + 1] == '!'){
                     $tags[] = $token[$i];
                 } elseif ($token[$i + 1] == '?'){
                     $tmp = '';
@@ -391,6 +425,12 @@ class Piles {    protected static $cache = array();
             $skip = 0;
         }
 
+        return $tags;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function parse($output){        $tags = (is_array($output) ? $output : self::tokenize($output));
         $result = '';
         $scope = array();
         $echo = false;

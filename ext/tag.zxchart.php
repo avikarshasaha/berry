@@ -11,7 +11,7 @@
 // Ещё один повод поблагодарить и за PHP Expert Editor!
 function tag_zxchart($attr){    $titles = array('');
 
-    file::mkdir($dir = file::path('cache').'/tag/zxchart');
+    file::mkdir($dir = file::path('tmp').'/tag/zxchart');
     if (preg_match_all('/<optgroup( ([^>]*))?>(.*?)<\/optgroup>/is', $attr['#text'], $match1))
         for ($i1 = 0, $c1 = b::len($match1[0]); $i1 < $c1; $i1++){
         	preg_match('/ label=("|\')(.*?)\\1/i', $match1[1][$i1], $tmp);
@@ -56,4 +56,4 @@ function tag_zxchart($attr){    $titles = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-if (b::q(1, 2) == 'tag/zxchart')	exit(file_get_contents(file::path('cache').'/tag/zxchart/'.b::q(3)));
+if (b::q(1, 2) == 'tag/zxchart')	exit(file_get_contents(file::path('tmp').'/tag/zxchart/'.b::q(3)));

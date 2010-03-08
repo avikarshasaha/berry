@@ -30,8 +30,7 @@ class B {    static $path = array('');
         debug::timer();
 
         $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
-        $lang and is_dir(file::path('lang/'.$lang)) and
-        self::$lang = $lang;
+        $lang and !self::$lang and self::$lang = $lang;
 
         date_default_timezone_set(self::config('lib.b.timezone'));
         setlocale(LC_ALL, self::lang('lib.b.locale'));
@@ -94,18 +93,21 @@ class B {    static $path = array('');
     static function config(){
         static $config;
 
-        if (!$config){
-            $dir = '/data/config';
-            $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
+        if (!$config){            $dirs = array();
 
-            if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = file::glob($dirs[0].'/*.yaml', $dirs[1].'/*.yaml');
+            foreach (self::$path as $path)
+                foreach (array('mod', 'lib', 'ext') as $dir)
+                    if (is_dir($path.'/'.$dir))                        $dirs[] = $path.'/'.$dir;
+            if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = array();
+                foreach ($dirs as $dir)                    foreach (file::dir($dir) as $file => $iter)
+                        if (substr($file, -5) == '.yaml')
+                            $files[$file] = basename($dir);
 
-                foreach (array_reverse($files) as $v)
-                    $config = arr::merge($config, arr::assoc(array(
-                        substr(basename($v), 0, -5) => arr::flat(yaml::load($v))
-                    )));
+                foreach ($files as $file => $dir){                    $key = ($dir == 'lib' ? $dir.'.' : '').substr(basename($file), 0, -5);
+                    $config = arr::merge($config, array($key => arr::flat(yaml::load($file))));
+                }
 
-                cache::set($config);
+                cache::set($config = arr::assoc($config));
             }
         }
 
@@ -125,41 +127,35 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function lang($text, $array = array()){
-        static $lang;
+    static function lang($string, $array = array()){        if (isset(self::$cache['lang'][$string])){
+            if (!is_array(self::$cache['lang'][$string]))
+                return str::format(self::$cache['lang'][$string], $array);
 
-        if (!$lang){            $dir = '/lang/en';
-            $dirs = array(self::$path[0].$dir, self::$path[1].$dir);
+            return self::$cache['lang'][$string];
+        }
+        $pos = array();
 
-            if (self::$lang != 'en'){                $dir = '/lang/'.self::$lang;
-                $dirs = array_merge($dirs, array(self::$path[0].$dir, self::$path[1].$dir));
-            }
+        for ($i = 0, $c = substr_count($string, '.'); $i < $c; $i++){
+            $pos[] = $tmp = strpos($string, '.', (end($pos) + 1));
 
-            if (!$lang = cache::get('b/lang/'.self::$lang.'.php', array('file' => $dirs))){
-                $func = create_function('$v', 'return $v."/*.yaml";');
-                $dirs = array_map($func, $dirs);
-                $files = call_user_func_array(array('file', 'glob'), $dirs);
+            if (!$i)
+                continue;
 
-                foreach ($files as $k => $v)
-                    $lang = arr::merge($lang, array(substr(basename($v), 0, -5) => yaml::load($v)));
-
-                $lang = arr::assoc($lang);
-                cache::set($lang);
+            if (
+                self::config($found = substr($string, 0, $tmp).'.'.self::$lang) or
+                self::config($found = substr($string, 0, $tmp).'.en')
+            ){                $result = $found.substr($string, $tmp);
+                break;
             }
         }
 
-        if (isset(self::$cache['lang'][$text]))
-            return self::$cache['lang'][$text];
+        if (!$result)
+            return;
 
-        $var = piles::varname($text, '$lang');
+        if (!is_array(self::$cache['lang'][$string] = self::config($result)))
+            return str::format(self::$cache['lang'][$string], $array);
 
-        if ($func = create_function('$lang', 'if (isset('.$var.')) return '.$var.';'))
-            $result = $func($lang);
-
-        if (is_array($result))
-            return self::$cache['lang'][$text] = $result;
-
-        return self::$cache['lang'][$text] = str::format($result, $array);
+        return self::$cache['lang'][$string];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -237,8 +233,8 @@ class B {    static $path = array('');
         if (!isset(self::$cache['autoload']))
             self::$cache['autoload'] = array();
 
-        if (!is_dir($dir = self::$path[1].'/cache'))
-            $dir = self::$path[0].'/cache';
+        if (!is_dir($dir = self::$path[1].'/tmp'))
+            $dir = self::$path[0].'/tmp';
 
         if (is_file($cache = $dir.'/b/autoload.php'))
             self::$cache['autoload'] = array_merge(
@@ -305,8 +301,8 @@ class B {    static $path = array('');
 
         foreach ($files as $file)
             if (
-                is_file(self::$cache['load'] = file::path('load/'.$file.'.php')) or
-                is_file(self::$cache['load'] = file::path('load/'.$file.'/index.php'))
+                is_file(self::$cache['load'] = file::path('mod/'.$file.'.php')) or
+                is_file(self::$cache['load'] = file::path('mod/'.$file.'/index.php'))
             ){
                 unset($string, $files, $file);
                 extract($_);
@@ -322,8 +318,16 @@ class B {    static $path = array('');
         $string = str_replace('.', '/', $string);
 
         if (
-            is_file(self::$cache['show'] = file::path('show/'.$string.'.phtml')) or
-            is_file(self::$cache['show'] = file::path('show/'.$string.'/index.phtml'))
+            is_file(self::$cache['show'] = file::path('ext/'.$string.'.phtml')) or
+            is_file(self::$cache['show'] = file::path('ext/'.$string.'/index.phtml')) or
+
+            is_file(self::$cache['show'] = file::path('mod/'.$string.'.phtml')) or
+            is_file(self::$cache['show'] = file::path('mod/'.$string.'/index.phtml')) or
+
+            is_file(self::$cache['show'] = file::path('lib/berry/'.$string.'.phtml')) or
+            is_file(self::$cache['show'] = file::path('lib/berry/'.$string.'/index.phtml')) or
+            is_file(self::$cache['show'] = file::path('lib/'.$string.'.phtml')) or
+            is_file(self::$cache['show'] = file::path('lib/'.$string.'/index.phtml'))
         ){            !cache::exists('b/call.php') and self::call('#');
             $funcs = include cache::exists('b/call.php');
 

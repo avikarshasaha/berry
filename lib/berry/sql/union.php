@@ -12,7 +12,7 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($array){        foreach ($array as $object){
-            $this->union[] = $object->build('fetch');
+            $this->union[] = $object->build('select');
             $this->placeholders = array_merge($this->placeholders, $object->placeholders);
         }
     }
@@ -55,7 +55,7 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
             return self::$cache[$key];
 
         $args = $this->placeholders;
-        array_unshift($args, self::build('fetch'));
+        array_unshift($args, self::build('select'));
         return self::$cache[$key] = call_user_method_array('select', self::$sql, $args);
     }
 

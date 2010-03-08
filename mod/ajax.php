@@ -4,30 +4,36 @@
     <http://goodgirl.ru/berry>                             | ~ )\
     <http://goodgirl.ru/berry/license>                     /__/\ \____
                                                            /   \_/    \
-    –õ—ë—Ö–∞ zloy –∏ –∫—Ä–∞—Å–∏–≤—ã–π <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
+    À∏ı‡ zloy Ë Í‡ÒË‚˚È <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-ob_start();
-    (!sql::is_valid() and b::load('offline')) or
-    b::load(b::q(1, 2, '.')) or b::load(b::q(1)) or
-    b::load();
-html::block('body', ob_get_clean());
+new JsHttpRequest('utf-8');
+$_GET['berry'] = substr($_GET['berry'], 5);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-$output = preg_replace('/<block_body(\s+)?\/>/i', join('', html::block('body')), piles::show());
+if (
+    ($_GET['call'] and !isset($_SESSION['ajax'][$_GET['call']])) or
+    (!check::is_valid_post() and !check::is_valid_files())
+)
+    exit;
+
+////////////////////////////////////////////////////////////////////////////////
+
+ob_start();
+    if ($_GET['call'])
+        echo b::call($_GET['call'], $_POST);
+    else
+        b::load(b::q(1, 2, '.')) or b::load(b::q(1));
+$output = ob_get_clean();
+
+////////////////////////////////////////////////////////////////////////////////
+
 $output = hook::get('output', $output);
 $output = preg_replace('/<block_(.*?)(\s+)?\/>/ie', "join('', html::block('\\1'))", $output);
+$output = new FormPersistent($output);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-if (stripos($output, '</form>'))
-    $output = new FormPersistent($output);
-
-////////////////////////////////////////////////////////////////////////////////
-
-$_SESSION['berry'] = array('addr' => $_SERVER['REMOTE_ADDR'], 'agent' => $_SERVER['HTTP_USER_AGENT']);
-
-////////////////////////////////////////////////////////////////////////////////
-
-return $output;
+echo $output;
+exit;

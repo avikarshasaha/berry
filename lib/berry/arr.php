@@ -10,7 +10,9 @@
 class Arr {
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function files($files){
+    static function files($files = array()){        if (!$files)
+            $files = $_FILES;
+
         foreach ($files as $k1 => $v1)
             foreach ($v1 as $k2 => $v2){
                 if (is_array($v2))

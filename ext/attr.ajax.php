@@ -14,62 +14,52 @@ function attr_ajax($attr){	$attr['ajax_call'] = $attr['ajax'];
 ////////////////////////////////////////////////////////////////////////////////
 
 function attr_ajax_call($attr){	$attr = array_merge(array(
-	    'ajax_on'   => 'click',
-	    'ajax_msg'  => false,
-	    'ajax_post' => 'this.form'
+	    'ajax_on' => 'click',
+	    'ajax_nocache' => 'false'
 	), $attr);
+	$ajax = piles::attr_group('ajax', $attr);
 
-    if ($attr['ajax_call'][0] == '/'){
-        $url = 'ajax/'.substr($attr['ajax_call'], 1);
-        unset($attr['ajax_call']);
-    } else {
+    if ($ajax['call'][0] == '/'){
+        $url = 'ajax/'.substr($ajax['call'], 1);
+	} elseif ($ajax['call']){
+        $_SESSION['ajax'][$ajax['call']] = true;
+	    $url .= 'ajax/?call='.$ajax['call'];
+	} else {
     	$url = 'ajax/'.b::q(1, 0);
     }
 
-	if ($attr['ajax_call']){	    if (!in_array($attr['ajax_call'], $_SESSION['ajax']))	        $_SESSION['ajax'][] = $attr['ajax_call'];
+    if (!$ajax['post'])
+        $ajax['post'] = 'null';
 
-	    $url .= '&call='.$attr['ajax_call'];
-	}
+    $attr['#before'] .= piles::fill('img', array(
+        'src' => '~/attr/ajax.gif',
+        'alt' => '[*]',
+        'style' => 'display: none;',
+        'align' => 'absmiddle'
+    ));
 
-    if ($attr['ajax_get'])
-        $url .= '&'.http_build_query(str::json($attr['ajax_get']));
+    $url .= ($ajax['get'] ? '&'.http_build_query(str::json($ajax['get'])) : '');
+    $id = ($ajax['id'] ? $ajax['id'] : $ajax['call']);
+    $on = 'on'.strtolower($ajax['on']);
+    $attr[$on] .= ($attr[$on] ? '; ' : '')."attr_ajax_call('".$url."', '".$id."', this, ".$ajax['post'].", ".$ajax['nocache']."); return false;";
+    html::block('head', html::js('
+        function attr_ajax_call(url, id, that, data, nocache){
+            that.disabled = true;
+            that.previousSibling.style.display = "inline-block";
 
-    if ($attr['ajax_msg'])
-        $url .= '&msg=1';
+            JsHttpRequest.query(
+                "'.b::q(0).'/" + url, data || that.form || {"#": ""},
+                function(_, result){                    that.disabled = false;
+                    that.previousSibling.style.display = "none";
 
-    if (!$attr['ajax_post'])
-        $attr['ajax_post'] = '{}';
-
-    $id = ($attr['ajax_id'] ? $attr['ajax_id'] : $attr['ajax_call']);
-    $loader = ($attr['ajax_loader'] ? $attr['ajax_loader'] : "''");
-    $on = 'on'.strtolower($attr['ajax_on']);
-    $attr[$on] .= ($attr[$on] ? '; ' : '')."attr_ajax_call('".$url."', '".$id."', ".$loader.", this, ".$attr['ajax_post']."); return false;";
-
-    if (!$attr['ajax_loader'])
-        $attr['#before'] .= '<img src="~/attr/ajax.gif" alt="" border="0" style="display: none;" align="absmiddle" />';
-
-    html::block('head', html::js('
-        function attr_ajax_call(url, id, loader, that, post){            var id = ($("ajax[" + id + "]") || id);
-            var loader = ($("ajax[" + loader + "]") || loader || that.previousSibling);
-
-        	new Ajax.Berry("'.b::q(0).'/" + url, {
-                onLoading: function(){
-                    $(that).disabled = true;
-                    $(loader).show();
-                },
-                onComplete: function(request){
-                    $(that).disabled = false;
-                    $(loader).hide();
-                    $(id).innerHTML = request.responseText;
-                },
-                onFailure: function(request){
-                    $(loader).hide();
-                    $(id).innerHTML = request.responseText;
-                },
-                parameters: post
-        	});
+                    var block = document.getElementById("ajax[" + id + "]") || document.getElementById(id);
+                    block.innerHTML = result;
+                }, nocache
+            );
         }
     '));
-    unset($attr['ajax_id'], $attr['ajax_on'], $attr['ajax_call'], $attr['ajax_post'], $attr['ajax_get'], $attr['ajax_msg'], $attr['ajax_info'], $attr['ajax_loader']);
-	return $attr;
-}
+
+    foreach ($ajax as $k => $v)
+        unset($attr['ajax_'.$k]);
+
+    return $attr;}

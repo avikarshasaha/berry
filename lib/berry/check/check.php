@@ -57,8 +57,9 @@ class Check {
                 }
 
                 // Есть косяки при использовании на нескольких полях
-                if ($func == 'or empty')
-                    $check = array($func => !$value);
+                if ($func == 'or empty'){                    $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
+                    $check = ((!$value and !$array[$tmp]) ? array($func => true) : $check);
+                }
             }
 
         foreach ($check as $k => $v)
@@ -167,7 +168,8 @@ class Check {
     static function datetime($value, $params = array()){
         $time = strtotime($value);
         return (
-            preg_match('/^[12]\d{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) and $time and
+            preg_match('/^(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}$/', $value, $m) and
+            $time and checkdate($m[2], $m[3], $m[1]) and
             (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1])))
         );
     }
@@ -176,7 +178,8 @@ class Check {
 
     static function date($value, $params = array()){        $time = strtotime($value);
         return (
-            preg_match('/^[12]\d{3}-\d{2}-\d{2}$/', $value) and $time and
+            preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) and
+            $time and checkdate($m[2], $m[3], $m[1]) and
             (!$params or ($time >= strtotime($params[0]) and $time <= strtotime($params[1])))
         );
     }

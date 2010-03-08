@@ -20,7 +20,7 @@ function tag_img2($attr){    $attr = array_merge(array(
     if ($image->file['dir'] != '.' and $image->file['dir'] != '..')
         $dir = $image->file['dir'];
 
-    $file = array(file::path('cache'));
+    $file = array(file::path('tmp'));
     $file[] = 'tag/img2';
     $file[] = ($dir[0] == '.' ? substr($dir, strpos($dir, '/')) : $dir);
     $file[] = $image->file['name'].'.'.$image->file['ext'];

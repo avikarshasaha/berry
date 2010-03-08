@@ -111,12 +111,12 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!$this->select)
             $this->select[] = '*';
 
-        $query = self::build('fetch');
+        $query = self::build('select');
 
         if ($this->multiple and ($this->limit or $this->where)){            $class = clone $this;
             $class->select = $class->group_by = array($this->primary_key);
             $args = $this->placeholders;
-            array_unshift($args, $class->build('fetch'));
+            array_unshift($args, $class->build('select'));
 
             if (!$ids = call_user_method_array('selectCol', self::$sql, $args))
                 return array();
@@ -125,7 +125,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $this->having = array();
             $this->limit = $this->offset = 0;
             $this->placeholders = array($ids);
-            $query = self::build('fetch');
+            $query = self::build('select');
         }
 
         $args = $this->placeholders;
@@ -145,13 +145,13 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 unset($array[$k]);
                 $array[$k][] = $v;
             }
-        } else {            self::build('fetch');
+        } else {            self::build('select');
 
             if ($multiple = array_unique($this->multiple)){                foreach ($multiple as $k => $v){                    $vars = get_class_vars(inflector::singular(end(explode('.', $v))));
-                    $field = $v.'.'.($vars['parent_key'] ? $vars['parent_key'] : 'id');
+                    $field = $v.'.'.($vars['primary_key'] ? $vars['primary_key'] : 'id');
                     $this->select[] = $field.' as array_key_'.($k + 2);
                 }
-            } else {                $multiple = array('Красивый-красивый мистер Биглз');
+            } else {
                 $this->select[] = 'null as array_key_2';
             }
 

@@ -7,15 +7,18 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_Raw {    protected $query;////////////////////////////////////////////////////////////////////////////////
+function var_q($string){
+    return b::call('*b::q', explode('.', $string, 3));
+}
 
-    function __construct($query){        $this->query = $query;    }
+////////////////////////////////////////////////////////////////////////////////
+
+function var_config($string){
+    return ($string ? b::config($string) : b::config());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __toString(){
-        return '('.$this->query.')';
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-}
+function var_lang($string){
+    return ($string ? b::lang($string) : b::lang());
+}

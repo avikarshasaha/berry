@@ -7,15 +7,12 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_Raw {    protected $query;////////////////////////////////////////////////////////////////////////////////
-
-    function __construct($query){        $this->query = $query;    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function __toString(){
-        return '('.$this->query.')';
-    }
+try {    if (!check::is_valid($_SESSION['attr']['check'], arr::merge($_POST, $_FILES)))
+        throw new Check_Except($_SESSION['attr']['check']);} catch (Check_Except $e){    $error = (string)$e;}
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+if (b::q(2) == 'ajax')
+    echo $error;
+else
+    echo piles::show('home', compact('error'));

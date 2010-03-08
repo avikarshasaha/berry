@@ -52,7 +52,7 @@ class SQL_Connect extends DbSimple_Mysql {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _toBerry($query, $use_prefix = true){
+    function _toBerry($query, $use_prefix = true){
         if (strtolower(substr($query, 0, 6)) == 'select' or strtolower(substr($query, 0, 6)) == 'update'){            $query = preg_replace('/\[(\w+\.)(\w+)\](?!\s+as )/i', '\\1\\2 as `\\2`', $query);
             $query = preg_replace('/\[(\w+)\](?!\s+as )/ie', "self::prefix('\\1').' as `\\1`'", $query);
 

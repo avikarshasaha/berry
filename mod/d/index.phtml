@@ -1,0 +1,47 @@
+<? foreach ($data as $post){ ?>
+    <h2>
+        <? if ($post['draft']){ ?>
+            [черновик]
+        <? } ?>
+
+        <a href="post/${post.id}/">${post.title}</a>
+    </h2>
+
+    <small>
+        (${post.date} ? date::format('%d.%m.%Y', ${post.date}) : '')
+        @ (${post.date} ? date::format('%H:%M', ${post.date}) : '')
+    </small>
+
+    <p>
+        <formatter format="${post.format}">${post.body}</formatter>
+    </p>
+
+    <? if ($post['draft']){ ?>
+        <p class="panel" align="right" style="background: #fff2e8; border-top: solid 1px #ffac84;" />
+    <? } else { ?>
+        <p class="panel" align="right" />
+    <? } ?>
+
+    <small>
+        <a href="post/${post.id}/">#</a> /
+        <a href="post/${post.id}/#comments">комментарии \(${post._comments})</a> /
+
+        <?
+            $keywords = array();
+
+            foreach ($post['keywords'] as $keyword){
+                ob_start();
+        ?>
+            <a href="keyword/${keyword.id}/">${keyword.name}</a>
+        <?
+                $keywords[] = ob_get_clean();
+            }
+
+            echo join(', ', arr::trim($keywords));
+        ?>
+    </small>
+<? } ?>
+
+<p align="center">
+    <pager limit="10" count="${count}" page="$i{_get.page}" />
+</p>

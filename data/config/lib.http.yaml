@@ -1,5 +1,0 @@
-cookie:
-    expire: +1 day
-    path: /
-    domain: %current
-    secure: false
