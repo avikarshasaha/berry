@@ -20,26 +20,38 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 $result[] = $v;
         }
 
-        $result = array_reverse($result);
-        return (b::len($result) == 1 ? reset($result) : $result);    }
+        return (b::len($result) <= 1 ? reset($result) : $result);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _save($result = array()){        foreach (self::$cache as $key => $value){            if (
-                !$value instanceof SQL or
-                (($key = '_save'.spl_object_hash($value)) and isset(self::$cache[$key]))
+    protected function _save($result = array()){        foreach (self::$cache as $key => $class){            if (
+                !$this[$this->primary_key] or
+                !$class instanceof SQL or
+                (($key = '_save'.spl_object_hash($class)) and isset(self::$cache[$key]))
             )
                 continue;
 
             self::$cache[$key] = true;
-            $result = array_merge($result, (array)$value->_save($result));        }
+            $result = array_merge($result, (array)$class->_save($result));
+            $relation = $this->relations[$class->table];
+
+            if (end($result) and !$this[$relation['local']['field']])                $this[$relation['local']['field']] = (string)end($result);        }
         if ($this->multisave){            foreach ($this->multisave as $class)                $result[] = $class->_save();
 
             return $result;
         }
         if ($this->into){            $args = $this->values;
             array_unshift($args, self::build('insert'));
-            $result[] = call_user_method_array('query', self::$sql, $args);
+            $query = call_user_method_array('query', self::$sql, $args);
+
+            if (is_int($query)){                if (($key = array_search($this->primary_key, $this->into)) !== false){
+                    for ($i = 0, $c = b::len($this->values); $i < $c; $i++)
+                        $result[] = $this->values[$i][$key];
+                } else {
+                    for ($i = $query, $c = (b::len($this->values) + $query); $i < $c; $i++)
+                        $result[] = $i;
+                }
+            } else {                $result[] = $query;            }
 
             return $result;
         }

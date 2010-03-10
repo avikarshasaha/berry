@@ -162,6 +162,9 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             $table = $this->_table;
         };
 
+        if (strpos($table, '.'))
+            $table = end(explode('.', $table));
+
         if (!$schema = cache::get('sql/schema/'.$table.'.php', array('db' => $table))){            $schema = array();
             $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 

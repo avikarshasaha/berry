@@ -42,10 +42,10 @@ class Debug {
                 'peak'  => (function_exists('memory_get_peak_usage') ? int::size(memory_get_peak_usage()) : 'N/A')
             ),
             'check' => array(
-                'php'   => version_compare('5.2.0', phpversion(), '<='),
-                'mysql' => (extension_loaded('mysql') and version_compare('4.1', mysql_get_server_info(), '<=')),
-                'xml'   => extension_loaded('xml'),
-                'pcre'  => extension_loaded('pcre')
+                'php'   => (phpversion() >= '5.2.0' ? phpversion() : false),
+                'mysql' => (b::call('mysql_get_server_info') >= '4.1' ? mysql_get_server_info() : false),
+                'pcre'  => extension_loaded('pcre'),
+                'tokenizer' => extension_loaded('tokenizer')
             )
         );
 

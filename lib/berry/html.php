@@ -11,13 +11,13 @@ class HTML {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function block($key, $value = null, $sort = 50){
-        static $block, $sort;
+        static $block, $order;
 
         if ($value !== null and !in_array($value, (array)$block[$key])){
-            $sort[$key][] = $sort;
+            $order[$key][] = $sort;
             return $block[$key][] = $value;
         } elseif ($value === null and $block[$key]){
-            array_multisort($sort[$key], SORT_ASC, $block[$key]);
+            array_multisort($order[$key], SORT_ASC, $block[$key]);
             return $block[$key];
         }
 
