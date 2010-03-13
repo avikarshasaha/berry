@@ -162,6 +162,9 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             $table = $this->_table;
         };
 
+        if ($vars = get_class_vars(inflector::singular($table)))
+            $table = ($vars['table'] ? $vars['table'] : $table);
+
         if (strpos($table, '.'))
             $table = end(explode('.', $table));
 
@@ -252,7 +255,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function hash($prefix = ''){        // Заебался. То тут не то, то там не так.        return $this->table.'['.$prefix.']'.spl_object_hash($this);
+    protected function hash($prefix = ''){        // Заебался. То тут не то, то там не так.        return $this->table.'::'.$prefix.'['.spl_object_hash($this).']';
         ob_start();
             var_dump($this);
         return $prefix.'_'.md5(ob_get_clean());
@@ -353,7 +356,12 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
                     $foreign['alias'] = $parent.$foreign['alias'];
                 }
 
-                if ($parent and substr($relation['type'], -4) == 'many')
+                if (
+                    $parent and (
+                        substr($relation['type'], -4) == 'many' or
+                        strpos($parent, inflector::tableize($relation['local']['alias']).'.') !== false
+                    )
+                )
                     $relation['local']['alias'] = inflector::tableize($relation['local']['alias']);
 
                 $table = inflector::singular($alias);

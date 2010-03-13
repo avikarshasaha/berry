@@ -91,20 +91,46 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _get($name){
+    protected function _get($name){        $key = self::hash('_get');
+
         if ($class = self::_multisave($name)){            if (!$this->select)
                 return $class;
 
-            $array = $this->fetch_array();
-            return new SQL_Element($array[$name]);
+            if (!isset(self::$cache[$key.$name])){
+                $array = $this->fetch_array();
+                self::$cache[$key.$name] = new SQL_Element($array[$name]);
+            }
+
+            return self::$cache[$key.$name];
         }
 
-        if (!$this->where)
+        if (!$this->where){
+            if ($relation = $this->relations[$name]){
+                if (!isset(self::$cache[$key.$name])){                    $class = self::_object($name);
+
+                    if ($relation['type'] == 'has_one')
+                        $this[$relation['local']['field']] = $class;
+
+                    if ($relation['type'] == 'belongs_to')
+                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
+
+                    if ($relation['type'] == 'has_many'){
+                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
+                        $this->multisave[] = $class;
+                    }
+
+                    if ($relation['type'] == 'has_and_belongs_to_many'){                    }
+
+                    self::$cache[$key.$name] = $class;
+                }
+
+                return self::$cache[$key.$name];
+            }
+
             return;
+        }
 
-        $key = self::hash('_get');
-
-        if (!array_key_exists($key, self::$cache)){            $class = clone $this;
+        if (!isset(self::$cache[$key])){            $class = clone $this;
 
             if ($class->select){
                 $class->select[] = $class->primary_key;
@@ -116,11 +142,27 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             self::$cache[$key] = new SQL_Element($class->fetch_array());
         }
 
-        if ($this->relations[$name]){
+        if ($relation = $this->relations[$name]){
             if (isset(self::$cache[$key][$name]))
                 return self::$cache[$key][$name];
-            elseif (!isset(self::$cache[$key.$name]))
-                return self::$cache[$key.$name] = self::_object($name);
+            elseif (!isset(self::$cache[$key.$name])){                $class = self::_object($name);
+                if (!self::_get($class->primary_key))                    return self::$cache[$key.$name] = $class;
+
+                if ($relation['type'] == 'has_one' and !$this[$relation['local']['field']])
+                    return self::$cache[$key.$name] = $this[$relation['local']['field']] = $class;
+
+                if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many')
+                    $class->values[$relation['foreign']['field']] = (string)$this->id;
+
+                if ($relation['type'] == 'has_and_belongs_to_many'){                    /*$field = $relation['foreign']['alias2'].'_ids';                    $ids = $this[$field];
+                    $ids[] = $this->id;
+                    $ids['#'] = true;
+                    $class->values[$field] = $ids;
+                    $class->relations[$name] = $relation;*/
+                }
+
+                return self::$cache[$key.$name] = $this->multisave[] = $class;
+            }
 
             return self::$cache[$key.$name];
         }
@@ -143,15 +185,15 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _set($name, $value){        if (is_array($value)){
+    protected function _set($name, $value){        $func = create_function('$a', 'return !is_int($a);');
+        if (is_array($value)){
             if ($class = self::_multisave($name)){
                 foreach ($value as $k => $v)
                     $class[$k] = $v;
             }
 
-            $func = create_function('$a', 'return !is_int($a);');
             $array = array_map($func, array_keys($value));
-            $array = array_unique($array);
+            $value = array_unique($value);
 
             if (in_array(true, $array))
                 asort($value);
@@ -159,28 +201,18 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 sort($value);
         }
 
-        if (($tmp = self::_get($name)) instanceof ArrayObject)
+        if (($tmp = self::_get($name)) instanceof ArrayObject or is_array($tmp)){
             $tmp = (array)$tmp;
+            sort($tmp);
+        }
 
         if ($this->where and ($value == $tmp or !self::_get($this->primary_key)))
             return $value;
 
-        if ($_name = self::_is_HABTM($name)){
-            foreach ($value as $v)                if ($v instanceof SQL){                    $vars = get_class_vars($v);
-                    $key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
-                    $this->joinvalues[$_name][] = ($v[$key] ? $v[$key] : $v->save());
-                } else {
-                    $this->joinvalues[$_name][] = $v;
-                }
-        } else {
-            if (is_int($value)){                $tmp = $value;
-                $tmp -= self::_get($name);
-                $this->values[$name] = self::raw($this->table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
-            } elseif ($value instanceof SQL){                $vars = get_class_vars($value);
-                $key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
-                $this->values[$name] = ($value[$key] ? $value[$key] : $value->save());
-            } else {                $this->values[$name] = $value;            }
-        }
+        if (is_int($value)){            $tmp = $value;
+            $tmp -= self::_get($name);
+            $this->values[$name] = self::raw($this->table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
+        } else {            $this->values[$name] = $value;        }
 
         if (isset(self::$cache[$key = self::hash('_get')]))
             self::$cache[$key][$name] = $value;
@@ -198,14 +230,32 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _multisave($name){
-        if (is_null($name))            return $this->multisave[] = self::table($this->table);
+    protected function _multisave($name, $values = array()){        if (is_null($name) or $values){            if ($this->multisave[0]){                $class = clone $this->multisave[0];            } else {                $class = clone $this;
+                $class->where = $this->values = $class->multisave = array();
+                $this->values = $values;
+            }
+
+            return $this->multisave[] = $class;
+        }
 
         if (is_int($name)){
-            if (!isset($this->multisave[$name]))
-                $this->multisave[$name] = self::table($this->table, $name);
+            if (!isset($this->multisave['#'.$name])){                if (!$this->where)
+                    return;
+                $class = clone $this;
+                $class->select = $class->group_by = array($this->primary_key);
+                $array = $class->fetch_col();
 
-            return $this->multisave[$name];
+                if (!$class->id = $array[$name])
+                    return;
+
+                $class->select = $this->select;
+                $class->group_by = $this->group_by;
+                $class->where($this->primary_key.' = ?d', $class->id);
+
+                $this->multisave['#'.$name] = $class;
+            }
+
+            return $this->multisave['#'.$name];
         }
     }
 
@@ -216,27 +266,26 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         $local = $relation['local'];
         $foreign = $relation['foreign'];
         $name = inflector::singular($name);
+        $class = self::table($name);
 
-        if ($relation['type'] == 'has_one')
-            return self::table($name, $this[$relation['local']['field']]);
+        if (!$id = $this[$local['field']])
+            return $class;
+
+        if ($relation['type'] == 'has_one'){            $class->id = $id;
+            return $class->where($foreign['field'].' = ?d', $id);
+        }
 
         if ($relation['type'] == 'belongs_to')
-            return self::table($name)->limit(1)->where(
-                $name.'.'.$foreign['field'].' = ?',
-                $this[$local['field']]
-            );
+            return $class->limit(1)->where($foreign['field'].' = ?d', $id);
 
         if ($relation['type'] == 'has_many')
-            return self::table($name)->where(
-                $name.'.'.$foreign['field'].' = ?',
-                $this[$local['field']]
-            );
+            return $class->where($foreign['field'].' = ?d', $id);
 
-        return self::table($name)->where(
+        return $class->where(
             $name.'.'.$foreign['field2'].' in (?a)',
             self::table($foreign['table1'])->
                 select($foreign['field3'])->
-                where($foreign['field1'].' = ?', $this->id)->
+                where($foreign['field1'].' = ?d', $id)->
                 fetch_col()
         );
     }

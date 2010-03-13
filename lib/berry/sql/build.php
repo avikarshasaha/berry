@@ -12,9 +12,17 @@ abstract class SQL_Build {
 
     protected function _append_join($v){        if ($pos = strrpos($v, '.')){
             $table = substr($v, 0, $pos);
+            $table = ($table[0].substr($table, -1) == '``' ? substr($table, 1, -1) : $table);
+            $table = explode('.', $table);
+            $join = '';
 
-            if ($table != $this->table and strpos($table, '`') === false)
-                $this->join($table);
+            for ($i = 0, $c = b::len($table); $i < $c; $i++){                $join .= $table[$i];
+
+                if ($join != $this->table and strpos($join, '`') === false)
+                    $this->join($join);
+
+                $join .= '.';
+            }
         }
     }
 

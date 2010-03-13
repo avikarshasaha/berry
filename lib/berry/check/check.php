@@ -336,6 +336,21 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function ean($value){
+        $number = strrev(str_replace(' ', '', $value));
+        $sum = 0;
+
+        if (!is_numeric($number))
+            return;
+
+        for ($i = 1, $c = b::len($number); $i < $c; $i += 2)
+            $sum += ($number[$i] * 3 + $number[$i + 1]);
+
+        return ($number[0] == (10 - ($sum % 10)));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     static function same_as($value, $params, $name, $array){
         return ($value == $array[$params[0]]);    }
 

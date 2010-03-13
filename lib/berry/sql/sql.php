@@ -19,7 +19,7 @@ class SQL extends SQL_Control {
         if ($id){            if (is_array($id))
                 list($this->primary_key, $id) = array(key($id), reset($id));
 
-            self::where($class.'.'.$this->primary_key.' = ?', ($this->id = $id));
+            self::where($this->primary_key.' = ?d', ($this->id = $id));
         }
     }
 

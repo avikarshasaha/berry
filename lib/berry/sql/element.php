@@ -11,7 +11,7 @@ class SQL_element implements ArrayAccess, Countable, Iterator {    protected $d
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($data){        $this->data = arr::assoc($data);    }
+    function __construct($data){        if (is_array($data))            $this->data = arr::assoc($data);    }
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
