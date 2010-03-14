@@ -1,0 +1,13 @@
+ru:
+    size:
+        gb: ГБ
+        mb: МБ
+        kb: КБ
+        b: б
+
+en:
+    size:
+        gb: GB
+        mb: MB
+        kb: KB
+        b: b

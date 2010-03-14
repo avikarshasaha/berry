@@ -38,10 +38,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetUnset($offset){
-        if ($name = self::_is_HABTM($offset))
-            unset($this->joinvalues[$name]);
-        else
-            unset($this->values[$offset]);
+        unset($this->values[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

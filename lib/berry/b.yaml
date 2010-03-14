@@ -6,3 +6,6 @@ router:
         re: sometest/(\d+).html
         route: home/sometest/$1
         url: sometest/%id.html
+
+ru:
+    locale: ru_RU.UTF-8

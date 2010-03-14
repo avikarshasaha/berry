@@ -327,8 +327,8 @@ class Check {
             return (($sum % 11) == ($number[$i] == 'x' ? 10 : $number[$i]));        }
 
         if ($len == 13 and preg_match('/\d+-\d+-\d+-\d+-\d{1}/', $value)){
-            for ($i = 0; $i < $len; $i++)
-                $sum += (($i % 2) == 1 ? ($number[$i] * 3) : $number[$i]);
+            for ($i = 0; $i < $len; $i += 2)
+                $sum += ($number[$i] * 3 + $number[$i + 1]);
 
             return (($sum % 10) == 0);
         }
@@ -336,7 +336,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function ean($value){
+    function barcode($value){
         $number = strrev(str_replace(' ', '', $value));
         $sum = 0;
 
@@ -346,7 +346,8 @@ class Check {
         for ($i = 1, $c = b::len($number); $i < $c; $i += 2)
             $sum += ($number[$i] * 3 + $number[$i + 1]);
 
-        return ($number[0] == (10 - ($sum % 10)));
+        $mod = ($sum % 10);
+        return ($number[0] == ($mod ? (10 - $mod) : 0));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
