@@ -18,6 +18,7 @@ html::block('body', ob_get_clean());
 $output = preg_replace('/<block_body(\s+)?\/>/i', join('', html::block('body')), piles::show());
 $output = hook::get('output', $output);
 $output = preg_replace('/<block_(.*?)(\s+)?\/>/ie', "join('', html::block('\\1'))", $output);
+$output = preg_replace('/(href|src)=("|\')\~\/(.*)\\2/iU', '\\1=\\2'.b::q(0).'/~/\\3\\2', $output);
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -78,8 +78,9 @@ class Image extends Image_Merge {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function merge($filename, $params = array()){
-        if (is_resource($filename)){
+    function merge($filename, $params = array()){        if ($filename instanceof self){
+            $merge = new parent($this->im, $filename->im);
+        } elseif (is_resource($filename)){
             $merge = new parent($this->im, $filename);
         } else {
             $image = new self($filename);

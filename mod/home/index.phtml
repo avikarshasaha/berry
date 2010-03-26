@@ -1,7 +1,7 @@
 <h1>Home</h1>
 
 <p>
-    Это главная страница, грузится по умолчанию. Можно изменить в <dfn>lib/berry/b.yaml</dfn> директивы <dfn>show</dfn> (для шаблона) и <dfn>load</dfn> (для модуля) указывающие на то, что должно подгружаться по умолчанию. Сейчас это <dfn>index</dfn> (на выходе <dfn>mod/index.phtml</dfn>) и <dfn>home</dfn> (на выходе <dfn>mod/home/index.php</dfn>), соответственно.
+    Это главная страница, грузится по умолчанию. Можно изменить в <dfn>lib/berry/b.yml</dfn> директивы <dfn>show</dfn> (для шаблона) и <dfn>load</dfn> (для модуля) указывающие на то, что должно подгружаться по умолчанию. Сейчас это <dfn>index</dfn> (на выходе <dfn>mod/index.phtml</dfn>) и <dfn>home</dfn> (на выходе <dfn>mod/home/index.php</dfn>), соответственно.
 </p>
 
 <h2>Ссылки</h2>
@@ -40,13 +40,23 @@
 
     <p>
         <input name="test[int]" type="text" check:re="int(0, 15)" check:need="Введите число от 0 до 15." />
+
+        <? if (${errors}){ ?>
+            <span style="color: #c60000">&lt;- тут ошибка: ${errors.test\.int.1}</span>
+        <? } ?>
     </p>
 
-    <p>А тут дата в формате ГГГГ-ММ-ДД:</p>
+    <p>Тут дата в формате ГГГГ-ММ-ДД:</p>
 
     <p>
         <input name="test[date]" type="text" check:re="date" check:need="Введите дату в формате ГГГГ-ММ-ДД." />
         <js:calendar for="test[date]" format="%Y-%m-%d" />
+    </p>
+
+    <p>Тут используем своё регулярное выражение для проверки:</p>
+
+    <p>
+        <input name="test[hello]" type="text" check:re="/h(el|a)lo/i" check:need="Введите "hello" или  "halo"." />
     </p>
 
     <p>Ну, и картинку с расширением GIF либо оставить поле пустым:</p>

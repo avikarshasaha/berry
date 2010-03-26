@@ -171,12 +171,9 @@ class Piles {    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _var($name, $in_string = false){        $rand = md5(rand());        $var = explode('{', str_replace("'", "\'", $name), 2);
+    protected static function _var($name){        $var = explode('{', str_replace("'", "\'", $name), 2);
         $var[0] = substr($var[0], 1);
-        $var[2] = strtr(self::varname(self::_vars($var[1], $rand)), array(
-            '['.$rand.']'  => "'.",
-            '[/'.$rand.']' => ".'"
-        ));
+        $var[2] = self::varname($var[1]);
 
         $func = reset(explode('.', str_replace('\.', self::char('.'), $var[1])));
         $func = strtr($func, array(
@@ -200,37 +197,20 @@ class Piles {    protected static $cache = array();
             $tmp = explode('.', $var[1]);
             unset($tmp[0]);
 
-            $var[2] = "b::call('".$func."', '".strtr(join('.', $tmp), array("'" => "\'"))."', get_defined_vars())";
+            $var[2] = 'b::call(`'.$func.'`, `'.str_replace("'", "\'", join('.', $tmp)).'`, get_defined_vars())';
         }
 
         if ($var[0] and b::function_exists($func = 'type_'.$var[0]))
-            $var[2] = "b::call('".$func."', ".$var[2].')';
-
-        if ($in_string)
-            return '['.$in_string.']'.$var[2].'[/'.$in_string.']';
+            $var[2] = 'b::call(`'.$func.'`, '.$var[2].')';
 
         return $var[2];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _vars($output, $in_string = false){        if (preg_match_all('/\((\$|\$\w+){([^}]*)}(.*)\)/', $output, $match))            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){                if (preg_match_all('/(\$|\$\w+){([^}]*)}/sU', $match[0][$i], $m))                    for ($j = 0, $c2 = b::len($m[0]); $j < $c2; $j++){
-                        $match['_'][$i] = str_replace(
-                            $m[1][$j].'{'.$m[2][$j].'}',
-                            self::_var($m[1][$j].'{'.$m[2][$j]),
-                            ($match['_'][$i] ? $match['_'][$i] : $match[0][$i])
-                        );
-                    }
-
-                if ($in_string)
-                    $match['_'][$i] = '['.$in_string.']'.$match['_'][$i].'[/'.$in_string.']';
-
-                $output = str_replace($match[0][$i], $match['_'][$i], $output);
-            }
-
-        if (preg_match_all('/(\$|\$\w+){([^}]*)}/sU', $output, $match))
+    protected static function _vars($output){        if (preg_match_all('/(\$|\$\w+){([^}]*)}/sU', $output, $match))
             for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
-                $output = str_replace($match[0][$i], self::_var($match[1][$i].'{'.$match[2][$i], $in_string), $output);
+                $output = str_replace($match[0][$i], self::_var($match[1][$i].'{'.$match[2][$i]), $output);
 
         return $output;
     }
@@ -244,25 +224,32 @@ class Piles {    protected static $cache = array();
             '#'  => '\#',
 
             '<? ' => '<?php ',
-            '?>' => '<?',
+            '?>'  => '<?',
+            '`'   => '\`' ,
+            "'"   => "\'",
 
-            '<script>' => '\<script>',
-            '<script ' => '\<script ',
+            '<script>'  => '\<script>',
+            '<script '  => '\<script ',
             '</script>' => '\</script>'
         );
 
         $output = str_ireplace(array_keys($sux), array_values($sux), $output);
         $output = preg_replace('/\\\\(\S)/e', "self::char('\\1')", trim($output));
-        $token = token_get_all('<?php '.$output);
+        $token = @token_get_all('<?php '.$output);
         $tags = $scope = array();
         $opened = false;
         $mask = '%s:%d';
 
-        for ($i = 1, $c = b::len($token); $i < $c; $i++){
-            if (
-                ($token[$i] == '$' or (is_array($token[$i]) and $token[$i][1][0] == '$')) and
-                $token[$i + 1] == '{' and array_search('}', $token)
-            ){
+        for ($i = 1, $c = b::len($token); $i < $c; $i++){            $is_var = ($token[$i] == '$' or (is_array($token[$i]) and $token[$i][1][0] == '$'));
+            if (
+                $is_var and is_array($token[$i + 1]) and
+                $token[$i + 1][1][0] == '{' and ($pos = strpos($token[$i + 1][1], '}'))
+            ){                $var = (is_array($token[$i]) ? $token[$i][1] : $token[$i]);
+                $var = self::_var($var.substr($token[$i + 1][1], 0, $pos));
+                $tags[sprintf($mask, '$', $i)] = $var;
+                $tags[] = substr($token[$i + 1][1], ($pos + 1));
+                $skip = 1;
+            } elseif ($is_var and $token[$i + 1] == '{' and array_search('}', $token)){
                 $tmp = 0;
                 $var = '';
 
@@ -278,25 +265,7 @@ class Piles {    protected static $cache = array();
                     $var .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                 }
 
-                $var = self::_var($var);
-
-                if (end($tags) == '('){
-                    unset($tags[key($tags)]);
-
-                    $tmp = 0;
-                    $var = '('.$var;
-
-                    for ($j += 1; $j < $c; $j++){
-                        $var .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
-
-                        if ($token[$j] == '(')
-                            $tmp++;
-                        elseif ($token[$j] == ')' and !$tmp--)
-                            break;
-                    }
-                }
-
-                $tags[sprintf($mask, '$', $i)] = $var;
+                $tags[sprintf($mask, '$', $i)] = self::_var($var);;
                 $skip = ($j - $i);
             } elseif ($opened){
                 if ($token[$i] == '>'){
@@ -334,15 +303,23 @@ class Piles {    protected static $cache = array();
                         $tmp .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                     }
 
-                    if ($tmp[0].substr($tmp, -1) == '""' or $tmp[0].substr($tmp, -1) == "''")
+                    if (in_array($tmp[0].substr($tmp, -1), array('""', "''", '``')))
                         $tmp = substr($tmp, 1, -1);
+
+                    $tmp = self::parse($tmp);
+                    $tmp = substr($tmp, (substr($tmp, 0, 5) == 'echo ' ? 5 : 0), -1);
+
+                    if ($tmp[0].substr($tmp, -1) == "''")
+                        $tmp = '`'.substr($tmp, 1, -1).'`';
+                    elseif (substr($tmp, -3) == ".''")
+                        $tmp = substr($tmp, 0, -3);
 
                     $tags[$key] += array($token[$i][1] => $tmp);
                     $skip = ($j - $i);
                 } elseif (!is_array($token[$i]) and trim($token[$i]) and $token[$i + 1] == '='){
                     $tmp = (is_array($token[$i + 2]) ? $token[$i + 2][1] : $token[$i + 2]);
 
-                    if ($tmp[0].substr($tmp, -1) == '""' or $tmp[0].substr($tmp, -1) == "''")
+                    if (in_array($tmp[0].substr($tmp, -1), array('""', "''", '``')))
                         $tmp = substr($tmp, 1, -1);
 
                     $tags[$key] += array($token[$i] => $tmp);
@@ -367,7 +344,7 @@ class Piles {    protected static $cache = array();
                     }
 
                     if (is_array($token[$i + 2]) and (!trim($token[$i + 2][1]) or strtolower($token[$i + 2][1]) == 'php'))
-                        $tags[sprintf($mask, '@', $i)] = substr($tmp, 3);
+                        $tags[sprintf($mask, '@', $i)] = substr($tmp, (!trim($token[$i + 2][1]) ? 1 : 3));
                     else
                         $tags[] = '<?'.$tmp.'?>';
 
@@ -434,63 +411,50 @@ class Piles {    protected static $cache = array();
         $result = '';
         $scope = array();
         $echo = false;
-        $rand = md5(rand());
 
         foreach ($tags as $k => $v)
             if (is_int($k)){
-                $v = str_replace("'", "\'", $v);
-                $result .= self::_vars((!$echo ? "echo '".$v : $v), $rand);
+                $result .= self::_vars((!$echo ? 'echo `'.$v : $v));
                 $echo = true;
-            } elseif ($k[0] == '$'){                $result .= self::_vars(!$echo ? 'echo '.$v.".'" : "'.".$v.".'");
+            } elseif ($k[0] == '$'){                $result .= self::_vars(!$echo ? 'echo '.$v.'.`' : '`.'.$v.'.`');
                 $echo = true;
-            } elseif ($k[0] == '@'){
-                $result .= self::_vars(($echo ? "';" : '').$v.';');
+            } elseif ($k[0] == '@'){                $v = str_replace(self::char("'"), "'", $v);
+                $result .= self::_vars(($echo ? '`;' : '').$v.';');
                 $echo = false;
             } else {
                 list($tag, $num) = explode(':', $k, 2);
-                $result .= ($echo ? "';" : '');
+                $result .= ($echo ? '`;' : '');
 
                 if ($tag[0] == '/'){
                     $open = '';
-                    $tag = substr($tag, 1);
-
-                    foreach ($scope[$tag][$num] as $ak => $av)
-                        if (b::function_exists($func = 'attr_'.$ak))
-                            $open .= "b::call('".$func."', ";
-
-                    $attr = str_replace(self::char("'"), "\'", var_export($scope[$tag][$num], true));
-                    $attr = self::_vars($attr, $rand);
-                    $close = ($open ? str_repeat(')', substr_count($open, '(')) : '');
-                    $result .= 'echo piles::call('.$open.$attr.$close.');';
+                    $result .= $scope[substr($tag, 1)][$num];
                 } else {
-                    $v['#tag'] = $tag;
+                    $v['#tag'] = '`'.$tag.'`';
+                    $attr = $open = '';
 
-                    if (!isset($tags['/'.$k])){
-                        $open = '';
+                    foreach ($v as $k2 => $v2){                        if (b::function_exists($func = 'attr_'.$k2))
+                            $open .= 'b::call(`'.$func.'`, ';
 
-                        foreach ($v as $ak => $av)
-                            if (b::function_exists($func = 'attr_'.$ak))
-                                $open .= "b::call('".$func."', ";
-
-                        $attr = str_replace(self::char("'"), "\'", var_export($v, true));
-                        $attr = self::_vars($attr, $rand);
-                        $close = ($open ? str_repeat(')', substr_count($open, '(')) : '');
-                        $result .= 'echo piles::call('.$open.$attr.$close.');';
-                    } else {
-                        $v['#text'] = '['.$rand.']ob_get_clean()[/'.$rand.']';
-                        $scope[$tag][$num] = $v;
-                        $result .= 'ob_start();';
+                        $attr .= '`'.$k2.'` => '.$v2.",\r\n";
                     }
+
+                    $close = ($open ? str_repeat(')', substr_count($open, '(')) : '');
+
+                    if (!isset($tags['/'.$k])){                        $attr = 'array('."\r\n".$attr.')';                        $result .= 'echo piles::call('.$open.$attr.$close.');';                    } else {                        $attr .= "`#text` => ob_get_clean()\r\n";
+                        $attr = 'array('."\r\n".$attr.')';
+                        $scope[$tag][$num] = 'echo piles::call('.$open.$attr.$close.');';
+                        $result .= 'ob_start();';                    }
                 }
 
                 $echo = false;
             }
 
         if ($result and substr($result, -1) != ';')
-            $result .= "';";
+            $result .= "`;";
 
-        $result = str_replace(array('['.$rand.']', '[/'.$rand.']', "''.", ".''"), array("'.", ".'", '', ''), $result);
-        $result = preg_replace('/%it\[(\d+)\]/e', "chr('\\1')", $result);
+        $result = str_replace(self::char("'"), "\'", $result);
+        $result = str_replace('`', "'", $result);
+        $result = @preg_replace('/%it\[(\d+)\]/e', "chr('\\1')'", $result);
 
         return $result;
     }

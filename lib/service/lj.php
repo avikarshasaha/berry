@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Service_LJ {
+class Service_LJ {    public $server = 'www.livejournal.com';
 ////////////////////////////////////////////////////////////////////////////////
 
 	function __construct($username, $password, $journal = ''){
@@ -25,7 +25,7 @@ class Service_LJ {
     	), $params);
 
     	$response = xmlrpc::request(
-    	    'www.livejournal.com',
+    	    $this->server,
     	    '/interface/xmlrpc',
     	    'LJ.XMLRPC.'.$method,
     	    array(xmlrpc::prepare($params)),
@@ -42,73 +42,63 @@ class Service_LJ {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-	function event($method, $subject, $event, $time = 0, $itemid = 0){
-    	$params['subject'] = base64_encode($subject);
+	function event($method, $params = array(), $timestamp = 0){	    $timestamp = date::time($timestamp);	    $params = array_merge(array(
+	        'itemid' => 0,
+
+	        'lineendings' => 'unix',
+	        'usejournal'  => $this->journal,
+	        'security' => 'public',
+
+    	    'year' => date('Y', $timestamp),
+    	    'mon'  => date('m', $timestamp),
+    	    'day'  => date('d', $timestamp),
+    	    'hour' => date('H', $timestamp),
+    	    'min'  => date('i', $timestamp)
+	    ), $params);
+
+    	$params['subject'] = base64_encode($params['subject']);
     	$params['subject type'] = 'base64';
-    	$params['event'] = base64_encode($event);
+    	$params['event'] = base64_encode($params['event']);
     	$params['event type'] = 'base64';
-    	$params['itemid'] = $itemid;
-    	$params['lineendings'] = 'unix';
-    	$params['usejournal'] = $this->journal;
-
-    	$time = date::time($time);
-
-	    $params['year'] = date('Y', $time);
-	    $params['mon']  = date('m', $time);
-	    $params['day']  = date('d', $time);
-	    $params['hour'] = date('H', $time);
-	    $params['min']  = date('i', $time);
 
     	if ($result = $this->_request($method.'event', $params))
-    		return ($request['itemid'] * 256 + $request['anum']);
+    		return $result;
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 
 	function postEvent($subject, $event, $timestamp = 0){
-        return $this->event('post', $subject, $event, $timestamp);
+        return $this->event('post', compact('subject', 'event'), $timestamp);
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 
 	function editEvent($itemid, $subject, $event, $timestamp = 0){
-    	return $this->event('edit', $subject, $event, $timestamp, $itemid);
+    	return $this->event('edit', compact('itemid', 'subject', 'event'), $timestamp);
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-	function getUserTags(){		$params['usejournal'] = $this->journal;
-
-    	if ($result = $this->_request('getusertags', $params))
-    		return $result['tags'];
+	function getUserTags(){    	$result = $this->_request('getUserTags', array('usejournal' => $this->journal));
+    	return $result['tags'];
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-	function getFriendOf($limit = 0){
-    	$params['friendoflimit'] = $limit;
-
-    	if ($result = $this->_request('friendof', $params))
-    		return $result['friendofs'];
+	function getFriendOf(){    	$result = $this->_request('friendof');
+    	return $result['friendofs'];
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-	function getFriendGroups(){
-    	if ($result = $this->_request('getfriendgroups'))
-    		return $result['friendgroups'];
+	function getFriendGroups(){    	$result = $this->_request('getfriendgroups');
+    	return $result['friendgroups'];
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-	function getFriends($limit = 0, $friendofs = true, $groups = true, $bdays = true){
-    	$params['friendlimit'] = $limit;
-    	$params['includefriendof'] = $friendofs;
-    	$params['includegroups'] = $groups;
-    	$params['includebdays'] = $bdays;
-
-    	if ($result = $this->_request('getfriends', $params))
-    	    return $result;
+	function getFriends(){        $result = $this->_request('getfriends');
+        return $result['friends'];
 	}
 
 ////////////////////////////////////////////////////////////////////////////////

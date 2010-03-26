@@ -132,17 +132,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     }
 ////////////////////////////////////////////////////////////////////////////////
 
-    /*function fetch(){
-        $key = self::hash('fetch');
-
-        if (!array_key_exists($key, self::$cache))
-            self::$cache[$key] = self::_fetch();
-
-        return self::$cache[$key];
-    }*/
-
-////////////////////////////////////////////////////////////////////////////////
-
     function fetch(){
         if (!$this->select)
             $this->select[] = '*';
@@ -174,7 +163,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch_array($keep_keys = false){        if (!$this->select)            $this->select[] = '*';
+    function fetch_array(){        if (!$this->select)            $this->select[] = '*';
 
         $this->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
 
@@ -203,7 +192,9 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         $multiple = ($multiple ? array_reverse($multiple) : array('Красивый-красивый мистер Биглз'));
         $len = b::len($multiple);
 
-        foreach (arr::flat($array) as $k => $v){            $k = str_replace('\.', '.', $k);
+        foreach (arr::flat($array) as $k => $v){            if ($v === null)
+                continue;
+            $k = str_replace('\.', '.', $k);
             $keys = explode('.', $k, ($len + 2));
 
             foreach ($multiple as $i => $w){                $i = ($len - $i);
@@ -216,7 +207,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $result[join('.', $keys)] = $v;        }
 
         $result = self::_fetch_array(arr::assoc($result));
-        return (($result and $this->id) ? $result[$this->id] : ($keep_keys ? $result : array_values($result)));
+        return (($result and $this->id) ? $result[$this->id] : array_values($result));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +260,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         $class->join = $class->order_by = array();
         $class->group_by = ($class->group_by ? $class->group_by : array($this->primary_key));
 
-        return count($class->fetch());
+        return b::len($class->fetch());
     }
 
 ////////////////////////////////////////////////////////////////////////////////

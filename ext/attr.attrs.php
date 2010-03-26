@@ -7,12 +7,15 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function attr_if($attr){    $result = '';
-    $token = token_get_all('<?php '.$attr['if']);
+function attr_if($attr){    $token = token_get_all('<?php '.$attr['if']);
 
-    for ($i = 1, $c = b::len($token); $i < $c; $i++)        $result .= (is_array($token[$i]) ? $token[$i][1] : $token[$i]);
+    for ($i = 1, $c = b::len($token); $i < $c; $i++){        if (is_array($token[$i]) and $token[$i][0] == T_STRING)
+            $result .= '"'.$token[$i][1].'"';
+        else
+            $result .= (is_array($token[$i]) ? $token[$i][1] : $token[$i]);
+    }
 
-    if ($func = @create_function('', 'return '.$result.';'))
+    if ($func = create_function('', 'return '.$result.';'))
         $attr['#skip'] = !$func();
 
     unset($attr['if']);

@@ -144,7 +144,7 @@ class JsHttpRequest
      */
     function getJsCode()
     {
-        return file_get_contents(home. '/public/JsHttpRequest/JsHttpRequest.js');
+        return file_get_contents(dirname(__file__).'/JsHttpRequest.js');
     }
 
 

@@ -100,10 +100,10 @@ class B {    static $path = array('');
                     if (is_dir($path.'/'.$dir))                        $dirs[] = $path.'/'.$dir;
             if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = array();
                 foreach ($dirs as $dir)                    foreach (file::dir($dir) as $file => $iter)
-                        if (substr($file, -5) == '.yaml')
+                        if (substr($file, -4) == '.yml')
                             $files[$file] = basename($dir);
 
-                foreach ($files as $file => $dir){                    $key = ($dir == 'lib' ? $dir.'.' : '').substr(basename($file), 0, -5);
+                foreach ($files as $file => $dir){                    $key = ($dir == 'lib' ? $dir.'.' : '').substr(basename($file), 0, -4);
                     $config = arr::merge($config, array($key => arr::flat(yaml::load($file))));
                 }
 

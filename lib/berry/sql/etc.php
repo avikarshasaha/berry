@@ -291,7 +291,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         }
 
         if ($type == 'belongs_to'){
-            $foreign['field'] = $local['alias'].'_'.$foreign['field'];
+            $local['field'] = $foreign['alias'].'_'.$foreign['field'];
             $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
             $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::tableize($foreign['table']));
         }
@@ -342,6 +342,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
                     continue;
 
                 $relation = self::relations($class, $has, array($key => $table));
+                $local = &$relation['local'];
                 $foreign = &$relation['foreign'];
 
                 if ($foreign['alias1']){
@@ -353,13 +354,10 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
                     $foreign['alias'] = $parent.$foreign['alias'];
                 }
 
-                if (
-                    $parent and (
-                        substr($relation['type'], -4) == 'many' or
-                        strpos($parent, inflector::tableize($relation['local']['alias']).'.') !== false
-                    )
-                )
-                    $relation['local']['alias'] = inflector::tableize($relation['local']['alias']);
+                $tmp = inflector::tableize($local['alias']);
+
+                if ($parent and ($relation['type'] == 'has_many' or strpos($parent, $tmp.'.') !== false))
+                    $local['alias'] = $tmp;
 
                 $table = inflector::singular($alias);
                 $alias = $parent.$alias;

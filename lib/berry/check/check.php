@@ -33,7 +33,7 @@ class Check {
         )
             return true;
 
-        if (preg_match('/\W?\/(.*?)\/(i|m|s|x|e|u|A|D|S|U|X|J)?(\s|$)/', $re, $match)){
+        if (preg_match('/\W?\/(.*)\/([imsxeuADSUXJ]+)?(\s|$)/', $re, $match)){
             $check['regexp'] = preg_match($match[0], $value);
             $re = str_replace($match[0], '', $re);
         }
@@ -56,7 +56,6 @@ class Check {
                     continue;
                 }
 
-                // Есть косяки при использовании на нескольких полях
                 if ($func == 'or empty'){                    $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
                     $check = ((!$value and !$array[$tmp]) ? array($func => true) : $check);
                 }

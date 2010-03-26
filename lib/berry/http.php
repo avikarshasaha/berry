@@ -41,11 +41,71 @@ class HTTP {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://php.net/manual/ru/function.header.php#60050
-    static function status($num){
+    static function status($num, $replace = true){
         $http = b::config('lib.http.status');
         $status = (substr(PHP_SAPI, 0, 3) == 'cgi' ? 'Status:' : $_SERVER['SERVER_PROTOCOL']);
 
-        header($status.' '.$num.' '.$http[$num], true, $num);
+        header($status.' '.$num.' '.$http[$num], $replace);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function request($url, $params = array()){
+        $current = array('method' => $_SERVER['REQUEST_METHOD']);
+
+        foreach ($_SERVER as $k => $v)
+            if (substr($k, 0, 5) == 'HTTP_')
+                $current[substr($k, 5)] = $v;
+
+        unset($current['COOKIE'], $current['CONNECTION']);
+        $params = array_merge($current, $params);
+
+        foreach ($params as $k => $v){
+            unset($params[$k]);
+
+            $k = strtr(strtolower($k), '_', ' ');
+            $k = strtr(ucwords($k), ' ', '-');
+            $params[$k] = $v;
+        }
+
+        $url = parse_url($url);
+        $fp = @fsockopen($url['host'], ($url['port'] ? $url['port'] : 80));
+
+        if (!$fp)
+            return array();
+
+        $query = array(strtoupper($params['Method']).' '.$url['path'].' HTTP/1.0');
+        $content = (is_array($params['Content']) ? http_build_query($params['Content']) : $params['Content']);
+        $params['Host'] = $url['host'];
+
+        if (!$params['Content-Length'] and $content)
+            $params['Content-Length'] = strlen($content);
+
+        unset($params['Method'], $params['Content']);
+
+        foreach ($params as $k => $v)
+            $query[] = $k.': '.$v;
+
+        $query = join("\r\n", $query)."\r\n\r\n".$content;
+
+        fputs($fp, $query);
+
+        while (!feof($fp))
+            $response .= fgets($fp);
+
+        fclose($fp);
+        $pos1 = strpos($response, "\r\n\r\n");
+        $result = array();
+
+        foreach (explode("\r\n", substr($response, 0, $pos1)) as $line){
+            if (!is_int($pos2 = strpos($line, ':')))
+                $result[] = $line;
+            else
+                $result[substr($line, 0, $pos2)] = substr($line, ($pos2 + 1));
+        }
+
+        $result['Content'] = substr($response, $pos1);
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

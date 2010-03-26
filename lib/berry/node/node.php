@@ -7,15 +7,14 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Node {////////////////////////////////////////////////////////////////////////////////
+class Node extends SQL {////////////////////////////////////////////////////////////////////////////////
 
-    function __construct(){
-        /*$this->meta = b::config('lib.node');
+    function __construct($type = '', $id = 0){
+        parent::__construct($id);
 
-        $node = new Node_Model;
-        $node->select('title', 'song.title', 'artist.name');
+        $config = b::config('lib.node');
+        $this->relations = array_merge($this->relations, self::deep_throat(array($this->table => $config)));
 
-        $this->data = $node->fetch_array();*/
     }
 
 ////////////////////////////////////////////////////////////////////////////////
