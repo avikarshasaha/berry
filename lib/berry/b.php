@@ -169,9 +169,9 @@ class B {    static $path = array('');
     static function call(){        static $call;
 
         $args = func_get_args();
-        $name = trim(array_shift($args));
+        $name = array_shift($args);
 
-        if ($name[0] == '*'){            $name = substr($name, 1);
+        if (!is_array($name) and ($name = trim($name)) and $name[0] == '*'){            $name = substr($name, 1);
             $args = $args[0];        }
 
         if (!$call){            $dirs = array();
@@ -252,7 +252,7 @@ class B {    static $path = array('');
         if (isset(self::$cache['autoload'][$name]))
             return include $prev = self::$cache['autoload'][$name];
 
-        $file = array(
+        $files = array(
              str_replace('_', '/', $name),
             substr($name, 0, strpos($name, '_')).'/'.substr($name, strpos($name, '_') + 1),
             $name.'/'.$name,
@@ -265,23 +265,23 @@ class B {    static $path = array('');
         );
 
         if ($prev = substr(str_replace(b::$path, '', dirname($prev)), 5))
-            $file = array_merge($file, array(
-                $prev.'/'.$file[0],
-                $prev.'/'.$file[1],
+            $files = array_merge($files, array(
+                $prev.'/'.$files[0],
+                $prev.'/'.$files[1],
                 $prev.'/'.$name.'/'.$name,
                 $prev.'/'.$name,
 
-                $prev.'/'.$file[4],
-                $prev.'/'.$file[5],
+                $prev.'/'.$files[4],
+                $prev.'/'.$files[5],
                 $prev.'/'.$Name.'/'.$Name,
                 $prev.'/'.$Name
             ));
 
-        foreach ($file as $try)
+        foreach ($files as $file)
             if (
-                (self::$path[1] and is_file($path = self::$path[1].'/lib/'.$try.'.php')) or
-                is_file($path = self::$path[0].'/lib/berry/'.$try.'.php') or
-                is_file($path = self::$path[0].'/lib/'.$try.'.php')
+                (self::$path[1] and is_file($path = self::$path[1].'/lib/'.$file.'.php')) or
+                is_file($path = self::$path[0].'/lib/berry/'.$file.'.php') or
+                is_file($path = self::$path[0].'/lib/'.$file.'.php')
             ){
                 include self::$cache['autoload'][$name] = $prev = $path;
 
@@ -297,11 +297,11 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function load($string = '', $_ = array()){
-        $string = ($string ? $string : b::config('lib.b.load'));
+    static function load($name = '', $_ = array()){
+        $name = ($name ? $name : b::config('lib.b.load'));
         $files = array(
-            str_replace('.', '/', $string),
-            str_replace('.', '/', substr($string, 0, strrpos($string, '.'))).strrchr($string, '.')
+            str_replace('.', '/', $name),
+            str_replace('.', '/', substr($name, 0, strrpos($name, '.'))).strrchr($name, '.')
         );
 
         foreach ($files as $file)
@@ -309,7 +309,7 @@ class B {    static $path = array('');
                 is_file(self::$cache['load'] = file::path('mod/'.$file.'.php')) or
                 is_file(self::$cache['load'] = file::path('mod/'.$file.'/index.php'))
             ){
-                unset($string, $files, $file);
+                unset($name, $files, $file);
                 extract($_);
                 include_once self::$cache['load'];
                 return self::$cache['load'];
@@ -318,36 +318,31 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($string = '', $_ = array()){
-        $string = ($string ? $string : b::config('lib.b.show'));
-        $string = str_replace('.', '/', $string);
+    static function show($name = '', $_ = array()){
+        $name = ($name ? $name : b::config('lib.b.show'));
+        $name = str_replace('.', '/', $name);
+        $files = array('ext/'.$name, 'mod/'.$name, 'lib/berry/'.$name, 'lib/'.$name);
 
-        if (
-            is_file(self::$cache['show'] = file::path('ext/'.$string.'.phtml')) or
-            is_file(self::$cache['show'] = file::path('ext/'.$string.'/index.phtml')) or
+        foreach ($files as $file)
+            if (
+                is_file(self::$cache['show'] = file::path($file.'.phtml')) or
+                is_file(self::$cache['show'] = file::path($file.'/index.phtml'))
+            ){
+                !cache::exists('b/call.php') and self::call('#');
+                $funcs = include cache::exists('b/call.php');
 
-            is_file(self::$cache['show'] = file::path('mod/'.$string.'.phtml')) or
-            is_file(self::$cache['show'] = file::path('mod/'.$string.'/index.phtml')) or
+                foreach (token_get_all(file_get_contents($file)) as $token)
+                    if ($token[0] == T_STRING){
+                        if (!function_exists($token[1]) and $funcs[$token[1]])
+                            include $funcs[$token[1]];
+                    }
 
-            is_file(self::$cache['show'] = file::path('lib/berry/'.$string.'.phtml')) or
-            is_file(self::$cache['show'] = file::path('lib/berry/'.$string.'/index.phtml')) or
-            is_file(self::$cache['show'] = file::path('lib/'.$string.'.phtml')) or
-            is_file(self::$cache['show'] = file::path('lib/'.$string.'/index.phtml'))
-        ){            !cache::exists('b/call.php') and self::call('#');
-            $funcs = include cache::exists('b/call.php');
-
-            foreach (token_get_all(file_get_contents($file)) as $token)
-                if ($token[0] == T_STRING){
-                    if (!function_exists($token[1]) and $funcs[$token[1]])
-                        include $funcs[$token[1]];
-                }
-
-            ob_start();
-                unset($string, $funcs, $token);
-                extract($_);
-                include self::$cache['show'];
-            return trim(ob_get_clean());
-        }
+                ob_start();
+                    unset($name, $files, $file, $funcs, $token);
+                    extract($_);
+                    include self::$cache['show'];
+                return trim(ob_get_clean());
+            }
     }
 
 ////////////////////////////////////////////////////////////////////////////////

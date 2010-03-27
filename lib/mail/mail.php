@@ -68,7 +68,7 @@ class Mail {
         $message = ltrim(str_replace(array($subject[0], $attach[0], $type[0]), '', $message));
         $message = trim($message)."\n";
         $subject = trim($subject[1]);
-        $attach  = arr::trim(explode(';', $attach[1]));
+        $attach  = arr::trim(explode(',', $attach[1]));
 
         if (!$type = trim($type[1]))
             $type = b::config('lib.mail.type');

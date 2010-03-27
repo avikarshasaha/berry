@@ -9,7 +9,7 @@
                                                                    \/|*/
 class Cache {
     static $file;
-    protected static $tags = array();
+    protected static $tags;
     protected static $scope = array();
 
 ////////////////////////////////////////////////////////////////////////////////

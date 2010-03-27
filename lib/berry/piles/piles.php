@@ -4,36 +4,31 @@
     <http://goodgirl.ru/berry>                             | ~ )\
     <http://goodgirl.ru/berry/license>                     /__/\ \____
                                                            /   \_/    \
-    Ë¸õà zloy è êðàñèâûé <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
+    Ð›Ñ‘Ñ…Ð° zloy Ð¸ ÐºÑ€Ð°ÑÐ¸Ð²Ñ‹Ð¹ <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Piles {    protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
     static function show($output = '', $_ = array()){
-        $string = ($output ? $output : b::config('lib.b.show'));
-        $string = str_replace('.', '/', $string);
+        $name = ($output ? $output : b::config('lib.b.show'));
+        $name = str_replace('.', '/', $name);
+        $files = array('ext/'.$name, 'mod/'.$name, 'lib/berry/'.$name, 'lib/'.$name);
 
-        if (
-            is_file($file = file::path('ext/'.$string.'.phtml')) or
-            is_file($file = file::path('ext/'.$string.'/index.phtml')) or
+        foreach ($files as $file)
+            if (
+                is_file(self::$cache['show'] = file::path($file.'.phtml')) or
+                is_file(self::$cache['show'] = file::path($file.'/index.phtml'))
+            ){                $file = self::$cache['show'];
+                if (!self::$cache['show'] = cache::get_path('piles/'.$name.'.php', compact('file')))                    self::$cache['show'] = cache::set('<?php '.self::parse(file_get_contents($file)));
 
-            is_file($file = file::path('mod/'.$string.'.phtml')) or
-            is_file($file = file::path('mod/'.$string.'/index.phtml')) or
+                unset($output, $name, $files, $file);
+                extract($_);
 
-            is_file($file = file::path('lib/berry/'.$string.'.phtml')) or
-            is_file($file = file::path('lib/berry/'.$string.'/index.phtml')) or
-            is_file($file = file::path('lib/'.$string.'.phtml')) or
-            is_file($file = file::path('lib/'.$string.'/index.phtml'))
-        ){            if (!self::$cache['show'] = cache::get_path('piles/'.$string.'.php', compact('file')))                self::$cache['show'] = cache::set('<?php '.self::parse(file_get_contents($file)));
-
-            unset($output, $string, $file);
-            extract($_);
-
-            ob_start();
-                 include self::$cache['show'];
-            return ob_get_clean();
-        }
+                ob_start();
+                    include self::$cache['show'];
+                return ob_get_clean();
+            }
 
         self::$cache['show'] = $output;
         unset($output, $string, $file);
@@ -44,7 +39,7 @@ class Piles {    protected static $cache = array();
         $result = ob_get_clean();
 
         if ($eval === false)
-            throw new Piles_Except($result, self::$cache['show']);
+            throw new Piles_Except($result, trim(self::$cache['show']));
 
         return $result;
     }
@@ -224,6 +219,7 @@ class Piles {    protected static $cache = array();
             '#'  => '\#',
 
             '<? ' => '<?php ',
+            '<?=' => '<?php echo ',
             '?>'  => '<?',
             '`'   => '\`' ,
             "'"   => "\'",
@@ -317,7 +313,7 @@ class Piles {    protected static $cache = array();
                     $tags[$key] += array($token[$i][1] => $tmp);
                     $skip = ($j - $i);
                 } elseif (!is_array($token[$i]) and trim($token[$i]) and $token[$i + 1] == '='){
-                    $tmp = (is_array($token[$i + 2]) ? $token[$i + 2][1] : $token[$i + 2]);
+                    $tmp = (is_array($next = $token[$i + 2]) ? $next[1] : $next);
 
                     if (in_array($tmp[0].substr($tmp, -1), array('""', "''", '``')))
                         $tmp = substr($tmp, 1, -1);
@@ -330,20 +326,59 @@ class Piles {    protected static $cache = array();
                     $tags[] = $token[$i];
                 } elseif ($token[$i + 1] == '?'){
                     $tmp = '';
+                    $is_php = (is_array($next = $token[$i + 2]) and (!trim($next[1]) or strtolower($next[1]) == 'php'));
 
-                    for ($j = ($i + 2); $j < $c; $j++){
-                        if (!trim($tmp) and $token[$j] == '='){
-                            $tmp .= 'echo ';
-                            continue;
+                    for ($j = ($i + 2); $j < $c; $j++){                        if ($is_php and is_array($token[$j]) and $token[$j][0] == T_STRING){                            $next = $token[$j + 1];
+                            $n = 0;
+
+                            if (
+                                ($next == '(' and ($n = 1)) or
+                                (is_array($next) and !trim($next[1]) and $token[$j + ($n = 2)] == '(')
+                            ){                                $method = '';
+
+                                if (
+                                    is_array($token[$j - 1]) and !trim($token[$j - 1][1]) and
+                                    in_array($token[$j - 2][1], array('::', '->')) and
+                                    is_array($token[$j - 3]) and !trim($token[$j - 3][1])
+                                ){
+                                    $method = $token[$j - 4][1].$token[$j - 3][1].$token[$j - 2][1].$token[$j - 1][1];
+                                } elseif (
+                                    is_array($token[$j - 2]) and !trim($token[$j - 2][1]) and
+                                    in_array($token[$j - 3][1], array('::', '->'))
+                                ){
+                                    $method = $token[$j - 4][1].$token[$j - 3][1].$token[$j - 2][1];
+                                } elseif (
+                                    is_array($token[$j - 1]) and !trim($token[$j - 1][1]) and
+                                    in_array($token[$j - 2][1], array('::', '->'))
+                                ){
+                                    $method = $token[$j - 3][1].$token[$j - 2][1].$token[$j - 1][1];
+                                } elseif (in_array($token[$j - 1][1], array('::', '->'))){
+                                    $method = $token[$j - 2][1].$token[$j - 1][1];
+                                }
+
+                                $token[$j][1] = '`'.$token[$j][1].'`';
+
+                                if ($method){
+                                    $tmp = substr($tmp, 0, -b::len($method));
+                                    $method = str_replace(' ', '', $method);
+                                    $method = explode((strpos($method, '::') ? '::' : '->'), $method);
+                                    $method[0] = ($method[0][0] != '$' ? '`'.$method[0].'`' : $method[0]);
+                                    $token[$j][1] = 'array('.$method[0].', '.$token[$j][1].')';
+                                }
+
+                                $tmp .= 'b::call('.$token[$j][1];
+                                $tmp .= ($token[$j + $n + 1] == ')' ? '' : ', ');
+                                $j += $n;
+                                continue;                            }
                         } elseif ($token[$j] == '<' and $token[$j + 1] == '?'){
-                            $j++;
+                            $j += 1;
                             break;
                         }
 
                         $tmp .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                     }
 
-                    if (is_array($token[$i + 2]) and (!trim($token[$i + 2][1]) or strtolower($token[$i + 2][1]) == 'php'))
+                    if ($is_php)
                         $tags[sprintf($mask, '@', $i)] = substr($tmp, (!trim($token[$i + 2][1]) ? 1 : 3));
                     else
                         $tags[] = '<?'.$tmp.'?>';
@@ -371,7 +406,7 @@ class Piles {    protected static $cache = array();
 
                     $tags[sprintf($mask, '/'.$key, $tmp)] = array();
                     $skip = ($j - $i);
-                } elseif (trim(is_array($token[$i + 1]) ? $token[$i + 1][1] : $token[$i + 1])){
+                } elseif (trim(is_array($next = $token[$i + 1]) ? $next[1] : $next)){
                     $opened = true;
                     $key = '';
 
