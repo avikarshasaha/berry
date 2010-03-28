@@ -47,7 +47,7 @@ class Piles {    protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
     static function char($char){
-        return '%it['.ord($char).']';
+        return '%char['.ord($char).']';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -489,7 +489,7 @@ class Piles {    protected static $cache = array();
 
         $result = str_replace(self::char("'"), "\'", $result);
         $result = str_replace('`', "'", $result);
-        $result = @preg_replace('/%it\[(\d+)\]/e', "chr('\\1')'", $result);
+        $result = @preg_replace('/%char\[(\d+)\]/e', "chr('\\1')'", $result);
 
         return $result;
     }

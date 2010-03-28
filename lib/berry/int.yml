@@ -3,11 +3,11 @@ ru:
         gb: ГБ
         mb: МБ
         kb: КБ
-        b: б
+        b: байт
 
 en:
     size:
         gb: GB
         mb: MB
         kb: KB
-        b: b
+        b: byte

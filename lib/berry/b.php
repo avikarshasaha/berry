@@ -13,28 +13,22 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function version($what = ''){        $version = array('name' => 'Chinpoko', 'id' => '0.1.6.dev');
+    static function version($what = ''){        $version = array('name' => 'Chuck', 'id' => '0.9.dev');
         return ($what ? $version[$what] : $version);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        if (!self::$path[0])
+    static function init(){        self::$cache['init'] = microtime(true);
+        if (!self::$path[0])
             self::$path[0] = realpath(dirname(__file__).'/../..');
 
         ini_set('docref_root', 'http://php.net/');
-        ini_set('session.use_trans_sid', false);
-        ini_set('session.use_cookies', true);
-        ini_set('session.cookie_lifetime', 0);
-
         spl_autoload_register(array('self', 'autoload'));
-        debug::timer();
+        date_default_timezone_set(self::config('lib.b.timezone'));
+        setlocale(LC_ALL, self::lang('lib.b.locale'));
 
         $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
         $lang and !self::$lang and self::$lang = $lang;
-
-        date_default_timezone_set(self::config('lib.b.timezone'));
-        setlocale(LC_ALL, self::lang('lib.b.locale'));
-        session_start();
 
         $_GET['berry'] = ($_GET['berry'] ? str::clean($_GET['berry']) : 'home');
         self::router();
@@ -96,15 +90,24 @@ class B {    static $path = array('');
         if (!$config){            $dirs = array();
 
             foreach (self::$path as $path)
-                foreach (array('mod', 'lib', 'ext') as $dir)
+                foreach (array('mod', 'lib', 'ext', '') as $dir)
                     if (is_dir($path.'/'.$dir))                        $dirs[] = $path.'/'.$dir;
             if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = array();
-                foreach ($dirs as $dir)                    foreach (file::dir($dir) as $file => $iter)
+                foreach ($dirs as $dir){                    $name = basename($dir);
+
+                    if (in_array($name, array('mod', 'lib')))
+                        $array = file::dir($dir);
+                    else                        $array = array_flip(file::glob($dir.'/*.yml'));
+
+                    foreach ($array as $file => $iter)
                         if (substr($file, -4) == '.yml')
-                            $files[$file] = basename($dir);
+                            $files[$file] = $name;
+                }
 
                 foreach ($files as $file => $dir){                    $key = ($dir == 'lib' ? $dir.'.' : '').substr(basename($file), 0, -4);
-                    $config = arr::merge($config, array($key => arr::flat(yaml::load($file))));
+                    $array = arr::flat(yaml::load($file));
+                    $array['#file'] = $file;
+                    $config = arr::merge($config, array($key => $array));
                 }
 
                 cache::set($config = arr::assoc($config));
@@ -113,15 +116,48 @@ class B {    static $path = array('');
 
         $args = func_get_args();
 
-        if (func_num_args() == 1){            if (isset(self::$cache['config'][$args[0]]))
+        if (!func_num_args()){            return $config;
+        } elseif (func_num_args() == 1){            if (isset(self::$cache['config'][$args[0]]))
                 return self::$cache['config'][$args[0]];
 
             $var = piles::varname($args[0], '$config');
 
             if ($func = create_function('$config', 'if (isset('.$var.')) return '.$var.';'))
                 return self::$cache['config'][$args[0]] = $func($config);
-        } else {
-            return $config;
+        } else {            $array = explode('.', str_replace('\.', piles::char('.'), $args[0]));
+
+            for ($i = 0, $c = self::len($array); $i < $c; $i++){                $section = join('.', $array);
+                $var = piles::varname($section, '$config');
+                $tmp = 'if (is_array('.$var.') and isset('.$var.'["#file"])) return '.$var.';';
+
+                if (
+                    ($func = create_function('$config', $tmp)) and
+                    ($tmp = $func($config))
+                ){                    $data = $tmp;
+                    break;
+                }
+                array_pop($array);            }
+
+            if (!isset($data))
+                return;
+
+            if ($data == $args[1])
+                return 0;
+
+            $file = $data['#file'];
+            unset($data['#file']);
+
+            if ($section = (substr($args[0], self::len($section) + 1)))
+                $set = arr::merge($data, arr::assoc(array($section => $args[1])));
+            else
+                $set = $args[1];
+
+            if ($data == $set)
+                return 0;
+
+            self::$cache['config'][$args[0]] = $args[1];
+            cache::remove('b/config.php');
+            return (bool)file_put_contents($file, yaml::dump($set));
         }
     }
 
@@ -376,6 +412,25 @@ class B {    static $path = array('');
             $_GET['berry'] = $url['path'];
             $_GET = array_merge($_GET, $query);
         }
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function stat($what = ''){        $stat = array(
+            'pgt' => (microtime(true) - self::$cache['init']),
+            'sql' => sql::stat(),
+            'memory' => array(
+                'limit' => int::size(int::bytes(ini_get('memory_limit'))),
+                'usage' => int::size(self::call('memory_get_usage')),
+                'peak'  => int::size(self::call('memory_get_peak_usage'))
+            )
+        );
+
+        if (!$what)
+            return $stat;
+
+        $stat = arr::flat($stat);
+        return $stat[$what];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

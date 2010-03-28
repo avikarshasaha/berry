@@ -21,7 +21,7 @@ class Int {
             if ($filesize >= $v)
                 return (round($filesize / $v * 100) / 100).' '.$size[$k];
 
-        return $filesize.' '.$size['b'];
+        return (int)$filesize.' '.$size['b'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

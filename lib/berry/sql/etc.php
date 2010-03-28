@@ -138,7 +138,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function statistics($what = ''){        if (!$stat = self::$sql->getStatistics())
+    static function stat($what = ''){        if (!$stat = self::$sql->getStatistics())
             return array();
 
 	    return ($what ? $stat[$what] : $stat);
