@@ -166,7 +166,7 @@ class Cache {
                     $tags[] = $v;
         }
 
-        $data = call_user_method_array($method, $this->object, $params);
+        $data = call_user_func_array(array($this->object, $method), $params);
         self::set($data, $tags);
 
         return $data;

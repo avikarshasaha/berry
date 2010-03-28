@@ -24,28 +24,28 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
         $args = $this->placeholders;
         array_unshift($args, $this->query);
-        return self::$cache[$key] = call_user_method_array('select', self::$sql, $args);
+        return self::$cache[$key] = call_user_func_array(array(self::$sql, 'select'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch_cell(){        $args = $this->placeholders;
         array_unshift($args, $this->query);
-        return call_user_method_array('selectCell', self::$sql, $args);
+        return call_user_func_array(array(self::$sql, 'selectCell'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch_col(){        $args = $this->placeholders;
         array_unshift($args, $this->query);
-        return call_user_method_array('selectCol', self::$sql, $args);
+        return call_user_func_array(array(self::$sql, 'selectCol'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch_row(){        $args = $this->placeholders;
         array_unshift($args, $this->query);
-        return call_user_method_array('selectRow', self::$sql, $args);
+        return call_user_func_array(array(self::$sql, 'selectRow'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

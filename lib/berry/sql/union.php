@@ -58,7 +58,7 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 
         $args = $this->placeholders;
         array_unshift($args, self::build('select'));
-        return self::$cache[$key] = call_user_method_array('select', self::$sql, $args);
+        return self::$cache[$key] = call_user_func_array(array(self::$sql, 'select'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

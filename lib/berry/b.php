@@ -18,7 +18,7 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        self::$cache['init'] = microtime(true);
+    static function init(){        self::$cache['stat'] = microtime(true);
         if (!self::$path[0])
             self::$path[0] = realpath(dirname(__file__).'/../..');
 
@@ -417,8 +417,9 @@ class B {    static $path = array('');
 ////////////////////////////////////////////////////////////////////////////////
 
     static function stat($what = ''){        $stat = array(
-            'pgt' => (microtime(true) - self::$cache['init']),
+            'pgt' => (microtime(true) - self::$cache['stat']),
             'sql' => sql::stat(),
+            'piles' => piles::stat(),
             'memory' => array(
                 'limit' => int::size(int::bytes(ini_get('memory_limit'))),
                 'usage' => int::size(self::call('memory_get_usage')),

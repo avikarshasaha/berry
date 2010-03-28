@@ -15,19 +15,36 @@ html::block('body', ob_get_clean());
 
 ////////////////////////////////////////////////////////////////////////////////
 
-$output = preg_replace('/<block_body(\s+)?\/>/i', join('', html::block('body')), piles::show());
+$content_type = 'text/html';
+
+foreach (headers_list() as $header)
+    if (substr($header, 0, 13) == 'Content-Type:'){
+        if ($pos = strpos($header, ';'))
+            $header = substr($header, 0, $pos);
+
+        $content_type = trim(strtolower(substr($header, 13)));
+        break;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+if ($content_type != 'text/html'){    $output = join('', html::block('body'));
+
+    if (substr($content_type, 0, 5) != 'text/')        return $output;
+} else {    $output = preg_replace('/<block_body(\s+)?\/>/i', join('', html::block('body')), piles::show());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 $output = hook::get('output', $output);
 $output = preg_replace('/<block_(.*?)(\s+)?\/>/ie', "join('', html::block('\\1'))", $output);
-$output = preg_replace('/(href|src)=("|\')\~\/(.*)\\2/iU', '\\1=\\2'.b::q(0).'/~/\\3\\2', $output);
+$output = preg_replace('/(href|src)=("|\'|)\~\/(.*)\\2/iU', '\\1=\\2'.b::q(0).'/~/\\3\\2', $output);
+$output = preg_replace('/(\W)url(\s+)?\(("|\'|)\~\/(.*)\\3\)/i', '\\1url\\2(\\3'.b::q(0).'/~/\\4\\3)', $output);
 
 ////////////////////////////////////////////////////////////////////////////////
 
 if (stripos($output, '</form>'))
     $output = new FormPersistent($output);
-
-////////////////////////////////////////////////////////////////////////////////
-
-$_SESSION['berry'] = array('addr' => $_SERVER['REMOTE_ADDR'], 'agent' => $_SERVER['HTTP_USER_AGENT']);
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -32,7 +32,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             }
 
             $args = array_merge(array(self::build('insert')), $values);
-            $query = call_user_method_array('query', self::$sql, $args);
+            $query = call_user_func_array(array(self::$sql, 'query'), $args);
 
             if (is_int($query)){                if (($key = array_search($this->primary_key, $this->into)) !== false){
                     for ($i = 0, $c = b::len($this->values); $i < $c; $i++)
@@ -78,7 +78,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             if ($values){
                 $args = array_merge(array($values), (!$this->where ? array($values) : $this->placeholders));
                 array_unshift($args, self::build('save'));
-                $result[] = call_user_method_array('query', self::$sql, $args);
+                $result[] = call_user_func_array(array(self::$sql, 'query'), $args);
             }
 
             if ($belongs){
@@ -116,7 +116,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
     function delete(){        $args = $this->placeholders;
         array_unshift($args, self::build('delete'));
-        return call_user_method_array('query', self::$sql, $args);
+        return call_user_func_array(array(self::$sql, 'query'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -146,7 +146,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $args = $this->placeholders;
             array_unshift($args, $class->build('select'));
 
-            if (!$ids = call_user_method_array('selectCol', self::$sql, $args))
+            if (!$ids = call_user_func_array(array(self::$sql, 'selectCol'), $args))
                 return array();
 
             $this->where = array($this->primary_key.' in (?a)');
@@ -158,7 +158,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         $args = $this->placeholders;
         array_unshift($args, $query);
-        return call_user_method_array('select', self::$sql, $args);
+        return call_user_func_array(array(self::$sql, 'select'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

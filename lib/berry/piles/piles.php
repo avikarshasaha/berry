@@ -10,7 +10,8 @@
 class Piles {    protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($output = '', $_ = array()){
+    static function show($output = '', $_ = array()){        self::$cache['stat'][0] = microtime(true);
+
         $name = ($output ? $output : b::config('lib.b.show'));
         $name = str_replace('.', '/', $name);
         $files = array('ext/'.$name, 'mod/'.$name, 'lib/berry/'.$name, 'lib/'.$name);
@@ -27,6 +28,7 @@ class Piles {    protected static $cache = array();
 
                 ob_start();
                     include self::$cache['show'];
+                    self::$cache['stat'][] = (microtime(true) - self::$cache['stat'][0]);
                 return ob_get_clean();
             }
 
@@ -41,7 +43,16 @@ class Piles {    protected static $cache = array();
         if ($eval === false)
             throw new Piles_Except($result, trim(self::$cache['show']));
 
+        self::$cache['stat'][] = (microtime(true) - self::$cache['stat'][0]);
         return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function stat(){        $stat = self::$cache['stat'];
+        array_shift($stat);
+
+        return array_sum($stat);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -447,6 +458,9 @@ class Piles {    protected static $cache = array();
         $scope = array();
         $echo = false;
 
+        if (end($tags) == ';')
+            $tags[] = ' ';
+
         foreach ($tags as $k => $v)
             if (is_int($k)){
                 $result .= self::_vars((!$echo ? 'echo `'.$v : $v));
@@ -470,7 +484,7 @@ class Piles {    protected static $cache = array();
                     foreach ($v as $k2 => $v2){                        if (b::function_exists($func = 'attr_'.$k2))
                             $open .= 'b::call(`'.$func.'`, ';
 
-                        $attr .= '`'.$k2.'` => '.$v2.",\r\n";
+                        $attr .= '`'.$k2.'` => '.(!$v2 ? '``' : $v2).",\r\n";
                     }
 
                     $close = ($open ? str_repeat(')', substr_count($open, '(')) : '');

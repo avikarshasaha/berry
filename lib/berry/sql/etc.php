@@ -244,7 +244,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
 
         foreach ($trigger as $k => $v)
-            if (call_user_method_array($k, $this, array_merge((array)$v)))
+            if (call_user_func_array(array($this, $k), array_merge((array)$v)))
                 $this->placeholders = array_merge($this->placeholders, $params);
 
         return $this;

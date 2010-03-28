@@ -89,7 +89,7 @@ class Image extends Image_Merge {
 
         foreach ($params as $k => $v)
             if (method_exists($merge, $k))
-                call_user_method($k, $merge, $v);
+                call_user_func(array($merge, $k), $v);
 
         unset($merge);
         unset($image);
