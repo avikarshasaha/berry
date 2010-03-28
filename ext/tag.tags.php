@@ -50,29 +50,69 @@ function tag_group($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function tag_toc($attr){    $uri = b::q(1, 0);
-    $toc = $ref = '';
-    $string = '<a name="%s"></a><a href="'.$uri.'#%s">%s</a>';
+function tag_toc($attr){    $ref = '';
+    $string = '<a name="%s"></a><a href="#%s">%s</a>';
     if (preg_match_all('/<ref>(.*?)<\/ref>/i', $attr['#text'], $match)){
         for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){            $id = 'ref-'.($i + 1);            $ref[] = sprintf($string, $id, '_'.$id, '↑').' '.$match[1][$i];
             $attr['#text'] = str_replace($match[0][$i], sprintf($string, '_'.$id, $id, '<sup>[?]</sup>'), $attr['#text']);        }
 
         if ($ref)
             $ref = '<li>'.join('</li><li>', $ref).'</li>';
-    }
+    }
+
+    $toc = array('*' => '', '#' => '');
+    $result = array();
+    $last = 0;
+    $string = '';
     if (preg_match_all('/<h(\d+)( (.*?))?>(.*)<\/h\\1>/i', $attr['#text'], $match)){
         for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){
         	preg_match('/ id=("|\')(.*?)\\1/', $match[2][$i], $id);
 
+        	if (!$last)
+        	    $string = 'h'.$match[1][$i];
+            elseif ($last < $match[1][$i])
+                $string .= '.h'.$match[1][$i];
+            elseif ($last > $match[1][$i])
+                $string = substr($string, 0, strrpos($string, '.')).'-h'.$match[1][$i];
+
         	$id = ($id[2] ? $id[2] : 'toc-'.($i + 1));
-            $toc .= str_repeat('#', $match[1][$i]);
-            $toc .= ' <a href="'.$uri.'#'.$id.'">'.$match[4][$i].'</a>'."\r\n";
-            $attr['#text'] = str_replace($match[0][$i], '<a name="'.$id.'"></a> '.$match[0][$i], $attr['#text']);
+        	$result[$string][] = '<a href="#'.$id.'">'.$match[4][$i].'</a>';
+        	$attr['#text'] = str_replace($match[0][$i], '<a name="'.$id.'"></a> '.$match[0][$i], $attr['#text']);
+        	$last = $match[1][$i];
         }
 
-        if ($toc)
-            $toc = formatter::textile($toc);
+        if ($result){            $result = arr::assoc($result);
+            if (strpos($attr['#text'], '%toc.*') !== false)
+                $toc['*'] = _tag_toc($result, 'ul');
+
+            if (strpos($attr['#text'], '%toc.#') !== false)
+                $toc['#'] = _tag_toc($result, 'ol');
+        }
     }
 
 	return str::format($attr['#text'], compact('toc', 'ref'));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function _tag_toc($items, $tag){    foreach ($items as $item)        if (is_array($item))
+            $result .= '<'.$tag.'>'._tag_toc($item, $tag).'</'.$tag.'>';
+        else
+            $result .= '<li>'.$item.'</li>';
+
+    return $result;}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function tag_formatter($attr){
+	$format = strtolower($attr['format']);
+
+    if ($format == 'text+br')
+      $attr['#text'] = nl2br(str::unhtml($attr['#text']));
+    elseif ($format == 'text')
+      $attr['#text'] = str::unhtml($attr['#text']);
+	elseif ($format == 'html+br')
+      $attr['#text'] = nl2br($attr['#text']);
+
+    return $attr['#text'];
 }
