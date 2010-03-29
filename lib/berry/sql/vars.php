@@ -88,28 +88,29 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
     protected function _get($name){        $key = self::hash('_get');
 
-        if (!$this->select and ($class = self::_multisave($name)))
+        if (!$this->select and ($class = self::_parallel($name)))
             return $class;
 
-        if (!$this->where and ($relation = $this->relations[$name])){
-            if (!isset(self::$cache[$key.$name])){                $class = self::_object($name);
+        if (!$this->where)
+            if ($relation = $this->relations[$name]){
+                if (!isset(self::$cache[$key.$name])){                    $class = self::_object($name);
 
-                if ($relation['type'] == 'has_one')
-                    $this[$relation['local']['field']] = $class;
+                    if ($relation['type'] == 'has_one')
+                        $this[$relation['local']['field']] = $class;
 
-                if ($relation['type'] == 'belongs_to')
-                    $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
+                    if ($relation['type'] == 'belongs_to')
+                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
 
-                if ($relation['type'] == 'has_many'){
-                    $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
-                    $this->multisave[] = $class;
+                    if ($relation['type'] == 'has_many'){
+                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
+                        $this->parallel[] = $class;
+                    }
+
+                    self::$cache[$key.$name] = $class;
                 }
 
-                self::$cache[$key.$name] = $class;
-            }
-
-            return self::$cache[$key.$name];
-        }
+                return self::$cache[$key.$name];
+            } else {                return $this->values[$name];            }
 
         if (!isset(self::$cache[$key])){            $class = clone $this;
 
@@ -135,7 +136,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many')
                     $class->values[$relation['foreign']['field']] = (string)$this->id;
 
-                return self::$cache[$key.$name] = $this->multisave[] = $class;
+                return self::$cache[$key.$name] = $this->parallel[] = $class;
             }
 
             return self::$cache[$key.$name];
@@ -161,7 +162,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
     protected function _set($name, $value){        $func = create_function('$a', 'return !is_int($a);');
         if (is_array($value)){
-            if ($class = self::_multisave($name)){
+            if ($class = self::_parallel($name)){
                 foreach ($value as $k => $v)
                     $class[$k] = $v;
             }
@@ -185,7 +186,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
         if (is_int($value)){            $tmp = $value;
             $tmp -= self::_get($name);
-            $this->values[$name] = self::raw($this->table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
+            $this->values[$name] = self::raw($this->_table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
         } else {            $this->values[$name] = $value;        }
 
         if (isset(self::$cache[$key = self::hash('_get')]))
@@ -204,16 +205,16 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _multisave($name, $values = array()){        if (is_null($name) or $values){            if ($this->multisave[0]){                $class = clone $this->multisave[0];            } else {                $class = clone $this;
-                $class->where = $this->values = $class->multisave = array();
+    protected function _parallel($name, $values = array()){        if (is_null($name) or $values){            if ($this->parallel[0]){                $class = clone $this->parallel[0];            } else {                $class = clone $this;
+                $class->where = $this->values = $class->parallel = array();
                 $this->values = $values;
             }
 
-            return $this->multisave[] = $class;
+            return $this->parallel[] = $class;
         }
 
         if (is_int($name)){
-            if (!isset($this->multisave['#'.$name])){                $class = clone $this;
+            if (!isset($this->parallel['#'.$name])){                $class = clone $this;
                 $class->select = $class->group_by = array($this->primary_key);
                 $array = $class->fetch_col();
 
@@ -224,10 +225,10 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 $class->group_by = $this->group_by;
                 $class->where($this->primary_key.' = ?d', $class->id);
 
-                $this->multisave['#'.$name] = $class;
+                $this->parallel['#'.$name] = $class;
             }
 
-            return $this->multisave['#'.$name];
+            return $this->parallel['#'.$name];
         }
     }
 

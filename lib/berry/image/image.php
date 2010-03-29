@@ -52,6 +52,9 @@ class Image extends Image_Merge {
 
         if ($quality and $ext == 'png')            $quality = round(($quality > 0 ? $quality : 10) / -10 + 10);
 
+        if ($file == '.'.$ext)
+            $file = null;
+
         if (b::call('*image'.$map[$ext], array($this->im, $file, $quality)))
             return $file;    }
 

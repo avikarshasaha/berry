@@ -21,8 +21,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if ($this->into){            $into = $this->into;            $values = $this->values;
             $belongs = array();
             foreach ($values as $k => $v){
-                if (!check::is_valid($this->checker, array_combine($into, $v)))
-                    throw new Check_Except($this->checker, $this->table);
+                if (!check::is_valid($this->check, array_combine($into, $v)))
+                    throw new Check_Except($this->check, $this->table);
 
                 foreach ($v as $k2 => $v2)
                     if ($name = self::_is_HABTM($into[$k2])){
@@ -59,8 +59,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 $result[] = $query;
             }
         } elseif ($this->values){
-            if (!check::is_valid($this->checker, $this->values))
-                throw new Check_Except($this->checker, $this->table);
+            if (!check::is_valid($this->check, $this->values))
+                throw new Check_Except($this->check, $this->table);
 
             $values = $this->values;
             $belongs = array();
@@ -102,7 +102,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             }
         }
 
-        foreach ($this->multisave as $class){            $key = spl_object_hash($class);
+        foreach ($this->parallel as $class){            $key = spl_object_hash($class);
 
             if (isset($cache[$key]))
                 continue;

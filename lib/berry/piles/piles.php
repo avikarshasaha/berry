@@ -10,7 +10,8 @@
 class Piles {    protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($output = '', $_ = array()){        self::$cache['stat'][0] = microtime(true);
+    static function show($output = '', $_ = array(), $filter = null){        self::$cache['stat'][0] = microtime(true);
+        self::$cache['show']['filter'] = $filter;
 
         $name = ($output ? $output : b::config('lib.b.show'));
         $name = str_replace('.', '/', $name);
@@ -18,30 +19,39 @@ class Piles {    protected static $cache = array();
 
         foreach ($files as $file)
             if (
-                is_file(self::$cache['show'] = file::path($file.'.phtml')) or
-                is_file(self::$cache['show'] = file::path($file.'/index.phtml'))
-            ){                $file = self::$cache['show'];
-                if (!self::$cache['show'] = cache::get_path('piles/'.$name.'.php', compact('file')))                    self::$cache['show'] = cache::set('<?php '.self::parse(file_get_contents($file)));
+                is_file(self::$cache['show']['file'] = file::path($file.'.phtml')) or
+                is_file(self::$cache['show']['file'] = file::path($file.'/index.phtml'))
+            ){                if (!self::$cache['show']['file'] = cache::get_path('piles/'.$name.'.php', array(
+                    'file' => self::$cache['show']['file']
+                )))                    self::$cache['show']['file'] = cache::set('<?php '.self::parse(
+                        file_get_contents(self::$cache['show']['file']),
+                        self::$cache['show']['filter']
+                    ));
 
-                unset($output, $name, $files, $file);
+                unset($output, $filter, $name, $files, $file);
                 extract($_);
 
                 ob_start();
-                    include self::$cache['show'];
+                    include self::$cache['show']['file'];
                     self::$cache['stat'][] = (microtime(true) - self::$cache['stat'][0]);
                 return ob_get_clean();
             }
 
-        self::$cache['show'] = $output;
-        unset($output, $string, $file);
+        self::$cache['show']['key'] = md5($output);
+
+        if (isset(self::$cache['show']['cache'][self::$cache['show']['key']]))
+            return self::$cache['show']['cache'][self::$cache['show']['key']];
+
+        self::$cache['show']['output'] = $output;
+        unset($output, $filter, $name, $files);
         extract($_);
 
         ob_start();
-            $eval = eval(self::parse(self::$cache['show']));
-        $result = ob_get_clean();
+            $eval = eval(self::parse(self::$cache['show']['output'], self::$cache['show']['filter']));
+        self::$cache['show']['cache'][self::$cache['show']['key']] = $result = ob_get_clean();
 
         if ($eval === false)
-            throw new Piles_Except($result, trim(self::$cache['show']));
+            throw new Piles_Except($result, trim(self::$cache['show']['output']));
 
         self::$cache['stat'][] = (microtime(true) - self::$cache['stat'][0]);
         return $result;
@@ -390,7 +400,7 @@ class Piles {    protected static $cache = array();
                     }
 
                     if ($is_php)
-                        $tags[sprintf($mask, '@', $i)] = substr($tmp, (!trim($token[$i + 2][1]) ? 1 : 3));
+                        $tags[sprintf($mask, '?', $i)] = substr($tmp, (!trim($token[$i + 2][1]) ? 1 : 3));
                     else
                         $tags[] = '<?'.$tmp.'?>';
 
@@ -416,7 +426,7 @@ class Piles {    protected static $cache = array();
                         $tmp = $i;
 
                     $tags[sprintf($mask, '/'.$key, $tmp)] = array();
-                    $skip = ($j - $i);
+                    $skip = ($end - $i);
                 } elseif (trim(is_array($next = $token[$i + 1]) ? $next[1] : $next)){
                     $opened = true;
                     $key = '';
@@ -453,7 +463,7 @@ class Piles {    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function parse($output){        $tags = (is_array($output) ? $output : self::tokenize($output));
+    static function parse($output, $filter = null){        $tags = (is_array($output) ? $output : self::tokenize($output));
         $result = '';
         $scope = array();
         $echo = false;
@@ -461,15 +471,25 @@ class Piles {    protected static $cache = array();
         if (end($tags) == ';')
             $tags[] = ' ';
 
+        if (is_array($filter))
+            foreach ($filter as $k => $v)                if (is_int($k)){                    $filter[$v] = array();                    unset($filter[$k]);                }
+
         foreach ($tags as $k => $v)
-            if (is_int($k)){
+            if (is_int($k)){                if (is_array($filter) and $v[0] == '<')
+                    $v = '&lt;'.substr($v, 1);
+
                 $result .= self::_vars((!$echo ? 'echo `'.$v : $v));
                 $echo = true;
-            } elseif ($k[0] == '$'){                $result .= self::_vars(!$echo ? 'echo '.$v.'.`' : '`.'.$v.'.`');
+            } elseif ($k[0] == '$'){                if (is_array($filter) and !isset($filter[$k[0]]))
+                    $result .= str_replace("'", self::char("'"), $v);
+                else                    $result .= self::_vars(!$echo ? 'echo '.$v.'.`' : '`.'.$v.'.`');
+
                 $echo = true;
-            } elseif ($k[0] == '@'){                $v = str_replace(self::char("'"), "'", $v);
-                $result .= self::_vars(($echo ? '`;' : '').$v.';');
-                $echo = false;
+            } elseif ($k[0] == '?'){                if (is_array($filter) and !isset($filter[$k[0]])){                    $result .= '&lt;? '.$v.'?>';
+                    $echo = true;                } else {                    $v = str_replace(self::char("'"), "'", $v);
+                    $result .= self::_vars(($echo ? '`;' : '').$v.';');
+                    $echo = false;
+                }
             } else {
                 list($tag, $num) = explode(':', $k, 2);
                 $result .= ($echo ? '`;' : '');
@@ -477,11 +497,30 @@ class Piles {    protected static $cache = array();
                 if ($tag[0] == '/'){
                     $open = '';
                     $result .= $scope[substr($tag, 1)][$num];
-                } else {
-                    $v['#tag'] = '`'.$tag.'`';
-                    $attr = $open = '';
+                } else {                    if (is_array($filter) and !isset($filter[$tag])){                        $attr = array();
+                        foreach ($v as $k2 => $v2){                            if (in_array($v2[0].substr($v2, -1), array('""', "''", '``')))
+                                $v2 = substr($v2, 1, -1);
 
-                    foreach ($v as $k2 => $v2){                        if (b::function_exists($func = 'attr_'.$k2))
+                            $v2 = ($echo ? '`.' : '').$v2.($echo ? '.`' : '');
+                            $v2 = (strpos($v2, '"') !== false ? "'".$v2."'" : '"'.$v2.'"');
+                            $attr[] = $k2.'='.$v2;
+                        }
+                        $result .= 'echo `&lt;'.$tag.($attr ? ' '.join(' ', $attr) : '');
+                        if (!isset($tags['/'.$k])){
+                            $result .= ' />';
+                        } else {
+                            $result .= '>';
+                            $scope[$tag][$num] = 'echo `&lt;/'.$tag.'>`;';
+                        }
+                        $result .= '`;';
+                        $echo = false;                        continue;                    }
+
+                    $attr = '`#tag` => `'.$tag.'`,'."\r\n";
+                    $open = '';
+
+                    foreach ($v as $k2 => $v2){                        if (is_array($filter[$tag]) and !in_array($k2, $filter[$tag]))
+                            continue;
+                        if (b::function_exists($func = 'attr_'.$k2))
                             $open .= 'b::call(`'.$func.'`, ';
 
                         $attr .= '`'.$k2.'` => '.(!$v2 ? '``' : $v2).",\r\n";

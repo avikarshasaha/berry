@@ -22,8 +22,8 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected $has_and_belongs_to_many = array();
 
     protected $schema = array();
-    protected $trigger = array();
-    protected $checker = array();
+    protected $scope = array();
+    protected $check = array();
 
     protected $into = array();
     protected $values = array();
@@ -41,7 +41,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected $multiple = array();
     protected $relations = array();
     protected $placeholders = array();
-    protected $multisave = array();
+    protected $parallel = array();
     protected $iterator = array();
 
     protected static $sql;
@@ -240,10 +240,10 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __call($method, $params){        if (!$trigger = $this->trigger[$method])
+    function __call($method, $params){        if (!$scope = $this->scope[$method])
             trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
 
-        foreach ($trigger as $k => $v)
+        foreach ($scope as $k => $v)
             if (call_user_func_array(array($this, $k), array_merge((array)$v)))
                 $this->placeholders = array_merge($this->placeholders, $params);
 
