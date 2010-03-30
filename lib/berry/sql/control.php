@@ -33,12 +33,13 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
             $args = array_merge(array(self::build('insert')), $values);
             $query = call_user_func_array(array(self::$sql, 'query'), $args);
+            $this->into = $this->values = array();
 
-            if (is_int($query)){                if (($key = array_search($this->primary_key, $this->into)) !== false){
-                    for ($i = 0, $c = b::len($this->values); $i < $c; $i++)
-                        $result[] = $ids[] = $this->values[$i][$key];
+            if (is_int($query)){                if (($key = array_search($this->primary_key, $into)) !== false){
+                    for ($i = 0, $c = b::len($values); $i < $c; $i++)
+                        $result[] = $ids[] = $values[$i][$key];
                 } else {
-                    for ($i = $query, $c = (b::len($this->values) + $query); $i < $c; $i++)
+                    for ($i = $query, $c = (b::len($values) + $query); $i < $c; $i++)
                         $result[] = $ids[] = $i;
                 }
 
@@ -63,6 +64,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 throw new Check_Except($this->check, $this->table);
 
             $values = $this->values;
+            $current = $values[$this->primary_key];
             $belongs = array();
 
             foreach ($values as $k => $v)
@@ -75,11 +77,12 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                         unset($values[$k]);
                 }
 
-            if ($values){
+            if (b::len($values) > 1 or !$current){
                 $args = array_merge(array($values), (!$this->where ? array($values) : $this->placeholders));
                 array_unshift($args, self::build('save'));
-                $result[] = call_user_func_array(array(self::$sql, 'query'), $args);
-            }
+                $result[] = $id = call_user_func_array(array(self::$sql, 'query'), $args);
+                $this->values = array($this->primary_key => (string)($current ? $current : $id));
+            } else {                $result[] = 0;            }
 
             if ($belongs){
                 $id = ($this->id ? $this->id : self::last_id());
@@ -175,7 +178,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             }
         } else {            self::build('select');
 
-            if ($multiple = array_unique($this->multiple)){                foreach ($multiple as $k => $v){                    $vars = get_class_vars(inflector::singular(end(explode('.', $v))));
+            if ($multiple = array_unique($this->multiple)){                foreach ($multiple as $k => $v){                    $vars = self::vars(inflector::singular(end(explode('.', $v))));
                     $field = $v.'.'.($vars['primary_key'] ? $vars['primary_key'] : 'id');
                     $this->select[] = $field.' as array_key_'.($k + 2);
                 }

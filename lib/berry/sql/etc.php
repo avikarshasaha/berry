@@ -190,7 +190,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             $primary_key = $this->primary_key;
             $parent_key = $this->parent_key;
         } else {
-            $vars = get_class_vars($table);
+            $vars = self::vars($table);
             $primary_key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
             $parent_key = $vars['parent_key'];
         }
@@ -260,7 +260,19 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function relations($table1, $type, $table2){
+    protected function vars($table){        static $cache = array();
+
+        if (isset($cache[$table]))
+            return $cache[$table];
+
+        $class = (($this and $table == $this->table) ? clone $this : self::table($table));
+        $class->table = $class->_table;
+
+        return $cache[$table] = get_object_vars($class);    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function relations($table1, $type, $table2){
         if (is_array($table2)){
             $key = key($table2);
 
@@ -270,8 +282,8 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
                 $table2 = reset($table2);
         }
 
-        $vars1 = get_class_vars(inflector::singular($table1));
-        $vars2 = get_class_vars(inflector::singular($table2));
+        $vars1 = self::vars(inflector::singular($table1));
+        $vars2 = self::vars(inflector::singular($table2));
 
         $local = array(
             'table' => $table1,
@@ -328,13 +340,13 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function deep_throat($class, $parent = '', $main = '', $result = array()){        if (is_array($class))
+    protected function deep_throat($class, $parent = '', $main = '', $result = array()){        if (is_array($class))
             list($class, $vars) = array(key($class), reset($class));
 
         $current = inflector::singular(substr($parent, strrpos($parent, '.')));
         $parent .= ($parent ? '.' : '');
         $main = ($main ? $main : $class);
-        $vars = ($vars ? $vars : get_class_vars($class));
+        $vars = ($vars ? $vars : self::vars($class));
 
         foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
             foreach ((array)$vars[$has] as $key => $table){

@@ -110,7 +110,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 }
 
                 return self::$cache[$key.$name];
-            } else {                return $this->values[$name];            }
+            } elseif (!$this->select){                return $this->values[$name];            }
 
         if (!isset(self::$cache[$key])){            $class = clone $this;
 

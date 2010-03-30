@@ -51,10 +51,11 @@ class Check {
                 if (b::function_exists($call = 'check_'.$func)){
                     $check[$func] = b::call('*'.$call, $args);
                     continue;
-                } elseif (method_exists('check', $func) and substr($func, 0, 3) != 'is_'){
-                    $check[$func] = call_user_func_array(array('check', $func), $args);
-                    continue;
                 }
+
+                foreach (array('', 'is_', '_is_') as $prefix)
+                    if (method_exists('check', $prefix.$func))
+                        $check[$func] = call_user_func_array(array('check', $prefix.$func), $args);
 
                 if ($func == 'or empty'){                    $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
                     $check = ((!$value and !$array[$tmp]) ? array($func => true) : $check);
@@ -146,25 +147,31 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function int($value, $params = array()){
+    static function is_int($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_INT) !== false and (!$params or ($value >= $params[0] and $value <= $params[1])));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function float($value, $params = array()){
+    static function is_float($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_FLOAT) !== false and (!$params or ($value >= $params[0] and $value <= $params[1])));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function number($value){
+    static function is_number($value){
         return preg_match('/^[+-]\d+([\s.,]\d+)?([\s.,]\d+)?$/', $value);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function datetime($value, $params = array()){
+    static function is_numeric($value){
+        return self::is_number($value);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function is_datetime($value, $params = array()){
         $time = strtotime($value);
         return (
             preg_match('/^(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}$/', $value, $m) and
@@ -175,7 +182,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function date($value, $params = array()){        $time = strtotime($value);
+    static function is_date($value, $params = array()){        $time = strtotime($value);
         return (
             preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) and
             $time and checkdate($m[2], $m[3], $m[1]) and
@@ -185,7 +192,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function time($value, $params = array()){
+    static function is_time($value, $params = array()){
         $time = strtotime($value);
         return (
             preg_match('/^\d{2}:\d{2}:\d{2}$/', $value) and $time and
@@ -195,7 +202,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function string($value, $params = array()){        if ($params)
+    static function is_string($value, $params = array()){        if ($params)
             return (b::len($value) >= $params[0] and b::len($value) <= $params[1]);
 
         return ($value !== '');
@@ -203,43 +210,31 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function mail($value){
+    static function is_mail($value){
         return (filter_var($value, FILTER_VALIDATE_EMAIL) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function url($value, $params = array()){
+    static function is_url($value, $params = array()){
         return (filter_var($value, FILTER_VALIDATE_URL) !== false and (!$params or preg_match('/^('.join('|', $params).')\:\/\//i', $value)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function aid($value){
+    static function is_aid($value){
         return (preg_match('/^[^_\-][a-z0-9_\-]+[^_\-]$/', $value) and !is_numeric($value));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function ip($value){
+    static function is_ip($value){
         return (filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function checker($value, $params){
-        return (bool)self::call($params[0], $value);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function compare($value){
-        return version_compare($value, $params[1], $params[0]);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function unique($value, $params = array()){        $tmp = explode('.', $params[0]);
+    static function is_unique($value, $params = array()){        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
         return !sql::query(
@@ -250,73 +245,13 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function in($value, $params){
-        return in_array($value, $params);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function mime($value, $params, $name, $array){
-        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.type\\2', $name);
-        return preg_match('{('.str_replace('*', '(.*)', join('|', $params)).')}i', $array[$tmp]);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function ext($value, $params, $name, $array){
-        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
-        $ext = strtolower(pathinfo($array[$tmp], PATHINFO_EXTENSION));
-
-        return in_array($ext, array_map('strtolower', $params));
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function size($value, $params, $name, $array){
-        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.size\\2', $name);
-        $tmp = $array[$tmp];
-
-        if (b::len($params) == 2)
-            return ($tmp >= int::bytes($params[0]) and $tmp <= int::bytes($params[1]));
-        elseif ($params)
-            return ($tmp <= int::bytes($params[0]));
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function width($value, $params, $name, $array){
-        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
-        $tmp = getimagesize($array[$tmp]);
-        $tmp = $tmp[0];
-
-        if (b::len($params) == 2)
-            return ($tmp >= $params[0] and $tmp <= $params[1]);
-        elseif ($params)
-            return ($tmp <= $params[0]);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function height($value, $params, $name, $array){
-        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
-        $tmp = getimagesize($array[$tmp]);
-        $tmp = $tmp[1];
-
-        if (b::len($params) == 2)
-            return ($tmp >= $params[0] and $tmp <= $params[1]);
-        elseif ($params)
-            return ($tmp <= $params[0]);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function phone($value, $params = array()){
+    static function is_phone($value, $params = array()){
         return in_array(b::len(preg_replace('/\D/', '', $value)), ($params ? $params : array(7, 10, 11)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function isbn($value){        $number = strtolower(str_replace('-', '', $value));
+    static function is_isbn($value){        $number = strtolower(str_replace('-', '', $value));
         $len = b::len($number);
         $sum = 0;
 
@@ -335,7 +270,7 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function barcode($value){
+    static function is_barcode($value){
         $number = strrev(str_replace(' ', '', $value));
         $sum = 0;
 
@@ -351,8 +286,81 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function same_as($value, $params, $name, $array){
-        return ($value == $array[$params[0]]);    }
+    protected static function checker($value, $params){
+        return (bool)self::call($params[0], $value);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function compare($value){
+        return version_compare($value, $params[1], $params[0]);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function same_as($value, $params, $name, $array){
+        return ($value == $array[$params[0]]);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function in($value, $params){
+        return in_array($value, $params);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function mime($value, $params, $name, $array){
+        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.type\\2', $name);
+        return preg_match('{('.str_replace('*', '(.*)', join('|', $params)).')}i', $array[$tmp]);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function ext($value, $params, $name, $array){
+        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
+        $ext = strtolower(pathinfo($array[$tmp], PATHINFO_EXTENSION));
+
+        return in_array($ext, array_map('strtolower', $params));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function size($value, $params, $name, $array){
+        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.size\\2', $name);
+        $tmp = $array[$tmp];
+
+        if (b::len($params) == 2)
+            return ($tmp >= int::bytes($params[0]) and $tmp <= int::bytes($params[1]));
+        elseif ($params)
+            return ($tmp <= int::bytes($params[0]));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function width($value, $params, $name, $array){
+        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
+        $tmp = getimagesize($array[$tmp]);
+        $tmp = $tmp[0];
+
+        if (b::len($params) == 2)
+            return ($tmp >= $params[0] and $tmp <= $params[1]);
+        elseif ($params)
+            return ($tmp <= $params[0]);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function height($value, $params, $name, $array){
+        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.tmp_name\\2', $name);
+        $tmp = getimagesize($array[$tmp]);
+        $tmp = $tmp[1];
+
+        if (b::len($params) == 2)
+            return ($tmp >= $params[0] and $tmp <= $params[1]);
+        elseif ($params)
+            return ($tmp <= $params[0]);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

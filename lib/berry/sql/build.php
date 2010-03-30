@@ -46,7 +46,7 @@ abstract class SQL_Build {
     protected function _prepare_select_all($v){
         static $cache = array();
 
-        $vars = get_class_vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
+        $vars = $this->vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
         $key = ($vars['table'] ? $vars['table'] : inflector::tableize($v));
 
         if (!$cache[$key]){            self::_append_join($v);

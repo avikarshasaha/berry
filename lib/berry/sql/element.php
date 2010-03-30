@@ -7,11 +7,11 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_element implements ArrayAccess, Countable, Iterator {    protected $data = array();
+class SQL_Element implements ArrayAccess, Countable, Iterator {    protected $scope = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($data){        if (is_array($data))            $this->data = arr::assoc($data);    }
+    function __construct($scope){        if (is_array($scope))            $this->scope = arr::assoc($scope);    }
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
@@ -36,48 +36,48 @@ class SQL_element implements ArrayAccess, Countable, Iterator {    protected $d
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetExists($offset){        return isset($this->data[$offset]);
+    function offsetExists($offset){        return isset($this->scope[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetUnset($offset){        unset($this->data[$offset]);
+    function offsetUnset($offset){        unset($this->scope[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        if ($this->data[$offset] instanceof ArrayObject)
-            return (array)$this->data[$offset];
-        elseif (!is_array($this->data[$offset]))
-            return $this->data[$offset];
+    function offsetGet($offset){        if ($this->scope[$offset] instanceof ArrayObject)
+            return (array)$this->scope[$offset];
+        elseif (!is_array($this->scope[$offset]))
+            return $this->scope[$offset];
         $class = clone $this;
-        $class->data = &$this->data[$offset];
+        $class->scope = &$this->scope[$offset];
 
         return $class;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if ($this->data[$offset] instanceof ArrayObject)
-            return $this->data[$offset] = $value;        elseif ($offset === null)
-            return $this->data[] = $value;
+    function offsetSet($offset, $value){        if ($this->scope[$offset] instanceof ArrayObject)
+            return $this->scope[$offset] = $value;        elseif ($offset === null)
+            return $this->scope[] = $value;
 
-        $this->data[$offset] = $value;
+        $this->scope[$offset] = $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function count(){        return b::len($this->data);    }
+    function count(){        return b::len($this->scope);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rewind(){        reset($this->data);
+    function rewind(){        reset($this->scope);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function key(){
-        return key($this->data);
+        return key($this->scope);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,13 +89,13 @@ class SQL_element implements ArrayAccess, Countable, Iterator {    protected $d
 ////////////////////////////////////////////////////////////////////////////////
 
     function next(){
-        next($this->data);
+        next($this->scope);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function valid(){
-        return (current($this->data) !== false);
+        return (current($this->scope) !== false);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
