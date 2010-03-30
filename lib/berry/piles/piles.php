@@ -83,9 +83,7 @@ class Piles extends Piles_Etc {
         $output = str_ireplace(array_keys($sux), array_values($sux), $output);
         $output = preg_replace('/\\\\(\S)/e', "self::char('\\1')", trim($output));
         $token = @token_get_all('<?php '.$output);
-        $tags = $scope = array();
-        $opened = false;
-        $mask = '%s:%d';
+        $mask  = '%s:%d';
 
         for ($i = 1, $c = b::len($token); $i < $c; $i++){
             $is_var = ($token[$i] == '$' or (is_array($token[$i]) and $token[$i][1][0] == '$'));
@@ -301,16 +299,12 @@ class Piles extends Piles_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     function parse($output = null){        $output = ($output !== null ? $output : $this->output);
-        $filter = $this->filter;
         $tags = (is_array($output) ? $output : self::tokenize($output));
-        $result = '';
-        $scope = array();
-        $echo = false;
 
         if (end($tags) == ';')
             $tags[] = ' ';
 
-        if (is_array($filter))
+        if (is_array($filter = $this->tags))
             foreach ($filter as $k => $v)
                 if (is_int($k)){
                     $filter[$v] = array();
