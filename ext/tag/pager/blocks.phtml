@@ -1,4 +1,4 @@
-(${prev} ? '<a href="'.$prev.'">←</a>' : '←')
+<?=(${prev} ? '<a href="'.$prev.'">←</a>' : '←'); ?>
 
 <? foreach ($pages as $page => $href){ ?>
     <? if ($page == $current){ ?>
@@ -8,4 +8,4 @@
     <? } ?>
 <? } ?>
 
-(${next} ? '<a href="'.$next.'">→</a>' : '→')
+<?=(${next} ? '<a href="'.$next.'">→</a>' : '→'); ?>

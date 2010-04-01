@@ -1,8 +1,8 @@
-(${prev} ? '<a href="'.$prev.'">←</a>' : '←')
+<?=(${prev} ? '<a href="'.$prev.'">←</a>' : '←'); ?>
 
 <? if ($array = $pages[0]){ ?>
     <? foreach ($array as $page => $href){ ?>
-        (${page} == $current ? '<b>['.$page.']</b>' : '<a href="'.$href.'">['.$page.']</a>')
+        <?=(${page} == $current ? '<b>['.$page.']</b>' : '<a href="'.$href.'">['.$page.']</a>'); ?>
     <? } ?>
 
     ...
@@ -10,7 +10,7 @@
 
 <? if ($array = $pages[1]){ ?>
     <? foreach ($array as $page => $href){ ?>
-        (${page} == $current ? '<b>['.$page.']</b>' : '<a href="'.$href.'">['.$page.']</a>')
+        <?=(${page} == $current ? '<b>['.$page.']</b>' : '<a href="'.$href.'">['.$page.']</a>'); ?>
     <? } ?>
 <? } ?>
 
@@ -18,8 +18,8 @@
     ...
 
     <? foreach ($array as $page => $href){ ?>
-        (${page} == $current ? '<b>['.$page.']</b>' : '<a href="'.$href.'">['.$page.']</a>')
+        <?=(${page} == $current ? '<b>['.$page.']</b>' : '<a href="'.$href.'">['.$page.']</a>'); ?>
     <? } ?>
 <? } ?>
 
-(${next} ? '<a href="'.$next.'">→</a>' : '→')
+<?=(${next} ? '<a href="'.$next.'">→</a>' : '→'); ?>

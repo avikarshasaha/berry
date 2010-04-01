@@ -22,7 +22,9 @@ class File {
         if (b::is_windows())
             $path = str_replace('/', '\\', $path);
 
-        // проверитиь на символьных и жёстких ссылках
+        if (!$path)
+            return;
+
         if (is_dir($path))
             return true;
 

@@ -23,7 +23,7 @@ class Date {
     static function time($timestamp = 0){
         if (!$timestamp)
             $timestamp = time();
-        elseif (!is_numeric($timestamp))
+        elseif (!is_numeric($timestamp) or b::len($timestamp) < 10)
             $timestamp = strtotime($timestamp);
 
         return $timestamp;

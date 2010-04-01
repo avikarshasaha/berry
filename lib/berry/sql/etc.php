@@ -138,9 +138,9 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function stat($what = ''){        if (!$stat = self::$sql->getStatistics())
-            return array();
-
+    static function stat($what = ''){        if (!self::$sql)
+            return array('time' => 0, 'count' => 0);
+        $stat = self::$sql->getStatistics();
 	    return ($what ? $stat[$what] : $stat);
     }
 
@@ -159,7 +159,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             $table = $this->_table;
         };
 
-        if ($vars = get_class_vars(inflector::singular($table)))
+        if ($vars = self::vars(inflector::singular($table)))
             $table = ($vars['table'] ? $vars['table'] : $table);
 
         if (strpos($table, '.'))
@@ -168,7 +168,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         if (!$schema = cache::get('sql/schema/'.$table.'.php', array('db' => $table))){            $schema = array();
             $keys = array('p' => 'p', 'u' => 'u', 'm' => 'i');
 
-            foreach (self::$sql->query(self::build('schema'), $table) as $info)
+            foreach ((array)self::$sql->query(self::build('schema'), $table) as $info)
                 $schema[$info['Field']] = array(
                     'name' => $info['Field'],
                     'type' => $info['Type'],

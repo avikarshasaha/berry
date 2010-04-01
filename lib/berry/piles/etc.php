@@ -7,25 +7,17 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class Piles_Etc {    public $tags;
-    public $vars = array();
-
-    protected $file, $output;    protected static $timer = 0;
-    protected static $cache = array();
+abstract class Piles_Etc {    protected $filter, $file, $output;    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($string = '', $vars = array(), $tags = null){        $class = new Piles($string);
-        $class->vars = $vars;
-        $class->tags = $tags;
-
-        return $class->render();
+    static function show($string = '', $_ = array(), $filter = null){        $class = new Piles($string, $filter);
+        return $class->render($_);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function stat(){
-        return self::$timer;
+    static function stat(){        return (float)self::$cache['stat'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -109,11 +101,16 @@ abstract class Piles_Etc {    public $tags;
             list($tag, $attr, $escape) = array($tag['#tag'], $tag, $attr);
 
         foreach ($attr as $k => $v)
-            if (is_array($v))
-                foreach ($v as $k2 => $v2){
+            if (is_array($v)){
+                foreach ($v as $k2 => $v2)
                     $attr[$k.'_'.$k2] = $v2;
-                    unset($attr[$k]);
-                }
+
+                unset($attr[$k]);
+            }
+
+        foreach ($attr as $k => $v)
+            if (b::function_exists($func = 'attr_'.$k))
+                $attr = b::call($func, $attr);
 
         foreach ($attr as $k => $v)
             if ($k[0] != '#'){
@@ -132,18 +129,6 @@ abstract class Piles_Etc {    public $tags;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function call($attr = array(), $escape = false){
-        if ($attr['#skip'])
-            return ($attr['#skip'] === true ? '' : $attr['#skip']);
-
-        if ($escape or !b::function_exists($func = 'tag_'.$attr['#tag']))
-            return self::fill($attr, $escape);
-
-        return $attr['#before'].b::call($func, $attr).$attr['#after'];
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function attr_group($group, $attr){
         if (is_array($attr[$group]))
             return $attr[$group];
@@ -155,6 +140,25 @@ abstract class Piles_Etc {    public $tags;
                 $result[substr($k, (strlen($group) + 1))] = $v;
 
         return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function call($attr = array()){        $escape = ($this->filter and !isset($this->filter[$attr['#tag']]));
+
+        if ($this->filter and !$escape)
+            foreach ($attr as $k => $v){
+                if ($k[0] != '#' and !in_array($k, $this->filter[$attr['#tag']]))
+                    unset($attr[$k]);
+            }
+
+        if ($attr['#skip'])
+            return ($attr['#skip'] === true ? '' : $attr['#skip']);
+
+        if ($escape or !b::function_exists($func = 'tag_'.$attr['#tag']))
+            return self::fill($attr, $escape);
+
+        return $attr['#before'].b::call($func, $attr).$attr['#after'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

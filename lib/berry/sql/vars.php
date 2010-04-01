@@ -205,16 +205,14 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _parallel($name, $values = array()){        if (is_null($name) or $values){            if ($this->parallel[0]){                $class = clone $this->parallel[0];            } else {                $class = clone $this;
-                $class->where = $this->values = $class->parallel = array();
-                $this->values = $values;
+    protected function _parallel($name){        if (is_null($name)){            if ($this->parallel[0]){                $class = clone $this->parallel[0];            } else {                $class = clone $this;
+                $this->values = $class->where = $class->parallel = array();
             }
 
             return $this->parallel[] = $class;
         }
 
-        if (is_int($name)){
-            if (!isset($this->parallel['#'.$name])){                $class = clone $this;
+        if (is_int($name)){            if (!isset($this->parallel['#'.$name])){                $class = clone $this;
                 $class->select = $class->group_by = array($this->primary_key);
                 $array = $class->fetch_col();
 

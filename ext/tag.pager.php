@@ -72,17 +72,17 @@ function tag_pager_simple($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function _tag_pager($attr){    if ($attr['count'] <= $attr['limit'])
+function _tag_pager($attr){    if ($attr['count'] < 1 or $attr['limit'] < 1 or $attr['count'] <= $attr['limit'])
         return;
 
     if (!array_key_exists('offset', $attr))
         $attr['page'] = ($attr['page'] ? $attr['page'] : 1);
 
-    $pattern = str::format(preg_quote($attr['href'], '/'), array('i' => '(\d+)?'));
-    $uri = $_SERVER['REQUEST_URI'];
-
-    $attr['href'] = preg_replace('/'.$pattern.'/', '', $uri).(strpos($uri, '?') ? '&' : '?').$attr['href'];
-    $attr['href'] = strtr($attr['href'], array('?&' => '?', '&&' => '&'));
+    parse_str($_SERVER['QUERY_STRING'].'&'.$attr['href'], $query);
+    array_walk_recursive($query, create_function('&$v', 'if ($v === "") $v = null;'));
+    array_pop($query);
+    $query = http_build_query($query);
+    $query = '?'.($query ? $query.'&' : $query);
 
     for ($i = 1, $c = (ceil($attr['count'] / $attr['limit']) + 1); $i < $c; $i++){
         if (array_key_exists('offset', $attr)){
@@ -97,14 +97,14 @@ function _tag_pager($attr){    if ($attr['count'] <= $attr['limit'])
                 $current = $i;
         }
 
-        $pages[$i] = str::format($attr['href'], array('i' => $page));
+        $pages[$i] = $query.str::format($attr['href'], array('i' => $page));
     }
 
     $prev = (array_key_exists('offset', $attr) ? ($attr['offset'] - $attr['limit']) : ($attr['page'] - 1));
-    $prev = ($prev >= 1 ? str::format($attr['href'], array('i' => $prev)) : '');
+    $prev = ($prev >= 1 ? $query.str::format($attr['href'], array('i' => $prev)) : '');
 
     $next = (array_key_exists('offset', $attr) ? ($attr['offset'] + $attr['limit']) : ($attr['page'] + 1));
-    $next = ($next <= $page ? str::format($attr['href'], array('i' => $next)) : '');
+    $next = ($next <= $page ? $query.str::format($attr['href'], array('i' => $next)) : '');
 
     return compact('prev', 'current', 'pages', 'next', 'attr');
 }

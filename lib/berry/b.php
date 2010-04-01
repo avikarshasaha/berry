@@ -252,10 +252,16 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function function_exists($func){
+    static function function_exists($name){
         static $funcs = array();
 
-        if (function_exists($func))
+        if (strpos($name, '::'))
+            $name = explode('::', $name);
+
+        if (is_array($name))
+            return method_exists($name[0], $name[1]);
+
+        if (function_exists($name))
             return true;
 
         !cache::exists('b/call.php') and self::call('#');
@@ -263,7 +269,7 @@ class B {    static $path = array('');
         if (!$funcs and ($file = cache::exists('b/call.php')))
             $funcs = include $file;
 
-        return isset($funcs[$func]);
+        return isset($funcs[$name]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -418,8 +424,8 @@ class B {    static $path = array('');
 
     static function stat($what = ''){        $stat = array(
             'pgt' => (microtime(true) - self::$cache['stat']),
-            'sql' => sql::stat(),
-            'piles' => piles::stat(),
+            'sql' => self::call('sql::stat'),
+            'piles' => self::call('piles::stat'),
             'memory' => array(
                 'limit' => int::size(int::bytes(ini_get('memory_limit'))),
                 'usage' => int::size(self::call('memory_get_usage')),

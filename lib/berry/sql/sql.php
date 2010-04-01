@@ -67,10 +67,7 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function from($table){        if (!$this)
-            return self::table($table);
-
-        foreach (func_get_args() as $arg)            if (!$this->table){                $table = inflector::tableize($arg);                $this->from[] = $table.($arg == $table ? '' : ' as '.$arg);
+    function from($table){        foreach (func_get_args() as $arg)            if (!$this->table){                $table = inflector::tableize($arg);                $this->from[] = $table.($arg == $table ? '' : ' as '.$arg);
             } else {                $this->from[] = $arg;            }
 
         return $this;

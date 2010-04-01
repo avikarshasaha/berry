@@ -10,9 +10,18 @@
 class Piles extends Piles_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($string = ''){        $name = ($string ? $string : b::config('lib.b.show'));
+    function __construct($string = '', $filter = null){        $name = ($string ? $string : b::config('lib.b.show'));
         $name = str_replace('.', '/', $name);
         $files = array('ext/'.$name, 'mod/'.$name, 'lib/berry/'.$name, 'lib/'.$name);
+        $this->file = array($string);
+
+        if (is_array($filter))
+            foreach ($filter as $k => $v){
+                if (is_int($k))
+                    $this->filter[$v] = array();
+                else
+                    $this->filter[$k] = $v;
+            }
 
         foreach ($files as $file)
             if (
@@ -20,14 +29,12 @@ class Piles extends Piles_Etc {
                 is_file($path = file::path($file.'/index.phtml'))
             ){
                 $this->file = array($name, $path);
-                return;
-            }
-
-        $this->file = array($string);    }
+                break;
+            }    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function render(){        if (is_array($_ = $this->vars))
+    function render($_ = array()){        if (is_array($_))
             extract($_);
 
         self::$cache[0] = md5($this->file[0]);
@@ -37,7 +44,7 @@ class Piles extends Piles_Etc {
                 'piles/'.$this->file[0].'.php', array('file' => $this->file[1])
             )){
                 $this->output = file_get_contents($this->file[1]);
-                cache::set('<?php '.self::parse());
+                $this->file[2] = cache::set('<?php '.self::parse());
             }
 
             ob_start();
@@ -53,12 +60,8 @@ class Piles extends Piles_Etc {
             if ($eval === false)
                 throw new Piles_Except($result, trim($this->output));        }
 
-        self::$timer += (microtime(true) - self::$cache[1]);
+        self::$cache['stat'] += (microtime(true) - self::$cache[1]);
         return $result;    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function __toString(){        return self::render();    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -185,10 +188,10 @@ class Piles extends Piles_Etc {
                             $next = $token[$j + 1];
                             $n = 0;
 
-                            if (
-                                ($next == '(' and ($n = 1)) or
-                                (is_array($next) and !trim($next[1]) and $token[$j + ($n = 2)] == '(')
-                            ){
+                            if (($next == '(' and ($n = 1)) or (
+                                ($j - 1) > ($i + 2) and is_array($next) and
+                                !trim($next[1]) and $token[$j + ($n = 2)] == '('
+                            )){
                                 $method = '';
 
                                 if (
@@ -304,29 +307,22 @@ class Piles extends Piles_Etc {
         if (end($tags) == ';')
             $tags[] = ' ';
 
-        if (is_array($filter = $this->tags))
-            foreach ($filter as $k => $v)
-                if (is_int($k)){
-                    $filter[$v] = array();
-                    unset($filter[$k]);
-                }
-
         foreach ($tags as $k => $v)
             if (is_int($k)){
-                if (is_array($filter) and $v[0] == '<')
+                if ($this->filter and $v[0] == '<')
                     $v = '&lt;'.substr($v, 1);
 
                 $result .= self::_vars(!$echo ? 'echo `'.$v : $v);
                 $echo = true;
             } elseif ($k[0] == '$'){
-                if (is_array($filter) and !isset($filter[$k[0]]))
+                if ($this->filter and !isset($this->filter[$k[0]]))
                     $result .= (!$echo ? 'echo `' : '').str_replace("'", self::char("'"), $v);
                 else
                     $result .= self::_vars(!$echo ? 'echo '.$v.'.`' : '`.'.$v.'.`');
 
                 $echo = true;
             } elseif ($k[0] == '?'){
-                if (is_array($filter) and !isset($filter[$k[0]])){
+                if ($this->filter and !isset($this->filter[$k[0]])){
                     $result .= '&lt;? '.$v.'?>';
                     $echo = true;
                 } else {
@@ -343,32 +339,17 @@ class Piles extends Piles_Etc {
                     $result .= $scope[substr($tag, 1)][$num];
                 } else {
                     $attr = '`#tag` => `'.$tag.'`,'."\r\n";
-                    $open = '';
 
-                    foreach ($v as $k2 => $v2){
-                        if (is_array($filter[$tag]) and !in_array($k2, $filter[$tag]))
-                            continue;
-
-                        if (b::function_exists($func = 'attr_'.$k2))
-                            $open .= 'b::call(`'.$func.'`, ';
-
+                    foreach ($v as $k2 => $v2)
                         $attr .= '`'.$k2.'` => '.(!$v2 ? '``' : $v2).",\r\n";
-                    }
-
-                    if (is_array($filter) and !isset($filter[$tag])){
-                        $close = ', true';
-                    } else {
-                        $open = '';
-                        $close = ($open ? str_repeat(')', substr_count($open, '(')) : '');
-                    }
 
                     if (!isset($tags['/'.$k])){
                         $attr = 'array('."\r\n".$attr.')';
-                        $result .= 'echo piles::call('.$open.$attr.$close.');';
+                        $result .= 'echo self::call('.$attr.');';
                     } else {
                         $attr .= "`#text` => ob_get_clean()\r\n";
                         $attr = 'array('."\r\n".$attr.')';
-                        $scope[$tag][$num] = 'echo piles::call('.$open.$attr.$close.');';
+                        $scope[$tag][$num] = 'echo self::call('.$attr.');';
                         $result .= 'ob_start();';
                     }
                 }

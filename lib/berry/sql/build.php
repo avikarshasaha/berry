@@ -219,8 +219,9 @@ abstract class SQL_Build {
                 isset($after['default']) and
                 !is_numeric($after['default']) and
                 strtolower($after['default']) != 'current_timestamp'
-            )
-                $after['default'] = self::$sql->escape($after['default']);
+            ){                $this->placeholders[] = $after['default'];
+                $after['default'] = '?';
+            }
 
             $query[] = ($before ? 'change '.$k : 'add').' '.
                        $name.' '.$after['type'].' '.(!$after['null'] ? 'not' : '').' null '.

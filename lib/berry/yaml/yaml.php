@@ -7,20 +7,20 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class YAML {////////////////////////////////////////////////////////////////////////////////
+class YAML extends Spyc {////////////////////////////////////////////////////////////////////////////////
 
-    static function load($input){
+    function load($input){
         if (!$input or (is_file($input) and !filesize($input)))
             return array();
-        return spyc::YAMLload($input);    }
+        return parent::YAMLload($input);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function dump($array, $indent = 4, $wordwrap = false){
+    function dump($array, $indent = 4, $wordwrap = false){
         if (!$array or !is_array($array))
             return '';
 
-        return spyc::YAMLdump($array, $indent, $wordwrap);
+        return parent::YAMLdump($array, $indent, $wordwrap);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
