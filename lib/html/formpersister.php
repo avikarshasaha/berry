@@ -50,7 +50,7 @@
  * @package HTML
  */
 
-include 'html_semiparser.php';
+//include 'html_semiparser.php';
 
 class HTML_FormPersister extends HTML_SemiParser
 {

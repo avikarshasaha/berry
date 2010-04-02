@@ -104,7 +104,7 @@ class B {    static $path = array('');
                             $files[$file] = $name;
                 }
 
-                foreach ($files as $file => $dir){                    $key = ($dir == 'lib' ? $dir.'.' : '').substr(basename($file), 0, -4);
+                foreach ($files as $file => $dir){                    $key = (in_array($dir, array('mod', 'lib')) ? $dir.'.' : '').substr(basename($file), 0, -4);
                     $array = arr::flat(yaml::load($file));
                     $array['#file'] = $file;
                     $config = arr::merge($config, array($key => $array));
@@ -295,7 +295,7 @@ class B {    static $path = array('');
             return include $prev = self::$cache['autoload'][$name];
 
         $files = array(
-             str_replace('_', '/', $name),
+            str_replace('_', '/', $name),
             substr($name, 0, strpos($name, '_')).'/'.substr($name, strpos($name, '_') + 1),
             $name.'/'.$name,
             $name,

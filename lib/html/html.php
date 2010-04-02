@@ -140,4 +140,15 @@ class HTML {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    static function form_persister($output){        if (!stripos($output, '</form>'))
+            return $output;
+        $class = new HTML_FormPersister;
+        return $class->process($output);    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function grid($data, $fields){        return new HTML_Grid($data, $fields);    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

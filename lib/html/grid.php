@@ -1,5 +1,13 @@
-<?php
-class Grid extends SQL_Etc {
+<?php                                                      /* `,
+                                                           ,\, #
+    B E R R Y                                              |/  ?
+    <http://goodgirl.ru/berry>                             | ~ )\
+    <http://goodgirl.ru/berry/license>                     /__/\ \____
+                                                           /   \_/    \
+    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
+---------------------------------------------------------/___/_____  \--'\|/----
+                                                                   \/|*/
+class HTML_Grid extends SQL_Etc {
     protected $data, $fields = array();
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -10,32 +18,32 @@ class Grid extends SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _order_by(){
-        if (($order_by = $_GET['order_by']) and $order_by[0] == '-')
-            $order_by = substr($order_by, 1);
+    function filter(){
+        $class = clone $this->data;
+        $class->order_by = array();
+        $class->limit = $class->offset = 0;
+        $query = sql::query($class->build('select').' procedure analyse()');
+        $select = array();
 
-        if (!$order_by or !$this->fields[$order_by])
-            $_GET['order_by'] = '-'.$this->data->primary_key;
+        foreach ($query->fetch() as $row){
+            $type = $row['Optimal_fieldtype'];
 
-        $this->data->order_by($_GET['order_by']);
-    }
+            if (substr($type, 0, 4) != 'ENUM')
+                continue;
 
-////////////////////////////////////////////////////////////////////////////////
+            $name = substr($row['Field_name'], strpos($row['Field_name'], '.'));
+            $name = substr($name, 1);
+            $type = substr($type, 5);
+            $type = substr($type, 0, strrpos($type, ')'));
 
-    protected function _limit(){
-        if (!is_numeric($_GET['limit']))
-            $_GET['limit'] = $this->data->limit;
+            if (substr($name, 0, ($len = b::len($this->data->table) + 1)) == $this->data->table.'.')
+                $name = substr($name, $len);
 
-        $this->data->limit($_GET['limit']);
-        $this->data->page((int)$_GET['page']);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function filter(){        /*$schema = array();
-        foreach ($this->data->schema() as $k => $v)
-            if ($this->fields[$k])
-                $schema[$k] = $v['type'];*/
+            foreach (token_get_all('<?php '.$type) as $k => $v)
+                if ($k and is_array($v)){                    $v = str_replace("\'", "'", substr($v[1], 1, -1));
+                    $select[$name][$v] = $v;
+                }
+        }
 
         foreach ($this->fields as $k => $v)
             if ($k[0] == '_' or $this->data->relations[$k]){                $result .= '<th>&nbsp;</th>';
@@ -52,13 +60,19 @@ class Grid extends SQL_Etc {
                             $op = $cond[0];
                             $cond = substr($cond, 1);
                         }
+                    } elseif ($select[$k]){                        $op = '=';
                     } else {                        $op = 'like';
                         $cond .= '%';                    }
 
                     $this->data->where($k.' '.$op.' ?', $cond);
                 }
 
-                $result .= '<th><input name="f['.$k.']" type="text" /></th>';
+                if (($v = $select[$k]) and b::len($v) > 1){                    array_unshift($v, ' ');
+                    $result .= '<th>'.html::dropdown('f['.$k.']', $v).'</th>';
+                } elseif ($v){                    $result .= '<th>&nbsp;</th>';
+                } else {
+                    $result .= '<th><input name="f['.$k.']" type="text" /></th>';
+                }
             }
 
         return '
@@ -71,8 +85,18 @@ class Grid extends SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function head(){        self::_order_by();
-        self::_limit();
+    function head(){        if (($order_by = $_GET['order_by']) and $order_by[0] == '-')
+            $order_by = substr($order_by, 1);
+
+        if (!$order_by or !$this->fields[$order_by])
+            $_GET['order_by'] = '-'.$this->data->primary_key;
+
+        if (!is_numeric($_GET['limit']))
+            $_GET['limit'] = $this->data->limit;
+
+        $this->data->order_by($_GET['order_by']);
+        $this->data->limit($_GET['limit']);
+        $this->data->page((int)$_GET['page']);
 
         foreach ($this->fields as $k => $v){            $v = $this->fields[$k] = (array)$v;
             $order_by = $k;
@@ -95,7 +119,7 @@ class Grid extends SQL_Etc {
                 $result .= '<th class="'.$class.'"><img alt="" /><a href="'.$query.'">'.$v[0].'</a></th>';
         }
 
-        return '<table class="grid"><tr class="head">'.$result.'</tr>';
+        return '<table class="datagrid"><tr class="head">'.$result.'</tr>';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +154,7 @@ class Grid extends SQL_Etc {
             'page' => $_GET['page']
         ));
 
-        return '</table><div class="pager">'.$pager.'</div>';
+        return '<tr class="pager"><td colspan="'.b::len($this->fields).'">'.$pager.'</td></tr></table>';
     }
 
 ////////////////////////////////////////////////////////////////////////////////

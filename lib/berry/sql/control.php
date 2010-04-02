@@ -180,7 +180,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
             $self->where = array($this->primary_key.' in (?a)');
             $self->having = array();
-            $self->limit = $this->offset = 0;
+            $self->limit = $self->offset = 0;
             $self->placeholders = array($ids);
             $query = $self->build('select');
         }
