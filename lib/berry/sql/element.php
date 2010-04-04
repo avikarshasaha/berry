@@ -46,20 +46,12 @@ class SQL_Element implements ArrayAccess, Countable, Iterator {    protected $s
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        if ($this->scope[$offset] instanceof ArrayObject)
-            return (array)$this->scope[$offset];
-        elseif (!is_array($this->scope[$offset]))
-            return $this->scope[$offset];
-        $class = clone $this;
-        $class->scope = &$this->scope[$offset];
-
-        return $class;
+    function offsetGet($offset){        return $this->scope[$offset];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if ($this->scope[$offset] instanceof ArrayObject)
-            return $this->scope[$offset] = $value;        elseif ($offset === null)
+    function offsetSet($offset, $value){        if ($offset === null)
             return $this->scope[] = $value;
 
         $this->scope[$offset] = $value;

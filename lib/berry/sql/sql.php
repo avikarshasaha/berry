@@ -143,21 +143,21 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function limit($limit){
-        $this->limit = max(0, $limit);
+        $this->limit = (is_numeric($limit) ? $limit : self::$sql->escape($limit));
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function offset($offset){
-        $this->offset = (int)$offset;
+        $this->offset = (is_numeric($offset) ? $offset : self::$sql->escape($offset));
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function page($page){
-        $this->offset(max(0, $page * $this->limit - $this->limit));
+        $this->offset($page * $this->limit - $this->limit);
         return $this;
     }
 

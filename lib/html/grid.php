@@ -4,7 +4,7 @@
     <http://goodgirl.ru/berry>                             | ~ )\
     <http://goodgirl.ru/berry/license>                     /__/\ \____
                                                            /   \_/    \
-    Ë¸õà zloy è êðàñèâûé <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
+    Ð›Ñ‘Ñ…Ð° zloy Ð¸ ÐºÑ€Ð°ÑÐ¸Ð²Ñ‹Ð¹ <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class HTML_Grid extends SQL_Etc {
@@ -94,19 +94,25 @@ class HTML_Grid extends SQL_Etc {
         if (!is_numeric($_GET['limit']))
             $_GET['limit'] = $this->data->limit;
 
+        if (!is_numeric($_GET['page']))
+            $_GET['page'] = 1;
+
         $this->data->order_by($_GET['order_by']);
         $this->data->limit($_GET['limit']);
-        $this->data->page((int)$_GET['page']);
+        $this->data->page($_GET['page']);
 
         foreach ($this->fields as $k => $v){            $v = $this->fields[$k] = (array)$v;
             $order_by = $k;
             $class = preg_replace('/\W+/', '_', $k);
+            $arrow = '';
 
             if ($_GET['order_by'] == '-'.$k){
                 $order_by = $k;
                 $class .= ($class ? ' ' : '').'desc';
+                $arrow = '<span>â–¼</span>';
             } elseif ($_GET['order_by'] == $k){                $order_by = '-'.$k;
-                $class .= ($class ? ' ' : '').'asc';            }
+                $class .= ($class ? ' ' : '').'asc';
+                $arrow = '<span>â–²</span>';            }
 
             parse_str($_SERVER['QUERY_STRING'], $query);
             array_walk_recursive($query, create_function('&$v', 'if ($v === "") $v = null;'));
@@ -116,7 +122,7 @@ class HTML_Grid extends SQL_Etc {
             if ($k[0] == '#' or $this->data->relations[$k])
                 $result .= '<th class="'.$class.'">'.$v[0].'</th>';
             else
-                $result .= '<th class="'.$class.'"><img alt="" /><a href="'.$query.'">'.$v[0].'</a></th>';
+                $result .= '<th class="'.$class.'">'.$arrow.'<a href="'.$query.'">'.$v[0].'</a></th>';
         }
 
         return '<table class="datagrid"><tr class="head">'.$result.'</tr>';

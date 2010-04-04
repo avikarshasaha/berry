@@ -303,7 +303,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         }
 
         if ($type == 'belongs_to'){
-            $local['field'] = $foreign['alias'].'_'.$foreign['field'];
+            $foreign['field'] = $local['alias'].'_'.$foreign['field'];
             $local['table'] = ($vars1['table'] ? $vars1['table'] : inflector::plural($local['table']));
             $foreign['table'] = ($vars2['table'] ? $vars2['table'] : inflector::tableize($foreign['table']));
         }

@@ -37,7 +37,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetUnset($offset){
+    function offsetUnset($offset){        $this[$offset] = null;
         unset($this->values[$offset]);
     }
 
@@ -92,21 +92,14 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             return $class;
 
         if (!$this->where)
-            if ($relation = $this->relations[$name]){
-                if (!isset(self::$cache[$key.$name])){                    $class = self::_object($name);
+            if ($relation = $this->relations[$name]){                if (!isset(self::$cache[$key.$name])){                    $class = self::_object($name);
 
                     if ($relation['type'] == 'has_one')
-                        $this[$relation['local']['field']] = $class;
+                        $this[$relation['local']['field']] = (string)($class->last_id() + 1);
 
-                    if ($relation['type'] == 'belongs_to')
-                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
+                    if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many')                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
 
-                    if ($relation['type'] == 'has_many'){
-                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
-                        $this->parallel[] = $class;
-                    }
-
-                    self::$cache[$key.$name] = $class;
+                    self::$cache[$key.$name] = $this->parallel[] = $class;
                 }
 
                 return self::$cache[$key.$name];
@@ -128,15 +121,16 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             if (isset(self::$cache[$key][$name]))
                 return self::$cache[$key][$name];
             elseif (!isset(self::$cache[$key.$name])){                $class = self::_object($name);
-                if (!self::_get($class->primary_key))                    return self::$cache[$key.$name] = $class;
 
                 if ($relation['type'] == 'has_one' and !$this[$relation['local']['field']])
-                    return self::$cache[$key.$name] = $this[$relation['local']['field']] = $class;
+                    $this[$relation['local']['field']] = (string)($class->last_id() + 1);
 
-                if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many')
-                    $class->values[$relation['foreign']['field']] = (string)$this->id;
+                if ($relation['type'] == 'belongs_to' and !$class[$relation['foreign']['field']]){                    $class->where = array();
+                    $class[$relation['foreign']['field']] = (string)$this->id;                }
 
-                return self::$cache[$key.$name] = $this->parallel[] = $class;
+                if ($relation['type'] == 'has_many')                    $class->values[$relation['foreign']['field']] = (string)$this->id;
+
+                self::$cache[$key.$name] = $this->parallel[] = $class;
             }
 
             return self::$cache[$key.$name];
@@ -147,10 +141,12 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             ($relation = $this->relations[$_name]) and
             !isset(self::$cache[$key][$name])
         )
-            if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = new ArrayObject(self::table($foreign['table1'])->
+            if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = new ArrayObject(
+                    self::table($foreign['table1'])->
                     select($foreign['field3'])->
                     where($foreign['field1'].' = ?', $id)->
-                    fetch_col());
+                    fetch_col()
+                );
             } else {
                 self::$cache[$key][$name] = new ArrayObject;
             }
@@ -240,13 +236,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         $class = self::table($name);
 
         if (!$id = $this[$local['field']])
-            return $class;
+            return $class->limit(1);
 
         if ($relation['type'] == 'has_one'){            $class->id = $id;
             return $class->where($foreign['field'].' = ?d', $id);
         }
 
-        if ($relation['type'] == 'belongs_to'){            $class->id = $id;
+        if ($relation['type'] == 'belongs_to'){            $class->id = -1;
             return $class->limit(1)->where($foreign['field'].' = ?d', $id);
         }
 
@@ -256,9 +252,9 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         return $class->where(
             $name.'.'.$foreign['field2'].' in (?a)',
             self::table($foreign['table1'])->
-                select($foreign['field3'])->
-                where($foreign['field1'].' = ?d', $id)->
-                fetch_col()
+            select($foreign['field3'])->
+            where($foreign['field1'].' = ?d', $id)->
+            fetch_col()
         );
     }
 

@@ -36,15 +36,18 @@ class B {    static $path = array('');
 ////////////////////////////////////////////////////////////////////////////////
 
     static function q($i = '', $c = '', $s = '/'){
-        $q = explode('/', $_GET['berry']);
+        if (!isset(self::$cache['q'])){
+            self::$cache['q'] = explode('/', $_GET['berry']);
+            $url = parse_url($_SERVER['REQUEST_URI']);
 
-        if (is_int($pos = strpos($_SERVER['REQUEST_URI'], '?')))
-            $uri = substr($_SERVER['REQUEST_URI'], 0, $pos);
-        else
-            $uri = $_SERVER['REQUEST_URI'];
+            $host  = 'http'.($_SERVER['HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME'];
+            $host .= substr($url['path'], 0, self::len(dirname($_SERVER['PHP_SELF'])));
+            $host .= (substr($host, -1) != '/' ? '/' : '');
 
-        $uri = substr($uri, 0, self::len(dirname($_SERVER['PHP_SELF'])));
-        array_unshift($q, 'http'.($_SERVER['HTTPS'] ? 's' : '').'://'.str::clean($_SERVER['SERVER_NAME'].$uri));
+            array_unshift(self::$cache['q'], $host);
+        }
+
+        $q = self::$cache['q'];
 
         if (is_numeric($i) and $i >= 0 and !is_numeric($c))
             $result = $q[$i];
@@ -138,7 +141,7 @@ class B {    static $path = array('');
                 }
                 array_pop($array);            }
 
-            if (!isset($data))
+            if (!$data)
                 return;
 
             if ($data == $args[1])
@@ -157,6 +160,7 @@ class B {    static $path = array('');
 
             self::$cache['config'][$args[0]] = $args[1];
             cache::remove('b/config.php');
+            file::chmod(dirname($file));
             return (bool)file_put_contents($file, yaml::dump($set));
         }
     }

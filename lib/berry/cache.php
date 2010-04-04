@@ -147,7 +147,7 @@ class Cache {
     function __construct($key, $object, $array){
         $this->key = $key;
         $this->object = $object;
-        $this->array = $array;
+        $this->array = (array)$array;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,8 +158,8 @@ class Cache {
 
         $tags = array();
 
-        if (isset($this->array['tags'])){
-            $tags = $this->array['tags'];
+        if (isset($this->array['tag'])){
+            $tags = (array)$this->array['tag'];
         } else {
             foreach ($this->array as $k => $v)
                 if (is_int($k))

@@ -97,7 +97,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 $result[] = 0;
             }
 
-            if ($belongs){
+            if (end($result) !== null and $belongs){
                 $id = ($this->id ? $this->id : self::last_id());
 
                 foreach ($belongs as $k => $v){
@@ -117,6 +117,9 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 }
             }
         }
+
+        if (end($result) === null)
+            return;
 
         foreach ($this->parallel as $class){
             $key = spl_object_hash($class);
@@ -253,7 +256,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         }
 
         $result = self::_fetch_array(arr::assoc($result));
-        return (($result and $this->id) ? $result[$this->id] : array_values($result));
+        $result = array_values($result);
+        return ($this->id ? $result[0] : $result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
