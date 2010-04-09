@@ -8,22 +8,19 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class HTML_Grid extends SQL_Etc {
-    protected $data, $fields = array();
+    protected $data;
+    protected $fields = array();
+    protected $enum = array();
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($data, $fields){
         $this->data = $data;
         $this->fields = $fields;
-    }
 
-////////////////////////////////////////////////////////////////////////////////
-
-    function filter(){
-        $class = clone $this->data;
+        $class = clone $data;
         $class->order_by = array();
         $class->limit = $class->offset = 0;
         $query = sql::query($class->build('select').' procedure analyse()');
-        $select = array();
 
         foreach ($query->fetch() as $row){
             $type = $row['Optimal_fieldtype'];
@@ -36,15 +33,20 @@ class HTML_Grid extends SQL_Etc {
             $type = substr($type, 5);
             $type = substr($type, 0, strrpos($type, ')'));
 
-            if (substr($name, 0, ($len = b::len($this->data->table) + 1)) == $this->data->table.'.')
+            if (substr($name, 0, ($len = b::len($data->table) + 1)) == $data->table.'.')
                 $name = substr($name, $len);
 
             foreach (token_get_all('<?php '.$type) as $k => $v)
-                if ($k and is_array($v)){                    $v = str_replace("\'", "'", substr($v[1], 1, -1));
-                    $select[$name][$v] = $v;
+                if ($k and is_array($v)){
+                    $v = str_replace("\'", "'", substr($v[1], 1, -1));
+                    $this->enum[$name][$v] = $v;
                 }
         }
+    }
 
+////////////////////////////////////////////////////////////////////////////////
+
+    function filter(){
         foreach ($this->fields as $k => $v)
             if ($k[0] == '_' or $this->data->relations[$k]){                $result .= '<th>&nbsp;</th>';
             } elseif ($k[0] != '#'){                if ($cond = $_GET['f'][$k]){
@@ -60,14 +62,14 @@ class HTML_Grid extends SQL_Etc {
                             $op = $cond[0];
                             $cond = substr($cond, 1);
                         }
-                    } elseif ($select[$k]){                        $op = '=';
+                    } elseif ($this->enum[$k]){                        $op = '=';
                     } else {                        $op = 'like';
                         $cond .= '%';                    }
 
                     $this->data->where($k.' '.$op.' ?', $cond);
                 }
 
-                if (($v = $select[$k]) and b::len($v) > 1){                    array_unshift($v, ' ');
+                if (($v = $this->enum[$k]) and b::len($v) > 1){                    array_unshift($v, ' ');
                     $result .= '<th>'.html::dropdown('f['.$k.']', $v).'</th>';
                 } elseif ($v){                    $result .= '<th>&nbsp;</th>';
                 } else {
@@ -119,13 +121,16 @@ class HTML_Grid extends SQL_Etc {
             $query['order_by'] = $order_by;
             $query = '?'.http_build_query($query);
 
-            if ($k[0] == '#' or $this->data->relations[$k])
+            if (
+                $k[0] == '#' or $this->data->relations[$k] or
+                ($this->enum[$k] and b::len($this->enum[$k]) < 2)
+            )
                 $result .= '<th class="'.$class.'">'.$v[0].'</th>';
             else
                 $result .= '<th class="'.$class.'">'.$arrow.'<a href="'.$query.'">'.$v[0].'</a></th>';
         }
 
-        return '<table class="datagrid"><tr class="head">'.$result.'</tr>';
+        return '<tr class="head">'.$result.'</tr>';
     }
 
 ////////////////////////////////////////////////////////////////////////////////

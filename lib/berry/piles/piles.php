@@ -304,6 +304,9 @@ class Piles extends Piles_Etc {
     function parse($output = null){        $output = ($output !== null ? $output : $this->output);
         $tags = (is_array($output) ? $output : self::tokenize($output));
 
+        if (!is_array($tags))
+            return;
+
         if (end($tags) == ';')
             $tags[] = ' ';
 
