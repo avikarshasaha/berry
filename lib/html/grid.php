@@ -17,6 +17,22 @@ class HTML_Grid extends SQL_Etc {
         $this->data = $data;
         $this->fields = $fields;
 
+        if (($order_by = $_GET['order_by']) and $order_by[0] == '-')
+            $order_by = substr($order_by, 1);
+
+        if (!$order_by or !$fields[$order_by])
+            $_GET['order_by'] = '-'.$data->primary_key;
+
+        if (!is_numeric($_GET['limit']))
+            $_GET['limit'] = $data->limit;
+
+        if (!is_numeric($_GET['page']))
+            $_GET['page'] = 1;
+
+        $data->order_by($_GET['order_by']);
+        $data->limit($_GET['limit']);
+        $data->page($_GET['page']);
+
         $class = clone $data;
         $class->order_by = array();
         $class->limit = $class->offset = 0;
@@ -87,22 +103,7 @@ class HTML_Grid extends SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function head(){        if (($order_by = $_GET['order_by']) and $order_by[0] == '-')
-            $order_by = substr($order_by, 1);
-
-        if (!$order_by or !$this->fields[$order_by])
-            $_GET['order_by'] = '-'.$this->data->primary_key;
-
-        if (!is_numeric($_GET['limit']))
-            $_GET['limit'] = $this->data->limit;
-
-        if (!is_numeric($_GET['page']))
-            $_GET['page'] = 1;
-
-        $this->data->order_by($_GET['order_by']);
-        $this->data->limit($_GET['limit']);
-        $this->data->page($_GET['page']);
-
+    function head($arrows = array('asc' => '<span>▲</span>', 'desc' => '<span>▼</span>')){
         foreach ($this->fields as $k => $v){            $v = $this->fields[$k] = (array)$v;
             $order_by = $k;
             $class = preg_replace('/\W+/', '_', $k);
@@ -111,10 +112,10 @@ class HTML_Grid extends SQL_Etc {
             if ($_GET['order_by'] == '-'.$k){
                 $order_by = $k;
                 $class .= ($class ? ' ' : '').'desc';
-                $arrow = '<span>▼</span>';
+                $arrow = $arrows['desc'];
             } elseif ($_GET['order_by'] == $k){                $order_by = '-'.$k;
                 $class .= ($class ? ' ' : '').'asc';
-                $arrow = '<span>▲</span>';            }
+                $arrow = $arrows['asc'];            }
 
             parse_str($_SERVER['QUERY_STRING'], $query);
             array_walk_recursive($query, create_function('&$v', 'if ($v === "") $v = null;'));
@@ -159,14 +160,19 @@ class HTML_Grid extends SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function foot(){        $pager = b::call('tag_pager_simple', array(
+    function pager($pager = 'simple'){
+        $pager = b::call('tag_pager'.($pager ? '_'.$pager : ''), array(
             'count' => b::len($this->data),
             'limit' => $_GET['limit'],
             'page' => $_GET['page']
         ));
 
-        return '<tr class="pager"><td colspan="'.b::len($this->fields).'">'.$pager.'</td></tr></table>';
+        return '<tr class="pager"><td colspan="'.b::len($this->fields).'">'.$pager.'</td></tr>';
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function __toString(){        return $this->head().$this->filter().$this->body().$this->pager();    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

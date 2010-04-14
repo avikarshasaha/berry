@@ -32,7 +32,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetExists($offset){        return ($this[$offset] !== null);
+    function offsetExists($offset){        if (
+            $this[$offset] instanceof SQl or
+            $this[$offset] instanceof SQl_Element
+        )
+            return (b::len($this[$offset]) > 0);
+
+        return ($this[$offset] !== null);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,8 +60,11 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rewind(){        if (!$this->iterator)
-            $this->iterator = range(0, (b::len($this) - 1));
+    function rewind(){        if (!isset($this->iterator)){            if ($len = b::len($this))
+                $this->iterator = range(0, ($len - 1));
+            else
+                $this->iterator = array();
+        }
 
         return reset($this->iterator);
     }
@@ -88,105 +97,149 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
     protected function _get($name){        $key = self::hash('_get');
 
-        if (!$this->select and ($class = self::_parallel($name)))
-            return $class;
-
-        if (!$this->where)
-            if ($relation = $this->relations[$name]){                if (!isset(self::$cache[$key.$name])){                    $class = self::_object($name);
-
-                    if ($relation['type'] == 'has_one')
-                        $this[$relation['local']['field']] = (string)($class->last_id() + 1);
-
-                    if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many')                        $class[$relation['foreign']['field']] = (string)(self::last_id() + 1);
-
-                    self::$cache[$key.$name] = $this->parallel[] = $class;
-                }
-
-                return self::$cache[$key.$name];
-            } elseif (!$this->select){                return $this->values[$name];            }
-
-        if (!isset(self::$cache[$key])){            $class = clone $this;
-
-            if ($class->select){
-                $class->select[] = $class->primary_key;
-
-                if (substr($name, -3) == '_id' and ($relation = $this->relations[substr($name, 0, -3)]))
-                    $class->select[] = $name;
-            }
+        if ($this->select and !isset(self::$cache[$key])){
+            $class = clone $this;
+            $class->select[] = $class->primary_key;
 
             self::$cache[$key] = new SQL_Element($class->fetch_array());
         }
 
-        if ($relation = $this->relations[$name]){
-            if (isset(self::$cache[$key][$name]))
-                return self::$cache[$key][$name];
-            elseif (!isset(self::$cache[$key.$name])){                $class = self::_object($name);
+        if (isset(self::$cache[$key][$name]))            return self::$cache[$key][$name];
 
-                if ($relation['type'] == 'has_one' and !$this[$relation['local']['field']])
-                    $this[$relation['local']['field']] = (string)($class->last_id() + 1);
+        if (is_null($name)){
+            $key = ($this->parallel ? (max(array_keys($this->parallel)) + 1) : 0);
 
-                if ($relation['type'] == 'belongs_to' and !$class[$relation['foreign']['field']]){                    $class->where = array();
-                    $class[$relation['foreign']['field']] = (string)$this->id;                }
+            if ($this->where and $key < ($count = b::len($this)))
+                $key = $count;
 
-                if ($relation['type'] == 'has_many')                    $class->values[$relation['foreign']['field']] = (string)$this->id;
+            $class = clone $this;
+            $class->parallel = $class->where = array();
 
-                self::$cache[$key.$name] = $this->parallel[] = $class;
-            }
-
-            return self::$cache[$key.$name];
+            return $this->parallel[$key] = $class;
         }
 
-        if (
-            ($_name = self::_is_HABTM($name)) and
-            ($relation = $this->relations[$_name]) and
-            !isset(self::$cache[$key][$name])
-        )
-            if ($id = self::_get($relation['local']['field'])){                $foreign = $relation['foreign'];                self::$cache[$key][$name] = new ArrayObject(
+        if (isset($this->values[$name]))
+            return $this->values[$name];
+
+        if ($this->relations[$name]){
+            if (!isset($this->parallel[$name]))
+                $this->parallel[$name] = self::_object($name);
+
+            return $this->parallel[$name];
+        }
+
+        if (is_int($name)){
+            if (!isset($this->parallel[$name])){
+                if ($this->parent and !$this->where)
+                    return;
+
+                $class = clone $this;
+                $class->parallel = array();
+                $class->select = $class->group_by = array($this->primary_key);
+                $array = $class->fetch_col();
+
+                if (!$class->id = $array[$name])
+                    return;
+
+                $class->select = $this->select;
+                $class->group_by = $this->group_by;
+                $class->where($this->primary_key.' = ?d', $class->id);
+
+                $this->parallel[$name] = $class;
+            }
+
+            return $this->parallel[$name];
+        }
+
+        if ($_name = self::_is_HABTM($name)){
+            $relation = $this->relations[$_name];
+
+            if ($id = $this[$relation['local']['field']]){
+                $foreign = $relation['foreign'];
+                $this->values[$name] = new ArrayObject(
                     self::table($foreign['table1'])->
                     select($foreign['field3'])->
                     where($foreign['field1'].' = ?', $id)->
                     fetch_col()
                 );
             } else {
-                self::$cache[$key][$name] = new ArrayObject;
+                $this->values[$name] = new ArrayObject;
             }
 
-        return self::$cache[$key][$name];
+            $tmp = (array)$this->values[$name];
+            sort($tmp);
+            self::$cache[$this->table][$name] = $tmp;
+
+            return $this->values[$name];
+        }
+
+        if (!isset($this->parallel[$this->table])){            $array = ($this->where ? $this->fetch_array() : array());
+            $this->parallel[$this->table] = new SQL_Element($array);
+        }
+
+        return $this->parallel[$this->table][$name];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _set($name, $value){        $func = create_function('$a', 'return !is_int($a);');
-        if (is_array($value)){
-            if ($class = self::_parallel($name)){
-                foreach ($value as $k => $v)
-                    $class[$k] = $v;
+    protected function _set($name, $value){
+        if ($value == $this[$name])
+            return;
+
+        if ($value instanceof SQL){
+            return;
+
+            if (
+                (!$relation = $this->relations['#']) and
+                (!$relation = $this->relations[$value->table]) and
+                (!$relation = $this->relations[inflector::tableize($value->table)])
+            )
+                return;
+
+            //if ($name === null)
+
+            if ($id = $this[$relation['local']['field']])
+                $value->where($value->primary_key.' = ?d', $id);
+
+            $value->parent = $this;
+            $value->relations['#'] = $relation;
+            $this->parallel[$value->table] = $value;
+        } elseif ($name === null){            $this->values[] = $value;
+        } elseif (self::_is_HABTM($name)){            $this->values[$name] = new ArrayObject($value);        } else {
+            $this->values[$name] = $value;
+        }
+
+        if ($relation = $this->relations['#']){
+            $local = $relation['local'];
+            $foreign = $relation['foreign'];
+
+            if ($relation['type'] == 'has_one' and !$this->parent[$local['field']]){
+                $class = clone $this->parent;
+                $class->parallel = array();
+                $class->values = array('#'.$local['field'] => $foreign['alias']);
+                $this->parent->parallel[] = $class;
             }
 
-            $array = array_map($func, array_keys($value));
-            $value = array_unique($value);
+            if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many'){
+                if ($this->parent->id)
+                    $this->values[$foreign['field']] = $this->parent->id;
+                else
+                    $this->values['#'.$foreign['field']] = $local['alias'];
+            }
 
-            if (in_array(true, $array))
-                asort($value);
-            else
-                sort($value);
+            if ($relation['type'] == 'has_and_belongs_to_many' and !$this->id){
+                $class = self::table($foreign['alias1']);
+                $class->parallel = array();
+                $class->values = array('#'.$foreign['field3'] => inflector::singular($foreign['alias2']));
+
+                if ($this->parent->id)
+                    $class->values[$foreign['field1']] = $this->parent->id;
+                else
+                    $class->values['#'.$foreign['field1']] = $local['alias'];
+
+                $this->parent->parallel[] = $class;
+            }
         }
-
-        if (($tmp = self::_get($name)) instanceof ArrayObject or is_array($tmp)){
-            $tmp = (array)$tmp;
-            sort($tmp);
-        }
-
-        if ($this->where and ($value == $tmp or !self::_get($this->primary_key)))
-            return $value;
-
-        if (is_int($value)){            $tmp = $value;
-            $tmp -= self::_get($name);
-            $this->values[$name] = self::raw($this->_table.'.'.$name.' '.($tmp >= 0 ? '+' : '').$tmp);
-        } else {            $this->values[$name] = $value;        }
-
-        if (isset(self::$cache[$key = self::hash('_get')]))
-            self::$cache[$key][$name] = $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -201,61 +254,38 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _parallel($name){        if (is_null($name)){            if ($this->parallel[0]){                $class = clone $this->parallel[0];            } else {                $class = clone $this;
-                $this->values = $class->where = $class->parallel = array();
-            }
-
-            return $this->parallel[] = $class;
-        }
-
-        if (is_int($name)){            if (!isset($this->parallel['#'.$name])){                $class = clone $this;
-                $class->select = $class->group_by = array($this->primary_key);
-                $array = $class->fetch_col();
-
-                if (!$class->id = $array[$name])
-                    return;
-
-                $class->select = $this->select;
-                $class->group_by = $this->group_by;
-                $class->where($this->primary_key.' = ?d', $class->id);
-
-                $this->parallel['#'.$name] = $class;
-            }
-
-            return $this->parallel['#'.$name];
-        }
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     protected function _object($name){
         $relation = $this->relations[$name];
         $local = $relation['local'];
         $foreign = $relation['foreign'];
         $name = inflector::singular($name);
+
         $class = self::table($name);
+        $class->parent = $this;
+        $class->relations['#'] = $relation;
 
         if (!$id = $this[$local['field']])
-            return $class->limit(1);
+            return $class;
 
-        if ($relation['type'] == 'has_one'){            $class->id = $id;
-            return $class->where($foreign['field'].' = ?d', $id);
+        if ($relation['type'] == 'has_and_belongs_to_many')
+            return $class->where(
+                $name.'.'.$foreign['field2'].' in (?a)',
+                self::table($foreign['table1'])->
+                select($foreign['field3'])->
+                where($foreign['field1'].' = ?d', $id)->
+                fetch_col()
+            );
+
+        $class->where($foreign['field'].' = ?d', $id);
+
+        if ($relation['type'] == 'has_one'){
+            $class->id = $id;
+        } elseif ($relation['type'] == 'belongs_to'){
+            $class->id = -1;
+            $class->limit = 1;
         }
 
-        if ($relation['type'] == 'belongs_to'){            $class->id = -1;
-            return $class->limit(1)->where($foreign['field'].' = ?d', $id);
-        }
-
-        if ($relation['type'] == 'has_many')
-            return $class->where($foreign['field'].' = ?d', $id);
-
-        return $class->where(
-            $name.'.'.$foreign['field2'].' in (?a)',
-            self::table($foreign['table1'])->
-            select($foreign['field3'])->
-            where($foreign['field1'].' = ?d', $id)->
-            fetch_col()
-        );
+        return $class;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

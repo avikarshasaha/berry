@@ -36,13 +36,14 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected $order_by = array();
     protected $limit = 0;
     protected $offset = 0;
-
     protected $union = array();
-    protected $multiple = array();
-    protected $relations = array();
-    protected $placeholders = array();
+
+    protected $parent;
+    protected $iterator;
     protected $parallel = array();
-    protected $iterator = array();
+    protected $relations = array();
+    protected $multiple = array();
+    protected $placeholders = array();
 
     protected static $sql;
     protected static $using = array();

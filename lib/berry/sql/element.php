@@ -46,7 +46,9 @@ class SQL_Element implements ArrayAccess, Countable, Iterator {    protected $s
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        return $this->scope[$offset];
+    function offsetGet($offset){        if (is_array($this->scope[$offset]))
+            $this->scope[$offset] = new self($this->scope[$offset]);
+        return $this->scope[$offset];
     }
 
 ////////////////////////////////////////////////////////////////////////////////

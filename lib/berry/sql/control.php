@@ -13,123 +13,90 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
     function save(){
         $result = array();
+
+        self::_check();
         self::_save($result);
+
+        foreach ($result as $k => $v){
+            $result = array_merge($result, $v);
+            unset($result[$k]);
+        }
+
         return (b::len($result) <= 1 ? reset($result) : $result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _save(&$result){
-        static $cache = array();
-
+    protected function _check(){
         if ($this->into){
-            $into = $this->into;
-            $values = $this->values;
-            $belongs = array();
-
-            foreach ($values as $k => $v){
-                if (!check::is_valid($this->check, array_combine($into, $v)))
+            foreach ($this->values as $k => $v)
+                if (!check::is_valid($this->check, array_combine($this->into, $v)))
                     throw new Check_Except($this->check, $this->table);
+        } elseif (!check::is_valid($this->check, $this->values)){
+            throw new Check_Except($this->check, $this->table);
+        }
 
-                foreach ($v as $k2 => $v2)
-                    if ($name = self::_is_HABTM($into[$k2])){
-                        $belongs[$name][] = $v2;
-                        unset($this->into[$k2], $values[$k][$k2]);
-                    }
+        foreach ($this->parallel as $class)
+            if ($class instanceof SQL)
+                $class->_check();
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _save(&$result, $is_parallel = false){        $values = $this->values;
+        $belongs = array();
+
+        foreach ($values as $k => $v)
+            if (self::_is_HABTM($k)){                $v = array_unique($v);
+                sort($v);
+                unset($values[$k]);
+                if (self::$cache[$this->table][$k] != $v)
+                    $belongs[substr($k, 0, -4)] = $v;
+            } elseif ($k[0] == '#' and $result[$v]){
+                $first = array_shift($result[$v]);
+                $values[substr($k, 1)] = $first;
+                $result[$v][] = $first;
+                unset($values[$k]);
+
+                if (
+                    !$this->where and !$this->relations['#'] and
+                    $result[$this->table] and $result[$this->table][0]
+                )
+                    $this->where($this->primary_key.' = ?d', $result[$this->table][0]);
             }
 
-            $args = array_merge(array(self::build('insert')), $values);
-            $query = call_user_func_array(array(self::$sql, 'query'), $args);
+        if ($values){            if ($this->into){                $args = array_merge(array(self::build('insert')), $values);
+            } else {                $args = array_merge(array($values), (!$this->where ? array($values) : $this->placeholders));
+                array_unshift($args, self::build('save'));            }
+
+            $result[$this->table][] = $last = call_user_func_array(array(self::$sql, 'query'), $args);
             $this->into = $this->values = array();
 
-            if (is_int($query)){
-                if (($key = array_search($this->primary_key, $into)) !== false){
-                    for ($i = 0, $c = b::len($values); $i < $c; $i++)
-                        $result[] = $ids[] = $values[$i][$key];
-                } else {
-                    for ($i = $query, $c = (b::len($values) + $query); $i < $c; $i++)
-                        $result[] = $ids[] = $i;
-                }
-
-                foreach ($belongs as $table => $values){
-                    $foreign = $this->relations[$table]['foreign'];
-                    $class[$table] = self::table($foreign['alias1']);
-
-                    foreach ($values as $k => $v)
-                        foreach ($v as $i)
-                            $class[$table]->values(array(
-                                $foreign['field1'] => $ids[$k],
-                                $foreign['field3'] => $i
-                            ));
-
-                    $class[$table]->save();
-                }
-            } else {
-                $result[] = $query;
-            }
-        } elseif ($this->values){
-            if (!check::is_valid($this->check, $this->values))
-                throw new Check_Except($this->check, $this->table);
-
-            $values = $this->values;
-            $current = $values[$this->primary_key];
-            $belongs = array();
-
-            foreach ($values as $k => $v)
-                if ($name = self::_is_HABTM($k)){
-                    $belongs[$name] = $v;
-                    unset($values[$k]);
-                } elseif ($v instanceof SQL){
-                    $v->_save($result);
-
-                    if (is_int($id = end($result)))
-                        $values[$k] = (string)$id;
-                    else
-                        unset($values[$k]);
-                }
-
-            if (b::len($values) > 1 or !$current){
-                $args = array_merge(array($values), (!$this->where ? array($values) : $this->placeholders));
-                array_unshift($args, self::build('save'));
-                $result[] = $id = call_user_func_array(array(self::$sql, 'query'), $args);
-                $this->values = array($this->primary_key => (string)($current ? $current : $id));
-            } else {
-                $result[] = 0;
-            }
-
-            if (end($result) !== null and $belongs){
-                $id = ($this->id ? $this->id : self::last_id());
-
-                foreach ($belongs as $k => $v){
-                    $foreign = $this->relations[$k]['foreign'];
-                    $class = self::table($foreign['alias1']);
-
-                    $class->where($foreign['field1'].' = ?', $id)->delete();
-                    $class->where = array();
-
-                    foreach ($v as $i)
-                        $class->values(array(
-                            $foreign['field1'] => $id,
-                            $foreign['field3'] => $i
-                        ));
-
-                    $class->save();
-                }
-            }
+            if ($last === null)
+                return;
         }
 
-        if (end($result) === null)
-            return;
+        foreach ($belongs as $k => $v){            $local = $this->relations[$k]['local'];
+            $foreign = $this->relations[$k]['foreign'];
 
-        foreach ($this->parallel as $class){
-            $key = spl_object_hash($class);
+            $class = self::table($foreign['alias1']);
+            $id = ($this->id ? $this->id : $result[$local['alias']][0]);
 
-            if (isset($cache[$key]))
-                continue;
+            $class->where($foreign['field1'].' = ?', $id)->delete();
+            $class->where = array();
 
-            $class->_save($result);
-            $cache[$key] = true;
+            foreach ($v as $i)
+                $class->values(array(
+                    $foreign['field1'] => $id,
+                    $foreign['field3'] => $i
+                ));
+
+            $this->parallel[] = $class;
         }
+
+        foreach ($this->parallel as $class)
+            if ($class instanceof SQL)
+                $class->_save($result, true);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
