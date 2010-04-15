@@ -186,25 +186,25 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if ($value == $this[$name])
             return;
 
-        if ($value instanceof SQL){
-            return;
+        if (is_array($value) or $value instanceof SQL){            if ($name === null)
+                $name = max(array_keys($this->parallel));
 
-            if (
-                (!$relation = $this->relations['#']) and
-                (!$relation = $this->relations[$value->table]) and
-                (!$relation = $this->relations[inflector::tableize($value->table)])
-            )
+            $class = self::_get($name);
+            $values = (is_array($value) ? $value : $value->values);
+
+            foreach ($values as $k => $v)
+                $class[$k] = $v;
+
+            if (!$this->id or !is_int($name))
                 return;
 
-            //if ($name === null)
+            $value = $class;
+        } elseif (is_int($value) or is_float($value)){
+            $value = ($value - $this[$name]);
+            $value = self::raw($name.' '.($value >= 0 ? '+' : '').$value);
+        }
 
-            if ($id = $this[$relation['local']['field']])
-                $value->where($value->primary_key.' = ?d', $id);
-
-            $value->parent = $this;
-            $value->relations['#'] = $relation;
-            $this->parallel[$value->table] = $value;
-        } elseif ($name === null){            $this->values[] = $value;
+        if ($name === null){            $this->values[] = $value;
         } elseif (self::_is_HABTM($name)){            $this->values[$name] = new ArrayObject($value);        } else {
             $this->values[$name] = $value;
         }
