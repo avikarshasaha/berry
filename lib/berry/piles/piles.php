@@ -136,7 +136,11 @@ class Piles extends Piles_Etc {
                     ){
                         $token[$i][1] .= '_'.$token[$i + 2][1];
                         $n += 3;
-                    } else {
+                    } elseif (
+                        !is_array($next = $token[$i + 1]) or
+                        is_array($next) and !trim($next[1])
+                    ){
+                        $tmp = $token[$i][1];                    } else {
                         continue;
                     }
 
@@ -284,6 +288,7 @@ class Piles extends Piles_Etc {
 
                     $key = sprintf($mask, $key, ($scope[$key][] = $i));
                     $tags[$key] = array();
+                    $skip = ($j - $i - 1);
                 }
             } elseif (!$opened){
                 $tags[] = (is_array($token[$i]) ? $token[$i][1] : $token[$i]);

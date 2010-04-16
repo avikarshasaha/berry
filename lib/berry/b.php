@@ -36,18 +36,19 @@ class B {    static $path = array('');
 ////////////////////////////////////////////////////////////////////////////////
 
     static function q($i = '', $c = '', $s = '/'){
-        if (!isset(self::$cache['q'])){
-            self::$cache['q'] = explode('/', $_GET['berry']);
+        if (!isset(self::$cache['q'][$_GET['berry']])){
+            $q = explode('/', $_GET['berry']);
             $url = parse_url($_SERVER['REQUEST_URI']);
 
             $host  = 'http'.($_SERVER['HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME'];
             $host .= substr($url['path'], 0, self::len(dirname($_SERVER['PHP_SELF'])));
             $host .= (substr($host, -1) != '/' ? '/' : '');
 
-            array_unshift(self::$cache['q'], $host);
+            array_unshift($q, $host);
+            self::$cache['q'][$_GET['berry']] = $q;
         }
 
-        $q = self::$cache['q'];
+        $q = self::$cache['q'][$_GET['berry']];
 
         if (is_numeric($i) and $i >= 0 and !is_numeric($c))
             $result = $q[$i];
