@@ -7,8 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_Union extends SQL_Etc {    protected $table = '<union>';
-
+class SQL_Union extends SQL_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($array){        foreach ($array as $class){            if (!$class->select)
@@ -31,14 +30,14 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
 ////////////////////////////////////////////////////////////////////////////////
 
     function limit($limit){
-        $this->limit = (is_numeric($limit) ? $limit : self::$sql->escape($limit));
+        $this->limit = (is_numeric($limit) ? $limit : self::$connection->escape($limit));
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function offset($offset){
-        $this->offset = (is_numeric($offset) ? $offset : self::$sql->escape($offset));
+        $this->offset = (is_numeric($offset) ? $offset : self::$connection->escape($offset));
         return $this;
     }
 
@@ -57,8 +56,8 @@ class SQL_Union extends SQL_Etc {    protected $table = '<union>';
             return self::$cache[$key];
 
         $args = $this->placeholders;
-        array_unshift($args, self::build('select'));
-        return self::$cache[$key] = call_user_func_array(array(self::$sql, 'select'), $args);
+        array_unshift($args, $this->build('select'));
+        return self::$cache[$key] = call_user_func_array(array(self::$connection, 'select'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

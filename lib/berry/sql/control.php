@@ -11,6 +11,32 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function create(){
+        $query = self::$connection->query(
+            $this->build('create'),
+            inflector::tableize($this->alias),
+            $this->primary_key, $this->primary_key
+        );
+
+        if ($query === null)
+            return 0;
+
+        $result = self::alter();
+        return ($result === 0 ? 1 : $result);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function alter(){
+        if (!$query = $this->build('alter'))
+            return 0;
+
+        $args = array_merge(array($query, $this->table), $this->placeholders);
+        return call_user_func_array(array(self::$connection, 'query'), $args);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function save(){
         $result = array();
 
@@ -31,9 +57,9 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if ($this->into){
             foreach ($this->values as $k => $v)
                 if (!check::is_valid($this->check, array_combine($this->into, $v)))
-                    throw new Check_Except($this->check, $this->table);
+                    throw new Check_Except($this->check, $this->alias);
         } elseif (!check::is_valid($this->check, $this->values)){
-            throw new Check_Except($this->check, $this->table);
+            throw new Check_Except($this->check, $this->alias);
         }
 
         foreach ($this->parallel as $class)
@@ -43,14 +69,17 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _save(&$result, $is_parallel = false){        $values = $this->values;
+    protected function _save(&$result, $is_parallel = false){
+        $values = $this->values;
         $belongs = array();
 
         foreach ($values as $k => $v)
-            if (self::_is_HABTM($k)){                $v = array_unique($v);
+            if (self::_is_HABTM($k)){
+                $v = array_unique($v);
                 sort($v);
                 unset($values[$k]);
-                if (self::$cache[$this->table][$k] != $v)
+
+                if (self::$cache[$this->alias][$k] != $v)
                     $belongs[substr($k, 0, -4)] = $v;
             } elseif ($k[0] == '#' and $result[$v]){
                 $first = array_shift($result[$v]);
@@ -60,23 +89,37 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
                 if (
                     !$this->where and !$this->relations['#'] and
-                    $result[$this->table] and $result[$this->table][0]
+                    $result[$this->alias] and $result[$this->alias][0]
                 )
-                    $this->where($this->primary_key.' = ?d', $result[$this->table][0]);
+                    $this->where($this->primary_key.' = ?d', $result[$this->alias][0]);
             }
 
-        if ($values){            if ($this->into){                $args = array_merge(array(self::build('insert')), $values);
-            } else {                $args = array_merge(array($values), (!$this->where ? array($values) : $this->placeholders));
-                array_unshift($args, self::build('save'));            }
+        if ($values){
+            if ($this->into){
+                array_unshift($values, $this->table, $this->into);
+                $args = array_merge(array($this->build('insert')), $values);
+            } else {
+                $args = array($this->build('save'), $this->table);
 
-            $result[$this->table][] = $last = call_user_func_array(array(self::$sql, 'query'), $args);
+                if (!$this->where){
+                    $args[] = $values;
+                    $args[] = $values;
+                } else {
+                    $args[] = $this->alias;
+                    $args[] = $values;
+                    $args = array_merge($args, $this->placeholders);
+                }
+            }
+
+            $result[$this->alias][] = $last = call_user_func_array(array(self::$connection, 'query'), $args);
             $this->into = $this->values = array();
 
             if ($last === null)
                 return;
         }
 
-        foreach ($belongs as $k => $v){            $local = $this->relations[$k]['local'];
+        foreach ($belongs as $k => $v){
+            $local = $this->relations[$k]['local'];
             $foreign = $this->relations[$k]['foreign'];
 
             $class = self::table($foreign['alias1']);
@@ -102,30 +145,15 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function delete(){
-        $args = $this->placeholders;
-        array_unshift($args, self::build('delete'));
-        return call_user_func_array(array(self::$sql, 'query'), $args);
-    }
+        $from = $this->from;
 
-////////////////////////////////////////////////////////////////////////////////
-
-    function create(){
-        if (self::$sql->query(self::build('create')) === null)
-            return 0;
-
-        $result = self::alter();
-        return ($result === 0 ? 1 : $result);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function alter(){
-        if (!$query = self::build('alter'))
-            return 0;
+        foreach ($this->from as $k => $v)
+            if ($pos = stripos($v, ' as '))
+                $from[$k] = trim(substr($v, 0, $pos));
 
         $args = $this->placeholders;
-        array_unshift($args, $query);
-        return call_user_func_array(array(self::$sql, 'query'), $args);
+        array_unshift($args, $this->build('delete'), $from, $from);
+        return call_user_func_array(array(self::$connection, 'query'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +162,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!$this->select)
             $this->select[] = '*';
 
-        $query = self::build('select');
+        $query = $this->build('select');
         $self = clone $this;
 
         if ($this->multiple and !$this->group_by and ($this->limit or $this->where)){
@@ -145,7 +173,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $args = $this->placeholders;
             array_unshift($args, $class->build('select'));
 
-            if (!$ids = call_user_func_array(array(self::$sql, 'selectCol'), $args))
+            if (!$ids = call_user_func_array(array(self::$connection, 'selectCol'), $args))
                 return array();
 
             $self->where = array($this->primary_key.' in (?a)');
@@ -157,7 +185,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         $args = $self->placeholders;
         array_unshift($args, $query);
-        return call_user_func_array(array(self::$sql, 'select'), $args);
+        return call_user_func_array(array(self::$connection, 'select'), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,17 +196,17 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!$this->select)
             $class->select[] = '*';
 
-        $class->select[] = $this->table.'.'.$this->primary_key.' as array_key_1';
+        $class->select[] = $this->alias.'.'.$this->primary_key.' as array_key_1';
 
         if ($this->parent_key){
-            $class->select[] = $this->table.'.'.$this->parent_key.' as parent_key';
+            $class->select[] = $this->alias.'.'.$this->parent_key.' as parent_key';
 
             foreach (arr::tree(self::fetch()) as $k => $v){
                 unset($array[$k]);
                 $array[$k][] = $v;
             }
         } else {
-            self::build('select');
+            $this->build('select');
 
             if ($multiple = array_unique($this->multiple)){
                 foreach ($multiple as $k => $v){
@@ -294,7 +322,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function begin(){
-        return self::$sql->transaction();
+        return self::$connection->transaction();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -303,7 +331,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function commit(){
         $result = self::save();
 
-        if (!self::$sql->commit())
+        if (!self::$connection->commit())
             throw new SQL_Except;
 
         return $result;
@@ -312,7 +340,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function rollback(){
-        return self::$sql->rollback();
+        return self::$connection->rollback();
     }
 
 ////////////////////////////////////////////////////////////////////////////////

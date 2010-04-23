@@ -10,112 +10,218 @@
 abstract class SQL_Build {
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _append_join($v){        if ($pos = strrpos($v, '.')){
-            $table = substr($v, 0, $pos);
-            $table = ($table[0].substr($table, -1) == '``' ? substr($table, 1, -1) : $table);
-            $table = explode('.', $table);
-            $join = '';
+    protected function tokenize($query, $keywords){
+        $token = token_get_all('<?php '.$query);
+        $result = $array = array();
 
-            for ($i = 0, $c = b::len($table); $i < $c; $i++){                $join .= $table[$i];
+        for ($i = 1, $c = b::len($token); $i < $c; $i++){
+            if (
+                (
+                    $token[$i + 1][0] == 370 and
+                    isset($keywords[$key = strtolower($token[$i][1].' '.$token[$i + 2][1])]) and
+                    $token[$i + 3][0] == 370 and $i += 2
+                ) or
+                (isset($keywords[$key = strtolower($token[$i][1])]) and $token[$i + 1][0] == 370)
+            ){
+                if (!isset($result[$key])){
+                    $result[$key] = array();
+                    $array = &$result[$key];
+                } else {                    $tmp = '';
+                    $count = 0;
 
-                if ($join != $this->table and strpos($join, '`') === false)
-                    $this->join($join);
+                    for ($j = $i; $j < $c; $j++){
+                        if ($token[$j] == '(')
+                            $count++;
 
-                $join .= '.';
+                        $tmp .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
+
+                        if ($token[$j] == ')' and !$count--)
+                            break;
+                    }
+
+                    $array[] = $tmp;
+                    $i = $j;
+                }
+
+                continue;
             }
-        }
-    }
 
-////////////////////////////////////////////////////////////////////////////////
+            if (is_array($token[$i])){
+                end($array);
+                $key = key($array);
 
-    protected function _prepare_fields($array){        $array = (array)$array;
-        foreach ($array as &$v){            self::_append_join($v);
+                for ($j = $i; $j < $c; $j++)
+                    if ($token[$j - 1] == '['){
+                        array_pop($array);
+                        end($array);
+                        $key = key($array);
 
-            if (strpos($v, '`') === false){                if (!strpos($v, '.') and !stripos($v, ' as '))
-                    $v = ($v[0] == '_' ? $v : $this->table.'.'.$v);
+                        for ($j2 = $j; $j2 < $c; $j2++){
+                            $tmp = (is_array($token[$j2]) ? $token[$j2][1] : $token[$j2]);
+                            $array[$key] .= $tmp;
 
-                $v = preg_replace('/([\w\.]+)\.(\w+)/i', '`\\1`.\\2', $v);
-            }
-        }
+                            if ($tmp == ']')
+                                break;
+                        }
 
-        return join(' or ', $array);
-    }
+                        $j = $j2;
+                    } elseif ($token[$j][0] == T_WHITESPACE){
+                        break;
+                    } elseif ($token[$j + 1] == '('){
+                        $array[] = $token[$j][1].'(';
+                        $j += 1;
+                    } elseif ($token[$j + 1] == '.'){
+                        $array[$key] .= $token[$j][1].'.';
+                        $j += 1;
+                    } else {
+                        if (substr($array[$key], -1) == '.'){
+                            $array[$key] = array(substr($array[$key], 0, -1), $token[$j][1]);
+                        } else {
+                            $array[] = (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
+                            $array[] = '';
+                        }
 
-////////////////////////////////////////////////////////////////////////////////
+                        break;
+                    }
 
-    protected function _prepare_select_all($v){
-        static $cache = array();
-
-        $vars = $this->vars(($pos = strrpos($v, '.')) ? substr($v, ($pos + 1)) : $v);
-        $key = ($vars['table'] ? $vars['table'] : inflector::tableize($v));
-
-        if (!$cache[$key]){            self::_append_join($v);
-            $cache[$key] = array_keys($this->schema($key));
-        }
-
-        if (!$cache['#'][$v])
-            foreach ($cache[$key] as $k)
-                $cache['#'][$v][] = '`'.$v.'`.'.$k.' as `'.$v.'.'.$k.'`';
-
-        return $cache['#'][$v];
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function _prepare_bulid(){        $select = $from = array();
-
-        foreach ($this->select as $v){
-            self::_append_join($v);
-
-            $if = (
-                !stripos($v, ' as ') and strpos($v, '`') === false and
-                strtolower(substr($v, 0, (b::len($this->table) + 1))) != strtolower($this->table.'.')
-            );
-
-            if ($v == '*'){
-                $v = '`'.$this->table.'`.*';
-            } elseif (strpos($v, '*') and strpos($v, '`') === false){
-                $tmp = preg_replace('/([\w\.]+)\.\*/', '\\1', $v);
-
-                if (strtolower($tmp) == strtolower($this->table))
-                    $v = '`'.$tmp.'`.*';
-                elseif ($this->relations[$tmp])
-                    $v = join(', ', self::_prepare_select_all($tmp));
-            } elseif ($if){                if (!strpos($v, '.'))
-                    $v = '`'.$this->table.'`.'.$v;
-                else
-                    $v = preg_replace('/([\w\.]+)\.(\w+)/', '`\\1`.\\2 as `\\1.\\2`', $v);
+                $i = $j;
             } else {
-                $v = preg_replace('/(?!`)([\w\.]+)\.(\w+)(?!`)/i', '`\\1`.\\2', $v);
-                $v = preg_replace('/``([\w\.]+)`\./', '`\\1.', $v);
+                $array[] = $token[$i];
+                $array[] = '';
             }
-
-            $select[] = $v;
         }
 
-        foreach ($this->from as $v)
-            if (strpos($v, '[') !== false){
-                $from[] = $v;
-            } else {
-                if ($pos = stripos($v, ' as '))
-                    $from[] = '['.(trim(substr($v, 0, $pos))).']'.substr($v, $pos, 4).'`'.substr($v, ($pos + 4)).'`';
-                else
-                    $from[] = '['.$v.']';
-            }
-
-        foreach (array('where', 'group_by', 'having', 'order_by') as $v)
-            $this->$v = array_map(array('self', '_prepare_fields'), $this->$v);
-
-        $this->select = array_unique($select);
-        $this->from = array_unique($from);
-        $this->join = array_unique($this->join);
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_select(){        self::_prepare_bulid();
+    protected function rebuild($tokens, $keywords){        $tokens = (!is_array($tokens) ? self::tokenize($tokens, $keywords) : $tokens);
 
-        $query[] = ($this->select? 'select '.join(', ', $this->select) : '');
+        foreach ($tokens as $key => $value)
+            foreach ($value as $k => $v)
+                if (is_array($v)){                    $tmp = explode('.', $v[0]);
+                    $name = '';
+
+                    for ($i = 0, $c = b::len($tmp); $i < $c; $i++){
+                        $name .= strtolower($tmp[$i]);
+
+                        if (
+                            (!$relation = $this->relations[$name]) and
+                            (!$relation = $this->relations[$name = inflector::singular($name)])
+                        )
+                            break;
+
+                        $local = $relation['local'];
+                        $foreign = $relation['foreign'];
+                        $table = ($foreign['table1'] ? $foreign['table1'] : $foreign['table']);
+
+                        if ($pos = strpos($table, '.'))
+                            $table = array(substr($table, 0, $pos), substr($table, ($pos + 1)));
+                        else                            $table = '`'.$table.'`';
+
+                        if (isset($tokens['select'])){                            if (
+                                ($foreign['alias'] and in_array($foreign['alias'], $tokens['from'])) or
+                                ($foreign['alias1'] and in_array($foreign['alias1'], $tokens['from']))
+                            ){                                $name .= '.';
+                                continue;
+                            }
+                            $foreign['alias'] = ($foreign['alias1'] ? $foreign['alias1'] : $foreign['alias']);
+
+                            $tokens['from'][] = 'left';
+                            $tokens['from'][] = 'join';
+                            $tokens['from'][] = $table;
+                            $tokens['from'][] = 'as';
+                            $tokens['from'][] = $foreign['alias'];
+                            $tokens['from'][] = 'on';
+                            $tokens['from'][] = '(';
+                            $tokens['from'][] = array($foreign['alias'], $foreign['field']);
+                            $tokens['from'][] = '=';
+                            $tokens['from'][] = array($local['alias'], $local['field']);
+                            $tokens['from'][] = ')';
+
+                            if ($relation['type'] == 'has_and_belongs_to_many'){                                $table2 = $foreign['table2'];
+                                if ($pos = strpos($table2, '.'))
+                                    $table2 = array(substr($table2, 0, $pos), substr($table2, ($pos + 1)));
+                                else
+                                    $table2 = '`'.$table2.'`';
+                                $tokens['from'][] = 'left';
+                                $tokens['from'][] = 'join';                                $tokens['from'][] = $table2;
+                                $tokens['from'][] = 'as';
+                                $tokens['from'][] = $foreign['alias2'];
+                                $tokens['from'][] = 'on';
+                                $tokens['from'][] = '(';
+                                $tokens['from'][] = array($foreign['alias2'], $foreign['field2']);
+                                $tokens['from'][] = '=';
+                                $tokens['from'][] = array($foreign['alias1'], $foreign['field3']);                            }
+                        } elseif (isset($tokens['using'])){                            if (!in_array($table, $tokens['using'])){
+                                $tokens['using'][] = ',';
+                                $tokens['using'][] = $table;
+                            }
+                        } else {                            if (!in_array($table, $tokens['from'])){
+                                $tokens['from'][] = ',';
+                                $tokens['from'][] = $table;
+                            }
+                        }
+
+                        $name .= '.';                    }
+                }
+
+        foreach ($tokens as $key => $value){            $array = array();
+            $quote = false;
+
+            foreach ($value as $k => $v){
+                if (trim($v) === '')
+                    continue;
+
+                if (is_array($v)){
+                    if (strtolower(end($array)) == 'as'){
+                        $array[] = '`'.$v[0].'.'.$v[1].'`';
+                    } else {
+                        if ($key != 'select' or strtolower($value[$k + 1]) == 'as')
+                            $array[] = '`'.$v[0].'`.'.$v[1];
+                        else
+                            $array[] = '`'.$v[0].'`.'.$v[1].' as `'.$v[0].'.'.$v[1].'`';
+                    }
+                } elseif ($v == '`'){
+                    if (!$quote)
+                        $array[] = $v.$value[$k + 2].$v;
+                    else
+                        array_pop($array);
+
+                    $quote = !$quote;
+                } elseif (strtolower(end($array)) == 'as'){
+                    $array[] = '`'.$v.'`';
+                } elseif (end($array) == '?'){
+                    array_pop($array);
+                    $array[] = '?'.$v;
+                } elseif (
+                    $key == 'from' or
+                    !preg_match('/^\w+$/i', $v) or is_numeric($v) or
+                    in_array(strtolower($v), array('as', 'null')) or
+                    in_array(strtolower($v), (array)$keywords[$key])
+                ){
+                    $array[] = $v;
+                } else {
+                    $array[] = ($this->alias ? '`'.$this->alias.'`.' : '').'`'.$v.'`';
+                }
+            }
+
+            $result[$key] = join(' ', $array).$result[$key];
+        }
+
+        if (isset($tokens['using']) and !$result['using'])
+            unset($tokens['using']);
+
+        foreach ($tokens as $k => $v)
+            $query .= "\r\n$k ".$result[$k];
+
+        return $query;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _build_select(){        $query[] = ($this->select ? 'select '.join(', ', $this->select) : '');
         $query[] = ($this->from ? 'from '.join(', ', $this->from) : '');
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
@@ -125,67 +231,74 @@ abstract class SQL_Build {
         $query[] = ($this->limit ? 'limit '.$this->limit : '');
         $query[] = ($this->offset ? 'offset '.$this->offset : '');
 
-        if (!$this->union)
-            return join("\r\n", $query);
+        $keywords['select'] =
+        $keywords['from'] =
+        $keywords['group by'] =
+        $keywords['order by'] =
+        $keywords['limit'] = ',';
+        $keywords['offset'] = '';
+        $keywords['where'] = array('and', 'or', 'in');
 
-        $query = array('('.join(') union (', $this->union).')');
-        $query[] = ($this->order_by ? 'order by '.str_replace($this->table.'.', '', join(', ', $this->order_by)) : '');
+        if (!$this->union)
+            return self::rebuild(join("\r\n", $query), $keywords);
+
+        $union = '('.join(')'."\r\n".'union (', $this->union).')'."\r\n";
+        $query = array();
+        $query[] = ($this->order_by ? 'order by '.str_replace($this->alias.'.', '', join(', ', $this->order_by)) : '');
         $query[] = ($this->limit ? 'limit '.$this->limit : '');
         $query[] = ($this->offset ? 'offset '.$this->offset : '');
 
-        return join("\r\n", $query);
+        return $union.self::rebuild(join("\r\n", $query), $keywords);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _build_save(){        if (!$this->where)
-            return 'insert into ['.$this->_table.'] set ?a on duplicate key update ?a';
+            return 'insert into `?_` set ?a on duplicate key update ?a';
 
-        $query[] = 'update ['.$this->_table.'] as '.$this->table.' set ?a';
+        $query[] = 'update `?_` as `?_` set ?a';
         $query[] = 'where ('.join(') and (', $this->where).')';
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
-
-        if ($this->limit)
-            $query[] = 'limit '.$this->limit;
+        $query[] = ($this->limit ? 'limit '.$this->limit : '');
 
         return join("\r\n", $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_insert(){        foreach ($this->values as $value){
-            $values[] = '(?a)';
-            $this->placeholders[] = $value;
-        }
+    protected function _build_insert(){        $query[] = 'insert into `?_` (?#)';
+        $query[] = 'values '.str_repeat('(?a), ', b::len($this->values));
 
-        $query[] = 'insert into ['.$this->_table.']';
-        $query[] = '(`'.join('`, `', $this->into).'`)';
-        $query[] = 'values '.join(', ', $values);
-
-        return join("\r\n", $query);
+        return substr(join("\r\n", $query), 0, -2);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_delete(){        if ($pos = stripos(($from = $this->from[0]), ' as '))
-            $table = trim(substr($this->from[0], 0, $pos));
+    protected function _build_delete(){        $class = clone $this;
+        $class->alias = inflector::tableize($this->alias);
 
-        $query[] = 'delete from ['.$this->_table.']';
+        $query[] = 'delete from `?_` using `?_`';
+        $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');
+        $query[] = ($this->limit ? 'limit '.$this->limit : '');
 
-        if ($this->limit)
-            $query[] = 'limit '.$this->limit;
+        $keywords['from'] =
+        $keywords['using'] =
+        $keywords['order by'] =
+        $keywords['limit'] = ',';
+        $keywords['delete'] = '';
+        $keywords['where'] = array('and', 'or', 'in');
 
-        return join("\r\n", $query);
+        return $class->rebuild(join("\r\n", $query), $keywords);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _build_create(){
-        $query[] = 'create table ['.$this->_table.'] (';
-        $query[] = 'id int not null auto_increment,';
-        $query[] = 'primary key (id)';
+        $query[] = 'create table `?_` (';
+        $query[] = '?# int not null auto_increment,';
+        $query[] = 'primary key (?#)';
         $query[] = ') default charset=utf8 collate=utf8_unicode_ci';
 
         return join("\r\n", $query);
@@ -194,7 +307,7 @@ abstract class SQL_Build {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _build_alter(){        $array1 = $this->values;
-        $array2 = $this->schema($this->_table);
+        $array2 = $this->schema($this->table);
 
         $query = array();
         $array = arr::assoc(array_diff_assoc(arr::flat($array1), arr::flat($array2)));
@@ -214,6 +327,9 @@ abstract class SQL_Build {
 
             if ($before == $after)
                 continue;
+
+            if ($before['default'] === $after['default'])
+                unset($after['default']);
 
             if (
                 isset($after['default']) and
@@ -242,28 +358,38 @@ abstract class SQL_Build {
         }
 
         if ($query)
-            return 'alter table ['.$this->_table.'] '.join(', ', $query);
+            return 'alter table `?_` '.join(', ', $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _build_join($relation){        $join = array();
+
+        if ($relation['foreign']['table1'])
+            $table = &$relation['foreign']['table1'];
+        else
+            $table = &$relation['foreign']['table'];
+
+        if ($pos = strpos($table, '.'))
+            $table = '`'.substr($table, 0, $pos).'`.`'.substr($table, ($pos + 1)).'`';
+        else
+            $table = '`'.$table.'`';
         if (in_array($relation['type'], array('has_one', 'belongs_to', 'has_many')))
             $join[] = str::format('
-                [%foreign.table] as `%foreign.alias` on (
-                    `%foreign.alias`.%foreign.field = `%local.alias`.%local.field
+                %foreign.table as %foreign.alias on (
+                    %foreign.alias.%foreign.field = %local.alias.%local.field
                 )
             ', $relation);
 
         if ($relation['type'] == 'has_and_belongs_to_many'){
             $join[] = str::format('
-                [%foreign.table1] as `%foreign.alias1` on (
-                    `%foreign.alias1`.%foreign.field1 = `%local.alias`.%local.field
+                %foreign.table1 as %foreign.alias1 on (
+                    %foreign.alias1.%foreign.field1 = %local.alias.%local.field
                 )
             ', $relation);
             $join[] = str::format('
-                [%foreign.table2] as `%foreign.alias2` on (
-                    `%foreign.alias2`.%foreign.field2 = `%foreign.alias1`.%foreign.field3
+                %foreign.table2 as %foreign.alias2 on (
+                    %foreign.alias2.%foreign.field2 = %foreign.alias1.%foreign.field3
                 )
             ', $relation);
         }
@@ -273,47 +399,71 @@ abstract class SQL_Build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_schema(){        return 'desc ?_';    }
+    protected function _build_schema($table){        $result = array();
+        $query = new SQL_Query('desc `?_`', $table);
+
+        foreach ((array)$query->fetch() as $info)
+            $result[$info['Field']] = array(
+                'name' => $info['Field'],
+                'type' => $info['Type'],
+                'null' => ($info['Null'] == 'YES'),
+                'key'  => (string)$keys[strtolower($info['Key'][0])],
+                'auto' => ($info['Extra'] == 'auto_increment'),
+                'default' => $info['Default']
+            );
+
+        return $result;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_childrens(){
-        return 'select ?# as array_key, ?# as parent_key from ?_';
+    protected function _build_last_id($table){
+	    $query = new SQL_Query('show table status like "?_"', $table);
+	    $query = $query->fetch_row();
+
+	    return max(0, ($query['Auto_increment'] - 1));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_subquery_select($parent){        if (!$parent->relations[$table = $this->table])
+    protected function _build_childrens(){
+        return 'select ?# as array_key, ?# as parent_key from `?_`';
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _build_subquery($where, $parent){        return call_user_func(array($this, '_build_subquery_'.$where), $parent);    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _build_subquery_select($parent){        if (!$this->relations[$table = $parent->alias])
             $table = inflector::tableize($table);
 
-        foreach ($this->where as $k => $v)
-            $this->where[$k] = preg_replace('/(.*?)('.$parent->table.'\.(.*?))$/e', "self::_prepare_fields('\\1').'\\2'", $v);
-
-        $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
+        $this->placeholders = array_merge($parent->placeholders, $this->placeholders);
         $query[] = '(';
-        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `subquery_(.*?)`/'), array('`subquery_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_select());
-        $query[] = ') as `_'.$table.'`';
+        $query[] = $parent->_build_select();
+        $query[] = ') as _'.$table;
 
         return join("\r\n", $query);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_subquery_join($parent){        if (!$relation = $parent->relations[$table = $this->table]){
-            $table = inflector::tableize($table);
-            $relation = $parent->relations[$table];
-        }
+    protected function _build_subquery_join($parent){        if (
+            (!$relation = $this->relations[$table = $parent->alias]) and
+            (!$relation = $this->relations[$table = inflector::tableize($table)])
+        )
+            return;
 
-        foreach ($parent->select as $k => $v)
-            if (substr_count($v, '.') > 1 and substr($v, 0, b::len('_'.$table.'.')) == '_'.$table.'.')
-                $parent->select[$k] = '`'.$v.'`';
+        $this->placeholders = array_merge($parent->placeholders, $this->placeholders);
 
-        $this->select[] = $relation['foreign']['field'];
-        $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
+        $alias = 'subquery_'.$parent->alias;
+        $parent->select[] = $relation['foreign']['field'];
+        $parent->from[0] = $parent->table.' as '.$alias;
+        $parent->alias = $alias;
 
         $query[] = '(';
-        $query[] = preg_replace(array('/`(.*?)`/', '/(\w) as `subquery_(.*?)`/'), array('`subquery_\\1`', '\\1 as `_'.$table.'.\\2`'), self::_build_select());
-        $query[] = ') as `_'.$table.'` on (';
-        $query[] = str::format('`_%foreign.alias`.%foreign.field = `%local.alias`.%local.field', $relation);
+        $query[] = $parent->_build_select();
+        $query[] = ') as _'.$table.' on (';
+        $query[] = str::format('_%foreign.alias.%foreign.field = %local.alias.%local.field', $relation);
         $query[] = ')';
 
         return join("\r\n", $query);

@@ -207,6 +207,12 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
                 $output = str_replace($match[0][$i], self::_var($match[1][$i].'{'.$match[2][$i]), $output);
 
         return $output;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function _empty($token){
+        return ($token[0] == T_WHITESPACE);
     }
 ////////////////////////////////////////////////////////////////////////////////
 

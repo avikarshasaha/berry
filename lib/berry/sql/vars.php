@@ -173,11 +173,11 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             return $this->values[$name];
         }
 
-        if (!isset($this->parallel[$this->table])){            $array = ($this->where ? $this->fetch_array() : array());
-            $this->parallel[$this->table] = new SQL_Element($array);
+        if (!isset($this->parallel[$this->alias])){            $array = ($this->where ? $this->fetch_array() : array());
+            $this->parallel[$this->alias] = new SQL_Element($array);
         }
 
-        return $this->parallel[$this->table][$name];
+        return $this->parallel[$this->alias][$name];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -189,17 +189,17 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if (is_array($value) or $value instanceof SQL){            if ($name === null)
                 $name = max(array_keys($this->parallel));
 
-            $class = self::_get($name);
-            $values = (is_array($value) ? $value : $value->values);
+            if ($class = self::_get($name)){                $values = (is_array($value) ? $value : $value->values);
 
-            foreach ($values as $k => $v)
-                $class[$k] = $v;
+                foreach ($values as $k => $v)
+                    $class[$k] = $v;
 
-            if (!$this->id or !is_int($name))
-                return;
+                if (!$this->id or !is_int($name))
+                    return;
 
-            $value = $class;
-        } elseif (is_int($value) or is_float($value)){
+                $value = $class;
+            }
+        } elseif (is_numeric($this[$name]) and is_int($value) or is_float($value)){
             $value = ($value - $this[$name]);
             $value = self::raw($name.' '.($value >= 0 ? '+' : '').$value);
         }

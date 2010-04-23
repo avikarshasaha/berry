@@ -37,33 +37,10 @@ class SQL_Connect extends DbSimple_Mysql {
         }    }
 
 ////////////////////////////////////////////////////////////////////////////////
-    function _query($query, &$total){        foreach ($query as $k => $v)
-            if (!is_array($v))
-                $query[$k] = ((is_object($v) or $v === DBSIMPLE_SKIP) ? $v : self::_toBerry($v));
-
-        return parent::_query($query, $total);    }
-
-////////////////////////////////////////////////////////////////////////////////
 
     function prefix($table, $q = '`'){        if (!$pos = strpos($table, '.'))
             return $q.$this->prefix.$table.$q;
         return $q.substr($table, 0, $pos).$q.'.'.$q.substr($table, ($pos + 1)).$q;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function _toBerry($query, $use_prefix = true){
-        if (strtolower(substr($query, 0, 6)) == 'select' or strtolower(substr($query, 0, 6)) == 'update'){            $query = preg_replace('/\[(\w+\.)(\w+)\](?!\s+as )/i', '\\1\\2 as `\\2`', $query);
-            $query = preg_replace('/\[(\w+)\](?!\s+as )/ie', "self::prefix('\\1').' as `\\1`'", $query);
-
-            $query = preg_replace('/\[(\w+\.)(\w+)\]/i', '\\1`\\2`', $query);
-            $query = preg_replace('/\[(\w+)\]/ie', "self::prefix('\\1')", $query);
-        } else {
-            $query = preg_replace('/\[(\w+\.)(\w+)\]/i', '\\1`\\2`', $query);
-            $query = preg_replace('/\[(\w+)\]/e', "self::prefix('\\1')", $query);
-        }
-
-        return $query;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +55,15 @@ class SQL_Connect extends DbSimple_Mysql {
             $this->_placeholderNoValueFound = true;
 
         if ($m[3] == '_')
-            return (!is_scalar($value) ? 'DBSIMPLE_ERROR_VALUE_NOT_SCALAR' : $this->prefix($value, $quote));
+            if (!is_array($value)){                return $this->prefix($value, $quote);
+            } else {
+                $tmp = array();
+
+                foreach ($value as $table)
+                    $tmp[] = $this->prefix($table, $quote);
+
+                return join(', ', $tmp);
+            }
 
         if (!$m[3]){
             if ($value === null)

@@ -10,11 +10,10 @@
 class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
-        $this->_table = ($this->table ? $this->table : inflector::tableize($class));
-        $from = (($this->table and $this->table != $class) ? $this->table.' as ' : '');
-        self::from($from.$class)->table = $class;
-        $this->relations = self::deep_throat($class);
+    function __construct($id = 0, $class = ''){        $this->alias = strtolower($class ? $class : get_class($this));
+        $this->table = ($this->table ? $this->table : inflector::tableize($this->alias));
+        $this->from[] = $this->table.' as '.$this->alias;
+        $this->relations = self::deep_throat($this->alias);
 
         if ($id){            if (is_array($id))
                 list($this->primary_key, $id) = array(key($id), reset($id));
@@ -58,7 +57,7 @@ class SQL extends SQL_Control {
 
     function select(){        foreach (func_get_args() as $arg)
             if ($arg instanceof SQL or $arg instanceof SQL_Query)
-                $this->select[] = $arg->build('subquery_select', $this);
+                $this->select[] = $this->build('subquery', 'select', $arg);
             else
                 $this->select[] = $arg;
 
@@ -67,17 +66,34 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function from($table){        foreach (func_get_args() as $arg)            if (!$this->table){                $table = inflector::tableize($arg);                $this->from[] = $table.($arg == $table ? '' : ' as '.$arg);
-            } else {                $this->from[] = $arg;            }
+    function from($table){        foreach (func_get_args() as $arg)            if ($pos = stripos($arg, ' as ')){
+                $this->from[] = self::table(trim(substr($arg, 0, $pos)))->table.substr($arg, $pos);
+            } else {
+                $this->from[] = self::table($arg)->table;            }
 
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function join(){        foreach (func_get_args() as $arg){            if ($arg instanceof SQL or $arg instanceof SQL_Query){                $this->join[] = $arg->build('subquery_join', $this);                continue;            } elseif (is_array($arg)){                list($arg, $vars) = array($this->table, $arg);                $this->relations = array_merge($this->relations, self::deep_throat(array($arg => $vars)));            }
-            $relation = $this->relations[strtolower($arg)];
-            $this->join = array_merge($this->join, self::build('join', $relation));
+    function join(){        foreach (func_get_args() as $arg){            if ($arg instanceof SQL){                $this->join[] = $this->build('subquery', 'join', $arg);                continue;
+            } elseif ($arg instanceof SQL_Query){                $this->join[] = $arg->build('subquery', 'join', $this);
+                continue;            } elseif (is_array($arg)){                list($arg, $vars) = array($this->alias, $arg);                $this->relations = array_merge($this->relations, self::deep_throat(array($arg => $vars)));            }
+
+            if ($pos = stripos($arg, ' as ')){
+                $alias = trim(substr($arg, ($pos + 4)));
+                $arg = trim(substr($arg, 0, $pos));
+
+                $relation = $this->relations[strtolower($arg)];
+
+                if ($relation['foreign']['alias2'])
+                    $relation['foreign']['alias2'] = $alias;
+                else
+                    $relation['foreign']['alias'] = $alias;
+            } else {                $relation = $this->relations[strtolower($arg)];
+            }
+
+            $this->join = array_merge($this->join, $this->build('join', $relation));
 
             if (substr($relation['type'], -4) == 'many')
                 $this->multiple[] = ($relation['foreign']['alias2'] ? $relation['foreign']['alias2'] : $relation['foreign']['alias']);
@@ -91,18 +107,14 @@ class SQL extends SQL_Control {
     function where(){
         $args = func_get_args();
         $this->where[] = array_shift($args);
-        $key = (b::len($this->where) - 1);
 
         foreach ($args as $arg){
             if ($arg instanceof SQL or $arg instanceof SQL_Query){
-                self::$sql->_placeholderArgs = array_reverse($arg->placeholders);
+                $arg->alias = 'subquery_'.$arg->alias;
+                $arg->from[0] = $arg->table.' as '.$arg->alias;
 
-                $class = clone $this;
-                $query = self::$sql->_toBerry($arg->build('subquery_select', $class));
-                $query = self::$sql->_expandPlaceholdersFlow($query);
-
-                if ($arg instanceof SQL)
-                    $query = substr($query, 0, strrpos($query, ')')).')';
+                self::$connection->_placeholderArgs = array_reverse($arg->placeholders);
+                $query = self::$connection->_expandPlaceholdersFlow($arg->build('select'));
 
                 $this->placeholders[] = self::raw($query);
             } else {
@@ -143,14 +155,14 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function limit($limit){
-        $this->limit = (is_numeric($limit) ? $limit : self::$sql->escape($limit));
+        $this->limit = (is_numeric($limit) ? $limit : self::$connection->escape($limit));
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function offset($offset){
-        $this->offset = (is_numeric($offset) ? $offset : self::$sql->escape($offset));
+        $this->offset = (is_numeric($offset) ? $offset : self::$connection->escape($offset));
         return $this;
     }
 
@@ -159,6 +171,13 @@ class SQL extends SQL_Control {
     function page($page){
         $this->offset($page * $this->limit - $this->limit);
         return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function union(){
+        $union = func_get_args();
+        return new SQL_Union($union);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,7 +201,14 @@ class SQL extends SQL_Control {
             return $this;
         }
 
-        return parent::__call($method, $params);
+        if (!$scope = $this->scope[$method])
+            trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);
+
+        foreach ($scope as $k => $v)
+            if (call_user_func_array(array($this, $k), array_merge((array)$v)))
+                $this->placeholders = array_merge($this->placeholders, $params);
+
+        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

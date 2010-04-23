@@ -124,7 +124,7 @@ class Piles extends Piles_Etc {
                 } elseif ($token[$i] == '/' and $token[$i + 1] == '>'){
                     $opened = false;
                     $skip = 1;
-                } elseif (is_array($token[$i]) and trim($token[$i][1])){
+                } elseif (is_array($token[$i]) and !self::_empty($token[$i])){
                     $tmp = '';
                     $n = 1;
 
@@ -136,16 +136,13 @@ class Piles extends Piles_Etc {
                     ){
                         $token[$i][1] .= '_'.$token[$i + 2][1];
                         $n += 3;
-                    } elseif (
-                        !is_array($next = $token[$i + 1]) or
-                        is_array($next) and !trim($next[1])
-                    ){
+                    } elseif (!is_array($next = $token[$i + 1]) or self::_empty($next)){
                         $tmp = $token[$i][1];                    } else {
                         continue;
                     }
 
                     for ($j = ($i + $n); $j < $c; $j++){
-                        if (is_array($token[$j]) and !trim($token[$j][1])){
+                        if (is_array($token[$j]) and self::_empty($token[$j])){
                             break;
                         } elseif ($token[$j] == '>'){
                             $j -= 1;
@@ -171,7 +168,7 @@ class Piles extends Piles_Etc {
 
                     $tags[$key] += array($token[$i][1] => $tmp);
                     $skip = ($j - $i);
-                } elseif (!is_array($token[$i]) and trim($token[$i]) and $token[$i + 1] == '='){
+                } elseif (!is_array($token[$i]) and $token[$i + 1] == '='){
                     $tmp = (is_array($next = $token[$i + 2]) ? $next[1] : $next);
 
                     if (in_array($tmp[0].substr($tmp, -1), array('""', "''", '``')))
@@ -185,7 +182,7 @@ class Piles extends Piles_Etc {
                     $tags[] = $token[$i];
                 } elseif ($token[$i + 1] == '?'){
                     $tmp = '';
-                    $is_php = (is_array($next = $token[$i + 2]) and (!trim($next[1]) or strtolower($next[1]) == 'php'));
+                    $is_php = (self::_empty($token[$i + 2]) or strtolower($token[$i + 2][1]) == 'php');
 
                     for ($j = ($i + 2); $j < $c; $j++){
                         if ($is_php and is_array($token[$j]) and $token[$j][0] == T_STRING){
@@ -194,23 +191,23 @@ class Piles extends Piles_Etc {
 
                             if (($next == '(' and ($n = 1)) or (
                                 ($j - 1) > ($i + 2) and is_array($next) and
-                                !trim($next[1]) and $token[$j + ($n = 2)] == '('
+                                self::_empty($next) and $token[$j + ($n = 2)] == '('
                             )){
                                 $method = '';
 
                                 if (
-                                    is_array($token[$j - 1]) and !trim($token[$j - 1][1]) and
+                                    is_array($token[$j - 1]) and self::_empty($token[$j - 1]) and
                                     in_array($token[$j - 2][1], array('::', '->')) and
-                                    is_array($token[$j - 3]) and !trim($token[$j - 3][1])
+                                    is_array($token[$j - 3]) and self::_empty($token[$j - 3])
                                 ){
                                     $method = $token[$j - 4][1].$token[$j - 3][1].$token[$j - 2][1].$token[$j - 1][1];
                                 } elseif (
-                                    is_array($token[$j - 2]) and !trim($token[$j - 2][1]) and
+                                    is_array($token[$j - 2]) and self::_empty($token[$j - 2]) and
                                     in_array($token[$j - 3][1], array('::', '->'))
                                 ){
                                     $method = $token[$j - 4][1].$token[$j - 3][1].$token[$j - 2][1];
                                 } elseif (
-                                    is_array($token[$j - 1]) and !trim($token[$j - 1][1]) and
+                                    is_array($token[$j - 1]) and self::_empty($token[$j - 1]) and
                                     in_array($token[$j - 2][1], array('::', '->'))
                                 ){
                                     $method = $token[$j - 3][1].$token[$j - 2][1].$token[$j - 1][1];
@@ -242,7 +239,7 @@ class Piles extends Piles_Etc {
                     }
 
                     if ($is_php)
-                        $tags[sprintf($mask, '?', $i)] = substr($tmp, (!trim($token[$i + 2][1]) ? 1 : 3));
+                        $tags[sprintf($mask, '?', $i)] = substr($tmp, (self::_empty($token[$i + 2]) ? 1 : 3));
                     else
                         $tags[] = '<?'.$tmp.'?>';
 
@@ -253,7 +250,7 @@ class Piles extends Piles_Etc {
 
                     for ($j = ($i + 2), $end = array_search('>', $token); $j < $end; $j++)
                         if (is_array($token[$j])){
-                            if (!trim($token[$j][1]))
+                            if (self::_empty($token[$j]))
                                 break;
 
                             $key .= $token[$j][1];
@@ -269,13 +266,13 @@ class Piles extends Piles_Etc {
 
                     $tags[sprintf($mask, '/'.$key, $tmp)] = array();
                     $skip = ($end - $i);
-                } elseif (trim(is_array($next = $token[$i + 1]) ? $next[1] : $next)){
+                } elseif (!self::_empty($next = $token[$i + 1])){
                     $opened = true;
                     $key = '';
 
                     for ($j = ($i + 1), $end = array_search('>', $token); $j < $end; $j++)
                         if (is_array($token[$j])){
-                            if (!trim($token[$j][1]))
+                            if (self::_empty($token[$j]))
                                 break;
 
                             $key .= $token[$j][1];

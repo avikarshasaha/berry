@@ -12,7 +12,15 @@ class SQL_Query extends SQL_Etc {    protected $query;
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct(){        $args = func_get_args();
-        $args = (is_array($args[0]) ? $args[0] : $args);        $this->query = array_shift($args);        $this->placeholders = $args;
+
+        if (is_array($args[0]))
+            $this->query = $args[0];
+        else
+            $this->query = $args;
+
+        $array = $this->query;
+        array_shift($array);
+        $this->placeholders = $array;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,43 +30,35 @@ class SQL_Query extends SQL_Etc {    protected $query;
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
 
-        $args = $this->placeholders;
-        array_unshift($args, $this->query);
-        return self::$cache[$key] = call_user_func_array(array(self::$sql, 'select'), $args);
+        return self::$cache[$key] = call_user_func_array(array(self::$connection, 'select'), $this->query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch_cell(){        $args = $this->placeholders;
-        array_unshift($args, $this->query);
-        return call_user_func_array(array(self::$sql, 'selectCell'), $args);
+    function fetch_cell(){        return call_user_func_array(array(self::$connection, 'selectCell'), $this->query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch_col(){        $args = $this->placeholders;
-        array_unshift($args, $this->query);
-        return call_user_func_array(array(self::$sql, 'selectCol'), $args);
+    function fetch_col(){        return call_user_func_array(array(self::$connection, 'selectCol'), $this->query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch_row(){        $args = $this->placeholders;
-        array_unshift($args, $this->query);
-        return call_user_func_array(array(self::$sql, 'selectRow'), $args);
+    function fetch_row(){        return call_user_func_array(array(self::$connection, 'selectRow'), $this->query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _build_select(){
-        return $this->query;
+        return $this->query[0];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _build_subquery_select($parent){
         $parent->placeholders = array_merge($this->placeholders, $parent->placeholders);
-        return $this->query;
+        return $this->query[0];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
