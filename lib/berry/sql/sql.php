@@ -56,10 +56,16 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function select(){        foreach (func_get_args() as $arg)
-            if ($arg instanceof SQL or $arg instanceof SQL_Query)
+            if ($arg instanceof SQL or $arg instanceof SQL_Query){
                 $this->select[] = $this->build('subquery', 'select', $arg);
-            else
+            } elseif ($arg == '*'){                $this->select = array_merge($this->select, array_keys(self::schema($this->alias)));
+            } elseif (substr($arg, -2) == '.*'){                $arg = substr($arg, 0, -2);
+
+                foreach (array_keys(self::schema($arg)) as $field)
+                    $this->select[] = $arg.'.'.$field.' as '.$arg.'.'.$field;
+            } else {
                 $this->select[] = $arg;
+            }
 
         return $this;
     }
@@ -106,7 +112,7 @@ class SQL extends SQL_Control {
 
     function where(){
         $args = func_get_args();
-        $this->where[] = array_shift($args);
+        $this->where[] = join(' or ', (array)array_shift($args));
 
         foreach ($args as $arg){
             if ($arg instanceof SQL or $arg instanceof SQL_Query){
@@ -154,22 +160,23 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function limit($limit){
-        $this->limit = (is_numeric($limit) ? $limit : self::$connection->escape($limit));
+    function limit($limit){        $this->limit = (is_numeric($limit) ? $limit : self::$connection->escape($limit));
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offset($offset){
-        $this->offset = (is_numeric($offset) ? $offset : self::$connection->escape($offset));
+    function offset($offset){        if ($offset > 0)
+            $this->offset = (is_numeric($offset) ? $offset : self::$connection->escape($offset));
+
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function page($page){
-        $this->offset($page * $this->limit - $this->limit);
+    function page($page){        if ($page > 0)
+            $this->offset($page * $this->limit - $this->limit);
+
         return $this;
     }
 

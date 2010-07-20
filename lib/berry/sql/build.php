@@ -17,9 +17,9 @@ abstract class SQL_Build {
         for ($i = 1, $c = b::len($token); $i < $c; $i++){
             if (
                 (
-                    $token[$i + 1][0] == 370 and
+                    $token[$i + 1][0] == T_WHITESPACE and
                     isset($keywords[$key = strtolower($token[$i][1].' '.$token[$i + 2][1])]) and
-                    $token[$i + 3][0] == 370 and $i += 2
+                    $token[$i + 3][0] == T_WHITESPACE and $i += 2
                 ) or
                 (isset($keywords[$key = strtolower($token[$i][1])]) and $token[$i + 1][0] == 370)
             ){
@@ -49,6 +49,7 @@ abstract class SQL_Build {
             if (is_array($token[$i])){
                 end($array);
                 $key = key($array);
+                $key = ($key === null ? 0 : $key);
 
                 for ($j = $i; $j < $c; $j++)
                     if ($token[$j - 1] == '['){
@@ -112,6 +113,7 @@ abstract class SQL_Build {
                         )
                             break;
 
+                        $name .= '.';
                         $local = $relation['local'];
                         $foreign = $relation['foreign'];
                         $table = ($foreign['table1'] ? $foreign['table1'] : $foreign['table']);
@@ -120,40 +122,37 @@ abstract class SQL_Build {
                             $table = array(substr($table, 0, $pos), substr($table, ($pos + 1)));
                         else                            $table = '`'.$table.'`';
 
-                        if (isset($tokens['select'])){                            if (
-                                ($foreign['alias'] and in_array($foreign['alias'], $tokens['from'])) or
-                                ($foreign['alias1'] and in_array($foreign['alias1'], $tokens['from']))
-                            ){                                $name .= '.';
+                        if (isset($tokens['select'])){                            if ($foreign['alias1']){
+                                $foreign['alias'] = $foreign['alias1'];
+                                $foreign['field'] = $foreign['field1'];
+                            }
+                            if ($foreign['alias'] and in_array($foreign['alias'], $tokens['from']))
                                 continue;
-                            }
-                            $foreign['alias'] = ($foreign['alias1'] ? $foreign['alias1'] : $foreign['alias']);
 
-                            $tokens['from'][] = 'left';
-                            $tokens['from'][] = 'join';
-                            $tokens['from'][] = $table;
-                            $tokens['from'][] = 'as';
-                            $tokens['from'][] = $foreign['alias'];
-                            $tokens['from'][] = 'on';
-                            $tokens['from'][] = '(';
-                            $tokens['from'][] = array($foreign['alias'], $foreign['field']);
-                            $tokens['from'][] = '=';
-                            $tokens['from'][] = array($local['alias'], $local['field']);
-                            $tokens['from'][] = ')';
+                            $this->join(substr($name, 0, -1));
 
+                            $tokens['from'] = array_merge($tokens['from'], array(
+                                'left', 'join', $table, 'as', $foreign['alias'],
+                                'on', '(',
+                                    array($foreign['alias'], $foreign['field']),
+                                    '=',
+                                    array($local['alias'], $local['field']),
+                                ')'
+                            ));
                             if ($relation['type'] == 'has_and_belongs_to_many'){                                $table2 = $foreign['table2'];
                                 if ($pos = strpos($table2, '.'))
                                     $table2 = array(substr($table2, 0, $pos), substr($table2, ($pos + 1)));
                                 else
                                     $table2 = '`'.$table2.'`';
-                                $tokens['from'][] = 'left';
-                                $tokens['from'][] = 'join';                                $tokens['from'][] = $table2;
-                                $tokens['from'][] = 'as';
-                                $tokens['from'][] = $foreign['alias2'];
-                                $tokens['from'][] = 'on';
-                                $tokens['from'][] = '(';
-                                $tokens['from'][] = array($foreign['alias2'], $foreign['field2']);
-                                $tokens['from'][] = '=';
-                                $tokens['from'][] = array($foreign['alias1'], $foreign['field3']);                            }
+
+                                $tokens['from'] = array_merge($tokens['from'], array(
+                                    'left', 'join', $table2, 'as', $foreign['alias2'],
+                                    'on', '(',
+                                        array($foreign['alias2'], $foreign['field2']),
+                                        '=',
+                                        array($foreign['alias1'], $foreign['field3']),
+                                    ')'
+                                ));                            }
                         } elseif (isset($tokens['using'])){                            if (!in_array($table, $tokens['using'])){
                                 $tokens['using'][] = ',';
                                 $tokens['using'][] = $table;
@@ -162,9 +161,7 @@ abstract class SQL_Build {
                                 $tokens['from'][] = ',';
                                 $tokens['from'][] = $table;
                             }
-                        }
-
-                        $name .= '.';                    }
+                        }                    }
                 }
 
         foreach ($tokens as $key => $value){            $array = array();
@@ -177,8 +174,7 @@ abstract class SQL_Build {
                 if (is_array($v)){
                     if (strtolower(end($array)) == 'as'){
                         $array[] = '`'.$v[0].'.'.$v[1].'`';
-                    } else {
-                        if ($key != 'select' or strtolower($value[$k + 1]) == 'as')
+                    } else {                        if ($key != 'select' or strtolower($value[$k + 1]) == 'as')
                             $array[] = '`'.$v[0].'`.'.$v[1];
                         else
                             $array[] = '`'.$v[0].'`.'.$v[1].' as `'.$v[0].'.'.$v[1].'`';
@@ -196,9 +192,8 @@ abstract class SQL_Build {
                     array_pop($array);
                     $array[] = '?'.$v;
                 } elseif (
-                    $key == 'from' or
+                    $key == 'from' or strtolower($v) == 'as' or
                     !preg_match('/^\w+$/i', $v) or is_numeric($v) or
-                    in_array(strtolower($v), array('as', 'null')) or
                     in_array(strtolower($v), (array)$keywords[$key])
                 ){
                     $array[] = $v;
@@ -231,13 +226,14 @@ abstract class SQL_Build {
         $query[] = ($this->limit ? 'limit '.$this->limit : '');
         $query[] = ($this->offset ? 'offset '.$this->offset : '');
 
-        $keywords['select'] =
+        $keywords['select'] = array(',', 'null', 'case', 'when', 'then', 'else', 'end');
         $keywords['from'] =
         $keywords['group by'] =
-        $keywords['order by'] =
         $keywords['limit'] = ',';
         $keywords['offset'] = '';
-        $keywords['where'] = array('and', 'or', 'in');
+        $keywords['where'] =
+        $keywords['having'] = array('and', 'or', 'xor', 'not', 'in', 'is', 'null', 'between', 'like', 'regexp');
+        $keywords['order by'] = array(',', 'asc', 'desc');
 
         if (!$this->union)
             return self::rebuild(join("\r\n", $query), $keywords);
@@ -288,7 +284,7 @@ abstract class SQL_Build {
         $keywords['order by'] =
         $keywords['limit'] = ',';
         $keywords['delete'] = '';
-        $keywords['where'] = array('and', 'or', 'in');
+        $keywords['where'] = array('and', 'or', 'xor', 'not', 'in', 'is', 'null', 'between', 'like', 'regexp');
 
         return $class->rebuild(join("\r\n", $query), $keywords);
     }
@@ -438,12 +434,15 @@ abstract class SQL_Build {
     protected function _build_subquery_select($parent){        if (!$this->relations[$table = $parent->alias])
             $table = inflector::tableize($table);
 
-        $this->placeholders = array_merge($parent->placeholders, $this->placeholders);
-        $query[] = '(';
-        $query[] = $parent->_build_select();
-        $query[] = ') as _'.$table;
+        $this->subquery_placeholders = $parent->placeholders;
+        $query = trim($parent->_build_select());
 
-        return join("\r\n", $query);    }
+        if ($query[0] != '(')
+            $query = '('.$query.') as _'.$table;
+        elseif (!stripos($query, ' as '))
+            $query .= ' as _'.$table;
+
+        return $query;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

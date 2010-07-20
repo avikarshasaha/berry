@@ -31,6 +31,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!$query = $this->build('alter'))
             return 0;
 
+        cache::remove('sql/schema/'.$this->table.'.php');
         $args = array_merge(array($query, $this->table), $this->placeholders);
         return call_user_func_array(array(self::$connection, 'query'), $args);
     }
@@ -176,14 +177,22 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             if (!$ids = call_user_func_array(array(self::$connection, 'selectCol'), $args))
                 return array();
 
-            $self->where = array($this->primary_key.' in (?a)');
+            sort($ids);
+            $min = min($ids);
+            $max = max($ids);
+            $self->where = $self->placeholders = array();
+
+            if (b::len($ids) == 1)                $self->where($this->primary_key.' = ?d', $ids);
+            elseif ($ids == range($min, $max))
+                $self->where($this->primary_key.' >= ?d', $min)->where($this->primary_key.' <= ?d', $max);            else
+                $self->where($this->primary_key.' in (?a)', array($ids));
+
             $self->having = array();
             $self->limit = $self->offset = 0;
-            $self->placeholders = array($ids);
             $query = $self->build('select');
         }
 
-        $args = $self->placeholders;
+        $args = array_merge($self->subquery_placeholders, $self->placeholders);
         array_unshift($args, $query);
         return call_user_func_array(array(self::$connection, 'select'), $args);
     }
@@ -201,7 +210,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if ($this->parent_key){
             $class->select[] = $this->alias.'.'.$this->parent_key.' as parent_key';
 
-            foreach (arr::tree(self::fetch()) as $k => $v){
+            foreach (arr::tree($class->fetch()) as $k => $v){
                 unset($array[$k]);
                 $array[$k][] = $v;
             }

@@ -40,12 +40,11 @@ class HTTP {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // http://php.net/manual/ru/function.header.php#60050
-    static function status($num, $replace = true){
+    static function status($num){
         $http = b::config('lib.http.status');
         $status = (substr(PHP_SAPI, 0, 3) == 'cgi' ? 'Status:' : $_SERVER['SERVER_PROTOCOL']);
 
-        header($status.' '.$num.' '.$http[$num], $replace);
+        header($status.' '.$num.' '.$http[$num], true);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -22,7 +22,6 @@ class B {    static $path = array('');
         if (!self::$path[0])
             self::$path[0] = realpath(dirname(__file__).'/../..');
 
-        ini_set('docref_root', 'http://php.net/');
         spl_autoload_register(array('self', 'autoload'));
         date_default_timezone_set(self::config('lib.b.timezone'));
         setlocale(LC_ALL, self::lang('lib.b.locale'));
@@ -42,9 +41,8 @@ class B {    static $path = array('');
 
             $host  = 'http'.($_SERVER['HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME'];
             $host .= substr($url['path'], 0, self::len(dirname($_SERVER['PHP_SELF'])));
-            $host .= (substr($host, -1) != '/' ? '/' : '');
 
-            array_unshift($q, $host);
+            array_unshift($q, trim($host, '/'));
             self::$cache['q'][$_GET['berry']] = $q;
         }
 

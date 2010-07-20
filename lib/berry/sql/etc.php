@@ -44,6 +44,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected $relations = array();
     protected $multiple = array();
     protected $placeholders = array();
+    protected $subquery_placeholders = array();
 
     protected static $connection;
     protected static $connections = array();
@@ -84,7 +85,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 ////////////////////////////////////////////////////////////////////////////////
 
     static function table($table, $id = 0){        if (
-            !class_exists($table, true) or
+            !class_exists($table, true) and
             !class_exists($table = inflector::singular($table), true)
         )
             return new SQL($id, $table);
@@ -167,7 +168,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         if (strpos($table, '.'))
             $table = end(explode('.', $table));
 
-        if (!$schema = cache::get('sql/schema/'.$table.'.php', array('db' => $table)))
+        if (!$schema = cache::get('sql/schema/'.$table.'.php'))
             cache::set($schema = $this->build('schema', $table));
 
         return $schema;

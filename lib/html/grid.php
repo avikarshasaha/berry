@@ -49,7 +49,7 @@ class HTML_Grid extends SQL_Etc {
             $type = substr($type, 5);
             $type = substr($type, 0, strrpos($type, ')'));
 
-            if (substr($name, 0, ($len = b::len($data->table) + 1)) == $data->table.'.')
+            if (substr($name, 0, ($len = b::len($data->alias) + 1)) == $data->alias.'.')
                 $name = substr($name, $len);
 
             foreach (token_get_all('<?php '.$type) as $k => $v)

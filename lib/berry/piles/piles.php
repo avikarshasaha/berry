@@ -136,6 +136,12 @@ class Piles extends Piles_Etc {
                     ){
                         $token[$i][1] .= '_'.$token[$i + 2][1];
                         $n += 3;
+                    } elseif (
+                        is_array($next = $token[$i + 1]) and
+                        $next[1][0] == '.' and $token[$i + 2] == '='
+                    ){
+                        $token[$i][1] .= '_'.substr($next[1], 1);
+                        $n += 2;
                     } elseif (!is_array($next = $token[$i + 1]) or self::_empty($next)){
                         $tmp = $token[$i][1];                    } else {
                         continue;
@@ -159,7 +165,6 @@ class Piles extends Piles_Etc {
                         $tmp = substr($tmp, 1, -1);
 
                     $tmp = self::parse($tmp);
-                    $tmp = substr($tmp, (substr($tmp, 0, 5) == 'echo ' ? 5 : 0), -1);
 
                     if ($tmp[0].substr($tmp, -1) == "''")
                         $tmp = '`'.substr($tmp, 1, -1).'`';
@@ -303,7 +308,8 @@ class Piles extends Piles_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse($output = null){        $output = ($output !== null ? $output : $this->output);
+    function parse($output = null){        $inside = ($output !== null);
+        $output = ($inside ? $output : $this->output);
         $tags = (is_array($output) ? $output : self::tokenize($output));
 
         if (!is_array($tags))
@@ -362,8 +368,13 @@ class Piles extends Piles_Etc {
                 $echo = false;
             }
 
+        if ($inside){            $result = substr($result, 5);
+            $result = str_replace('`; ', '`. ', $result);
+            $result = str_replace(' ;echo ', ' .', $result);
+        }
+
         if ($result and substr($result, -1) != ';')
-            $result .= '`;';
+            $result .= '`'.(!$inside ? ';' : '');
 
         $result = str_replace(self::char("'"), "\'", $result);
         $result = str_replace('`', "'", $result);

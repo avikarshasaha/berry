@@ -112,6 +112,9 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
             if (b::function_exists($func = 'attr_'.$k))
                 $attr = b::call($func, $attr);
 
+        if ($attr['#skip'])
+            return ($attr['#skip'] === true ? '' : $attr['#skip']);
+
         foreach ($attr as $k => $v)
             if ($k[0] != '#'){
                 $quote  = (is_int(strpos($v, '"')) ? "'" : '"');
@@ -151,9 +154,6 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
                 if ($k[0] != '#' and !in_array($k, $this->filter[$attr['#tag']]))
                     unset($attr[$k]);
             }
-
-        if ($attr['#skip'])
-            return ($attr['#skip'] === true ? '' : $attr['#skip']);
 
         if ($escape or !b::function_exists($func = 'tag_'.$attr['#tag']))
             return self::fill($attr, $escape);

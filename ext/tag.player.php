@@ -29,23 +29,25 @@ function tag_player_audio($attr){    static $i = 0;
 
     unset($params['id'], $params['src'], $params['#is_final'], $params['#tag']);
     return piles::fill('span', array('id' => $attr['id'], '#text' => $attr['#text'])).
-           js('AudioPlayer.embed("'.$attr['id'].'", '.arr::json($params).');');
+           html::js('AudioPlayer.embed("'.$attr['id'].'", '.arr::json($params).');');
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function tag_player_video($attr){    $attr = array_merge(array(
+function tag_player_video($attr){
+    $attr = array_merge(array(
     	'params_allowfullscreen' => true,
     	'params_allownetworking' => 'all',
     	'params_allowscriptaccess' => 'always',
         'flashvars_skin' => 'modieus',
-        'flashvars_viral.onpause' => false
+        'flashvars_viral.onpause' => false,
+        'flashvars_viral.functions' => false
     ),(array)b::config('tag.player_video'), $attr);
 
-    if ($attr['flashvars_skin'])
-        $attr['flashvars_skin'] = '~/tag/player/video/'.$attr['flashvars_skin'].'.swf';
-
+    $attr['flashvars_skin'] = '~/tag/player/video/'.$attr['flashvars_skin'].'.swf';
 	$attr['flashvars_file'] = $attr['src'];
 	$attr['flashvars_image'] = $attr['image'];
-	$attr['src'] = '~/tag/player/video/player.swf';
-    return tag_swfobject($attr);}
+	$attr['src'] = '~/tag/player/video/player.swf';
+
+    return b::call('tag_swfobject', $attr);
+}

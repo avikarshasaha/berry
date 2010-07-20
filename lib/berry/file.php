@@ -57,7 +57,8 @@ class File {
             $flag = array_pop($args);
 
         foreach ($args as $pattern)
-            $files = array_merge($files, (array)call_user_func_array('glob', array($pattern, $flag)));
+            if (is_array($tmp = call_user_func_array('glob', array($pattern, $flag))))
+                $files = array_merge($files, $tmp);
 
         return $files;
     }
