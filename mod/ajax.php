@@ -30,7 +30,7 @@ $output = ob_get_clean();
 ////////////////////////////////////////////////////////////////////////////////
 
 $output = hook::get('output', $output);
-$output = preg_replace('/<block_(.*?)(\s+)?\/>/ie', "join('', html::block('\\1'))", $output);
+$output = preg_replace('/<block(_|:|-|\.)(.*?)(\s+)?\/>/ie', "join('', html::block('\\2'))", $output);
 $output = preg_replace('/(href|src)=("|\'|)\~\/(.*)\\2/iU', '\\1=\\2'.b::q(0).'/~/\\3\\2', $output);
 $output = preg_replace('/(\W)url(\s+)?\(("|\'|)\~\/(.*)\\3\)/i', '\\1url\\2(\\3'.b::q(0).'/~/\\4\\3)', $output);
 $output = html::form_persister($output);

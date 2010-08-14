@@ -145,6 +145,23 @@ class Image extends Image_Merge {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function GPS(){
+        $exif = exif_read_data($this->file['path']);
+        $func = create_function('$v', '$v = explode("/", $v); return ($v[0] / $v[1]);');
+
+        $latitude = array_map($func, $exif['GPSLatitude']);
+        $latitude = ($latitude[0] + ($latitude[1] / 60.0) + ($latitude[2] / 3600.0));
+        $latitude = ($exif['GPSLatitudeRef'] != 'N' ? -$latitude : $latitude);
+
+        $longitude = array_map($func, $exif['GPSLongitude']);
+        $longitude = ($longitude[0] + ($longitude[1] / 60.0) + ($longitude[2] / 3600.0));
+        $longitude = ($exif['GPSLongitudeRef'] != 'E' ? -$longitude : $longitude);
+
+        return array($latitude, $longitude);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function close(){        is_resource($this->im) and imagedestroy($this->im);    }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -92,7 +92,7 @@ class Str {///////////////////////////////////////////////////////////////////
 
     // http://nudnik.ru/entry/1125
     static function truncate($string, $len = 150){
-        preg_match('/.{1,'.$len.'}[^.!;?]*[.!;?]/si', trim(strip_tags($string)).'. ', $match);
+        preg_match('/.{1,'.$len.'}[^.!;?]*[.!;?]/si', trim(strip_tags($string)), $match);
         return $match[0];
     }
 

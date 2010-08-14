@@ -117,8 +117,8 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
 
         foreach ($attr as $k => $v)
             if ($k[0] != '#'){
-                $quote  = (is_int(strpos($v, '"')) ? "'" : '"');
-                $attrs .= ' '.str_replace(array(':', '-', '.'), '_', $k).'='.$quote.$v.$quote;
+                $quote  = (strpos($v, '"') !== false ? "'" : '"');
+                $attrs .= ' '.(isset($attr['#'.$k]) ? $attr['#'.$k] : $k).'='.$quote.$v.$quote;
             }
 
         $open = ($escape ? '&lt;' : '<');
@@ -155,7 +155,7 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
                     unset($attr[$k]);
             }
 
-        if ($escape or !b::function_exists($func = 'tag_'.$attr['#tag']))
+        if ($escape or !b::function_exists($func = 'tag_'.str_replace(array(':', '-', '.'), '_', $attr['#tag'])))
             return self::fill($attr, $escape);
 
         return $attr['#before'].b::call($func, $attr).$attr['#after'];

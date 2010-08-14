@@ -51,9 +51,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected static $cache = array();
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function connect($dsn){        if (!is_array($dsn))
-            return self::_connect();
-        if (isset($dsn['database'])){            self::$connection = new SQL_Connect($dsn);
+    static function connect($dsn){        if (isset($dsn['database'])){            self::$connection = new SQL_Connect($dsn);
             return;
         }
         self::$connections += $dsn;
@@ -65,7 +63,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _connect($key = ''){        static $last;
+    static function using($key = ''){        static $last;
 
         if (!$last)
             $last = key(self::$connections);
