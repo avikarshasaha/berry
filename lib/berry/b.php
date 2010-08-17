@@ -376,7 +376,7 @@ class B {    static $path = array('');
                 !cache::exists('b/call.php') and self::call('#');
                 $funcs = include cache::exists('b/call.php');
 
-                foreach (token_get_all(file_get_contents($file)) as $token)
+                foreach (token_get_all(file_get_contents(self::$cache['show'])) as $token)
                     if ($token[0] == T_STRING){
                         if (!function_exists($token[1]) and $funcs[$token[1]])
                             include $funcs[$token[1]];
