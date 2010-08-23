@@ -25,10 +25,14 @@ class HTTP {
         return setcookie($name, $value, $expire, $path, $domain, $secure, true);
     }////////////////////////////////////////////////////////////////////////////////
 
-    static function go($location = '', $status = 303){        if (!$location)
+    static function go($location = '', $status = 303){        if (!$location){
             $location = b::q(0, 0);
-        elseif (!strpos($location, '://'))
-            $location = b::q(0).'/'.$location;
+        } elseif (!strpos($location, '://')){
+            if ($location[0] == '/')
+                $location = b::q(0).$location;
+            else
+                $location = b::q(0, 0).'/'.$location;
+        }
 
         self::status($status);
         header('Location: '.$location, true);
@@ -49,7 +53,7 @@ class HTTP {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function request($url, $params = array()){
+    static function request($url, $params = array()){
         $current = array('method' => $_SERVER['REQUEST_METHOD']);
 
         foreach ($_SERVER as $k => $v)

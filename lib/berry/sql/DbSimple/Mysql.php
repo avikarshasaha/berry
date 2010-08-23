@@ -149,7 +149,7 @@ class DbSimple_Mysql extends DbSimple_Generic_Database
     }
 
 
-    function _performQuery($queryMain)
+    /*function _performQuery($queryMain)
     {
         $this->_lastQuery = $queryMain;
         $this->_expandPlaceholders($queryMain, false);
@@ -164,6 +164,30 @@ class DbSimple_Mysql extends DbSimple_Generic_Database
             return @mysql_affected_rows($this->link);
         }
         return $result;
+    }*/
+
+    function _performQuery($queryMain){
+        $this->_lastQuery = $queryMain;
+        $this->_expandPlaceholders($queryMain, false);
+        $result = @mysql_query($queryMain[0], $this->link);
+
+        if ($result === false)
+            return $this->_setDbError($queryMain[0]);
+
+        if (is_resource($result))            return $result;
+
+        $affected = @mysql_affected_rows($this->link);
+
+        if (preg_match('/^\s* INSERT \s+/six', $queryMain[0])){
+            $insert_id = @mysql_insert_id($this->link);
+
+            if (preg_match('/\s* ON\s+DUPLICATE\s+KEY \s+/six', $queryMain[0]))
+                return (!$affected ? $affected : $insert_id);
+
+            return $insert_id;
+        }
+
+        return $affected;
     }
 
 
