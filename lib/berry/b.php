@@ -101,7 +101,7 @@ class B {    static $path = array('');
                         $array = file::dir($dir);
                     else                        $array = array_flip(file::glob($dir.'/*.yml'));
 
-                    foreach ($array as $file => $iter)
+                    foreach ($array as $file => $info)
                         if (substr($file, -4) == '.yml')
                             $files[$file] = $name;
                 }
@@ -441,6 +441,48 @@ class B {    static $path = array('');
 
         $stat = arr::flat($stat);
         return $stat[$what];
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function references(){
+        $dir = self::$path[0].'/lib';
+        $result = array();
+
+        foreach (file::dir($dir, '/\.php$/i') as $file => $info){
+            if ($info->isDir())
+                continue;
+
+            $contents = file_get_contents($file);
+            $tokens = token_get_all($contents);
+
+            foreach ($tokens as $k => $v)
+                if (is_array($v) and ($v[0] == T_COMMENT or $v[0] == T_DOC_COMMENT))
+                    $contents = str_replace($v[1], '', $contents);
+
+            foreach ($tokens as $k => $v)
+                if (is_array($v) and $v[0] == T_CLASS){
+                    $class = $tokens[$k + 2][1];
+                    break;
+                }
+
+            preg_match_all('/(\w+)::\w+/s', $contents, $array);
+            $array = array_unique($array[1]);
+            sort($array);
+
+            foreach ($array as $k => $v)
+                if (in_array(strtolower($v), array('self', 'parent', strtolower($class))))
+                    unset($array[$k]);
+                else
+                    $array[$k] = trim($v);
+
+            if ($array){                $file = substr($file, (self::len($dir) + 1));
+                $result[$file.': '.$class] = array_values($array);
+            }
+        }
+
+        ksort($result);
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

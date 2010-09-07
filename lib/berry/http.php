@@ -71,13 +71,13 @@ class HTTP {
             $params[$k] = $v;
         }
 
-        $url = parse_url($url);
+        $url = parse_url((!strpos($url, '://') ? 'http://' : '').$url);
         $fp = @fsockopen($url['host'], ($url['port'] ? $url['port'] : 80));
 
         if (!$fp)
             return array();
 
-        $query = array(strtoupper($params['Method']).' '.$url['path'].' HTTP/1.0');
+        $query = array(strtoupper($params['Method']).' '.($url['path'] ? $url['path'] : '/').' HTTP/1.0');
         $content = (is_array($params['Content']) ? http_build_query($params['Content']) : $params['Content']);
         $params['Host'] = $url['host'];
 
@@ -90,7 +90,6 @@ class HTTP {
             $query[] = $k.': '.$v;
 
         $query = join("\r\n", $query)."\r\n\r\n".$content;
-
         fputs($fp, $query);
 
         while (!feof($fp))

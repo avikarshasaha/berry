@@ -93,15 +93,22 @@ class File {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function dir($filename, $child_first = false){
+    static function dir($filename, $regexp = null, $child_first = false){        if (is_bool($regexp)){            $child_first = $regexp;
+            $regexp = null;
+        }
+
         $map = array(
             RecursiveIteratorIterator::SELF_FIRST,
             RecursiveIteratorIterator::CHILD_FIRST
         );
-
-        return new RecursiveIteratorIterator(
+        $iter = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($filename), $map[(bool)$child_first]
         );
+
+        if ($regexp)
+            return new RegexIterator($iter, $regexp, RecursiveRegexIterator::MATCH);
+
+        return $iter;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -38,12 +38,20 @@ class Check {
             $re = str_replace($match[0], '', $re);
         }
 
-        if (preg_match_all('/(or\s+empty|!?\w+)(\((.*?)\))?(\s+)?/is', $re, $match))
+        if (preg_match_all('/(!?\w+)(\((.*?)\))?(\s+)?/is', $re, $match))
             for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
                 $func = strtolower($match[1][$i]);
                 $args = array($value, self::_params($match[3][$i]), $name, $array, $data);
 
-                if ($func[0] == '!'){
+                if ($func == 'or'){                    end($check);
+                    $tmp = key($check);
+
+                    if (!$check[$tmp]){
+                        unset($check[$tmp]);
+                    } else {                        $i++;
+                        continue;
+                    }
+                } elseif ($func[0] == '!'){
                     $func = substr($func, 1);
                     $not[$func] = true;
                 }
@@ -53,13 +61,9 @@ class Check {
                     continue;
                 }
 
-                foreach (array('', 'is_', '_is_') as $prefix)
+                foreach (array('', 'is_') as $prefix)
                     if (method_exists('check', $prefix.$func))
                         $check[$func] = call_user_func_array(array('check', $prefix.$func), $args);
-
-                if ($func == 'or empty'){                    $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
-                    $check = ((!$value and !$array[$tmp]) ? array($func => true) : $check);
-                }
             }
 
         foreach ($check as $k => $v)
@@ -288,6 +292,13 @@ class Check {
 
     protected static function checker($value, $params){
         return (bool)self::call($params[0], $value);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function is_empty($value, $params, $name, $array){
+        $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.name\\2', $name);
+        return (!$value and !$array[$tmp]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
