@@ -25,12 +25,13 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function fetch(){        $key = self::hash('fetch');
+    function fetch(){        return call_user_func_array(array(self::$connection, 'select'), $this->query);
+        /*$key = self::hash('fetch');
 
         if (array_key_exists($key, self::$cache))
             return self::$cache[$key];
 
-        return self::$cache[$key] = call_user_func_array(array(self::$connection, 'select'), $this->query);
+        return self::$cache[$key] = call_user_func_array(array(self::$connection, 'select'), $this->query);*/
     }
 
 ////////////////////////////////////////////////////////////////////////////////
