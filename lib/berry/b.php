@@ -172,19 +172,26 @@ class B {    static $path = array('');
 
             return self::$cache['lang'][$string];
         }
-        $pos = array();
+        if (
+            self::config($found = $string.'.'.self::$lang) or
+            self::config($found = $string.'.en')){
+            $result = $found;
+        } else {
+            $pos = array();
 
-        for ($i = 0, $c = substr_count($string, '.'); $i < $c; $i++){
-            $pos[] = $tmp = strpos($string, '.', (end($pos) + 1));
+            for ($i = 0, $c = substr_count($string, '.'); $i < $c; $i++){
+                $pos[] = $tmp = strpos($string, '.', (end($pos) + 1));
 
-            if (!$i)
-                continue;
+                if (!$i)
+                    continue;
 
-            if (
-                self::config($found = substr($string, 0, $tmp).'.'.self::$lang) or
-                self::config($found = substr($string, 0, $tmp).'.en')
-            ){                $result = $found.substr($string, $tmp);
-                break;
+                if (
+                    self::config($found = substr($string, 0, $tmp).'.'.self::$lang) or
+                    self::config($found = substr($string, 0, $tmp).'.en')
+                ){
+                    $result = $found.substr($string, $tmp);
+                    break;
+                }
             }
         }
 
