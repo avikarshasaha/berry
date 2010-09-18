@@ -182,7 +182,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $max = max($ids);
             $self->where = $self->placeholders = array();
 
-            if (b::len($ids) == 1)                $self->where($this->primary_key.' = ?d', $ids);
+            if (b::len($ids) == 1)                $self->where($this->primary_key.' = ?d', $ids[0]);
             elseif ($ids == range($min, $max))
                 $self->where($this->primary_key.' >= ?d', $min)->where($this->primary_key.' <= ?d', $max);            else
                 $self->where($this->primary_key.' in (?a)', array($ids));
