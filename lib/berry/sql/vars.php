@@ -183,8 +183,14 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _set($name, $value){
-        if ($value == $this[$name])
-            return;
+        if ($value !== null){            $is_int = (is_int($value) or is_float($value));
+
+            if (
+                ($is_int and $value === $this[$name]) or
+                (!$is_int and $value == $this[$name])
+            )
+                return;
+        }
 
         if (is_array($value) or $value instanceof SQL){            if ($name === null)
                 $name = max(array_keys($this->parallel));
@@ -199,10 +205,18 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
                 $value = $class;
             }
-        } elseif (is_numeric($this[$name]) and is_int($value) or is_float($value)){
-            $value = ($value - $this[$name]);
-            $value = self::raw($name.' '.($value >= 0 ? '+' : '').$value);
-        }
+        } elseif ($is_int){            $key = self::hash('_get');
+
+            if (!isset(self::$cache[$key.'[+-]'][$name]))
+                self::$cache[$key.'[+-]'][$name] = $value;
+
+            if (is_numeric($this[$name])){
+                $tmp = $value;
+                $value = ($value - self::$cache[$key.'[+-]'][$name]);
+                $value = self::raw(sprintf('(%s + %s)', $name, $value));
+                self::$cache[$key][$name] = $tmp;
+            }
+        } elseif ($value === null){            $value = self::raw('null');        }
 
         if ($name === null){            $this->values[] = $value;
         } elseif (self::_is_HABTM($name)){            $this->values[$name] = new ArrayObject($value);        } else {

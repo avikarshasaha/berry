@@ -38,18 +38,20 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function save(){
+    function save($full = false){
         $result = array();
 
         self::_check();
         self::_save($result);
 
-        foreach ($result as $k => $v){
-            $result = array_merge($result, $v);
-            unset($result[$k]);
-        }
+        if (isset(self::$cache['#transaction']))
+            foreach ($result as $k => $v)
+                self::$cache['#transaction'] = array_merge(self::$cache['#transaction'], $v);
 
-        return (b::len($result) <= 1 ? reset($result) : $result);
+        if (!array_key_exists($this->alias, $result))
+            $result = array($this->alias => array(0)) + $result;
+
+        return ($full ? $result : self::_fetch_col($result[$this->alias]));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +115,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             }
 
             $result[$this->alias][] = $last = call_user_func_array(array(self::$connection, 'query'), $args);
-            $this->into = $this->values = array();
+            //$this->into = $this->values = array();
 
             if ($last === null)
                 return;
@@ -330,26 +332,39 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function begin(){
-        return self::$connection->transaction();
+    function exists(){        if (!$this->where)
+            return;
+
+        $class = self::table($this->alias);
+        $class->select[] = 1;
+        $class->where = $this->where;
+        $class->having = $this->having;
+        $class->limit = 1;
+        $class->placeholders = $this->placeholders;
+
+        return (bool)$class->fetch_cell();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    // ???
-    function commit(){
-        $result = self::save();
+    function begin(){        self::$cache['#transaction'] = array();
+        self::$connection->transaction();
+    }
 
-        if (!self::$connection->commit())
+////////////////////////////////////////////////////////////////////////////////
+
+    function commit(){        $transaction = self::$cache['#transaction'];
+        unset(self::$cache['#transaction']);
+        if (in_array(null, $transaction))
             throw new SQL_Except;
 
-        return $result;
+        self::$connection->commit();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rollback(){
-        return self::$connection->rollback();
+    function rollback(){        unset(self::$cache['#transaction']);
+        self::$connection->rollback();
     }
 
 ////////////////////////////////////////////////////////////////////////////////

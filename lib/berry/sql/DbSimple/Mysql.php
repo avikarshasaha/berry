@@ -22,9 +22,10 @@ require_once dirname(__FILE__) . '/Generic.php';
 /**
  * Database class for MySQL.
  */
-class DbSimple_Mysql extends DbSimple_Generic_Database
+class DbSimple_Mysql extends SQL_Wrap
 {
     var $link;
+    var $q = '`';
 
     /**
      * constructor(string $dsn)
@@ -59,12 +60,6 @@ class DbSimple_Mysql extends DbSimple_Generic_Database
     }
 
 
-    function _performTransaction($parameters=null)
-    {
-        return $this->query('BEGIN');
-    }
-
-
     function& _performNewBlob($blobid=null)
     {
         $obj =& new DbSimple_Mysql_Blob($this, $blobid);
@@ -94,15 +89,21 @@ class DbSimple_Mysql extends DbSimple_Generic_Database
     }
 
 
-    function _performCommit()
-    {
-        return $this->query('COMMIT');
+    function _performTransaction(){
+        $this->query('SET AUTOCOMMIT = 0');
+        return $this->query('BEGIN');
     }
 
+    function _performCommit(){
+        $result = $this->query('COMMIT');
+        $this->query('SET AUTOCOMMIT = 1');
+        return $result;
+    }
 
-    function _performRollback()
-    {
-        return $this->query('ROLLBACK');
+    function _performRollback(){
+        $result = $this->query('ROLLBACK');
+        $this->query('SET AUTOCOMMIT = 1');
+        return $result;
     }
 
 

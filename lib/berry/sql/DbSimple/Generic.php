@@ -765,7 +765,7 @@ class DbSimple_Generic_Database extends DbSimple_Generic_LastError
               |
             (?>
                 # Placeholder
-                (\?) ( [_dsafn\#]? )                           #2 #3
+                (\?) ( [_dsafnkv\#]? )                           #2 #3
             )
         }sx';
         $query = preg_replace_callback(

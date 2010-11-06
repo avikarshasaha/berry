@@ -91,4 +91,38 @@ class Date {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    static function sec($value){
+        if (is_numeric($value))
+            return $value;
+
+        $value = strtolower($value);
+        $map = array('m' => 60, 'h' => 3600, 'd' => 86400);
+
+        return ($map[substr($value, -1)] * substr($value, 0, -1));
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    static function calendar($year = '', $month = ''){        $year = ($year ? $year : date('Y'));        $result = $months = array();
+
+        if (is_array($month))
+            $months = array_fill($month[0], ($month[1] - 1), array());
+        elseif ($month)
+            $months[$month] = array();
+        else
+            $months = array_fill(1, 12, array());
+
+        if (is_array($year)){            for ($i = $year[0]; $i <= $year[1]; $i++)
+                $result[$i] = $months;        } else {            $result[$year] = $months;        }
+
+        foreach ($result as $year => $months)
+            foreach ($months as $month => $array)
+                for ($i = 1, $c = date('t', strtotime($year.'-'.$month)); $i <= $c; $i++)
+                    $result[$year][$month][$i] = $i;
+
+        return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

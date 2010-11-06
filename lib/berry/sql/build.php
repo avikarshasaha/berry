@@ -97,7 +97,7 @@ abstract class SQL_Build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function rebuild($tokens, $keywords){        $tokens = (!is_array($tokens) ? self::tokenize($tokens, $keywords) : $tokens);
+    protected function rebuild($tokens, $keywords){        $tokens = (!is_array($tokens) ? $this->tokenize($tokens, $keywords) : $tokens);
 
         foreach ($tokens as $key => $value)
             foreach ($value as $k => $v)
@@ -188,15 +188,15 @@ abstract class SQL_Build {
                     $quote = !$quote;
                 } elseif (strtolower(end($array)) == 'as'){
                     $array[] = '`'.$v.'`';
-                } elseif (end($array) == '?'){
-                    array_pop($array);
-                    $array[] = '?'.$v;
                 } elseif (
                     $key == 'from' or strtolower($v) == 'as' or
                     !preg_match('/^\w+$/i', $v) or is_numeric($v) or
                     in_array(strtolower($v), (array)$keywords[$key])
                 ){
                     $array[] = $v;
+                } elseif (end($array) == '?'){
+                    array_pop($array);
+                    $array[] = '?'.$v;
                 } else {
                     $array[] = ($this->alias ? '`'.$this->alias.'`.' : '').'`'.$v.'`';
                 }
@@ -236,7 +236,7 @@ abstract class SQL_Build {
         $keywords['order by'] = array(',', 'asc', 'desc');
 
         if (!$this->union)
-            return self::rebuild(join("\r\n", $query), $keywords);
+            return $this->rebuild(join("\r\n", $query), $keywords);
 
         $union = '('.join(')'."\r\n".'union (', $this->union).')'."\r\n";
         $query = array();
@@ -244,7 +244,7 @@ abstract class SQL_Build {
         $query[] = ($this->limit ? 'limit '.$this->limit : '');
         $query[] = ($this->offset ? 'offset '.$this->offset : '');
 
-        return $union.self::rebuild(join("\r\n", $query), $keywords);
+        return $union.$this->rebuild(join("\r\n", $query), $keywords);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -270,7 +270,8 @@ abstract class SQL_Build {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _build_delete(){        $class = clone $this;
+    protected function _build_delete(){        if (!$this->where)            return 'truncate table `?_`';
+        $class = clone $this;
         $class->alias = inflector::tableize($this->alias);
 
         $query[] = 'delete from `?_` using `?_`';
@@ -435,7 +436,7 @@ abstract class SQL_Build {
             $table = inflector::tableize($table);
 
         $this->subquery_placeholders = $parent->placeholders;
-        $query = trim($parent->_build_select());
+        $query = trim($parent->build('select'));
 
         if ($query[0] != '(')
             $query = '('.$query.') as _'.$table;
@@ -460,7 +461,7 @@ abstract class SQL_Build {
         $parent->alias = $alias;
 
         $query[] = '(';
-        $query[] = $parent->_build_select();
+        $query[] = $parent->build('select');
         $query[] = ') as _'.$table.' on (';
         $query[] = str::format('_%foreign.alias.%foreign.field = %local.alias.%local.field', $relation);
         $query[] = ')';

@@ -9,6 +9,7 @@
                                                                    \/|*/
 class B {    static $path = array('');
     static $lang = 'ru';
+    static $query = '';
     protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,24 +30,32 @@ class B {    static $path = array('');
         $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
         $lang and !self::$lang and self::$lang = $lang;
 
-        $_GET['berry'] = ($_GET['berry'] ? str::clean($_GET['berry']) : 'home');
+        $len = self::len(dirname($_SERVER['PHP_SELF']));
+        $url = parse_url(str::clean($_SERVER['REQUEST_URI']));
+
+        $path = substr($url['path'], ($len - 1));
+        $path = ($path ? trim($path, '/') : 'home');
+
+        self::$query = $path;
         self::router();
     }
 ////////////////////////////////////////////////////////////////////////////////
 
     static function q($i = '', $c = '', $s = '/'){
-        if (!isset(self::$cache['q'][$_GET['berry']])){
-            $q = explode('/', $_GET['berry']);
-            $url = parse_url($_SERVER['REQUEST_URI']);
+        if (!isset(self::$cache['q'][self::$query])){
+            $url = parse_url(str::clean($_SERVER['REQUEST_URI']));
+            $len = self::len(dirname($_SERVER['PHP_SELF']));
 
             $host  = 'http'.($_SERVER['HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME'];
-            $host .= substr($url['path'], 0, self::len(dirname($_SERVER['PHP_SELF'])));
+            $host .= '/'.substr($url['path'], 0, ($len - 1));
 
+            $q = explode('/', self::$query);
             array_unshift($q, trim($host, '/'));
-            self::$cache['q'][$_GET['berry']] = $q;
+
+            self::$cache['q'][self::$query] = $q;
         }
 
-        $q = self::$cache['q'][$_GET['berry']];
+        $q = self::$cache['q'][self::$query];
 
         if (is_numeric($i) and $i >= 0 and !is_numeric($c))
             $result = $q[$i];
@@ -94,6 +103,9 @@ class B {    static $path = array('');
             foreach (self::$path as $path)
                 foreach (array('mod', 'lib', 'ext', '') as $dir)
                     if (is_dir($path.'/'.$dir))                        $dirs[] = $path.'/'.$dir;
+
+            if ($config = cache::get('b/config.php'))
+                $dirs = array_merge($dirs, $config['#files']);
             if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = array();
                 foreach ($dirs as $dir){                    $name = basename($dir);
 
@@ -106,10 +118,24 @@ class B {    static $path = array('');
                             $files[$file] = $name;
                 }
 
-                foreach ($files as $file => $dir){                    $key = (in_array($dir, array('mod', 'lib')) ? $dir.'.' : '').substr(basename($file), 0, -4);
+                foreach ($files as $file => $dir){                    $key = substr(basename($file), 0, -4);
+
+                    if ($dir == 'lib'){
+                        $key = $dir.'.'.$key;
+                    } elseif ($dir == 'mod'){                        $dir2 = basename(dirname($file));
+                        $dir3 = basename(dirname(dirname($file)));
+                        if (basename($file) == 'index.yml'){
+                            $key = $dir.'.'.$dir2;
+                        } elseif ($dir3 == $dir){                            $key = $dir.'.'.$dir2.'.'.$key;
+                        } else {
+                            $key = $dir.'.'.$key;
+                        }
+                    }
+
                     $array = arr::flat(yaml::load($file));
                     $array['#file'] = $file;
                     $config = arr::merge($config, array($key => $array));
+                    $config['#files'][] = $file;
                 }
 
                 cache::set($config = arr::assoc($config));
@@ -421,11 +447,10 @@ class B {    static $path = array('');
                     $rules[$k]['re'] = str_replace($match[0][$i], $rules[$match[1][$i]]['re'], $v['re']);
         }
 
-        foreach ($rules as $rule)            $_GET['berry'] = preg_replace('/^'.str_replace('/', '\/', $rule['re']).'$/i', $rule['route'], $_GET['berry']);
+        foreach ($rules as $rule)            self::$query = preg_replace('/^'.str_replace('/', '\/', trim($rule['re'], '/')).'$/i', $rule['route'], self::$query);
 
-        if (($url = parse_url($_GET['berry'])) and $url['query']){
+        if (($url = parse_url(self::$query)) and $url['query']){
             parse_str($url['query'], $query);
-            $_GET['berry'] = $url['path'];
             $_GET = array_merge($_GET, $query);
         }
     }

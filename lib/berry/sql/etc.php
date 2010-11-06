@@ -7,6 +7,10 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
+defined('DBSIMPLE_SKIP') or define('DBSIMPLE_SKIP', log(0));
+defined('DBSIMPLE_ARRAY_KEY') or define('DBSIMPLE_ARRAY_KEY', 'array_key');
+defined('DBSIMPLE_PARENT_KEY') or define('DBSIMPLE_PARENT_KEY', 'parent_key');
+
 abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
     protected $id;
@@ -48,14 +52,15 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
     protected static $connection;
     protected static $connections = array();
-    protected static $cache = array();
+    protected static $cache = array();
+
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function connect($dsn){        if (isset($dsn['database'])){            self::$connection = new SQL_Connect($dsn);
+    static function init($dsn){        if (isset($dsn['database'])){            self::$connection = self::connect($dsn);
             return;
         }
         self::$connections += $dsn;
-        self::$connection = new SQL_Connect(current($dsn));
+        self::$connection = self::connect(current($dsn));
         self::$connections[key($dsn)] = self::$connection;
 
         return key($dsn);
@@ -71,7 +76,7 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             return $last;
         if (is_object($dsn = self::$connections[$key])){            self::$connection = $dsn;
         } elseif (is_array($dsn)){            $logger = self::$connection->_logger;
-            self::$connection = new SQL_Connect($dsn);
+            self::$connection = self::connect($dsn);
             self::$connection->_logger = $logger;            self::$connections[$key] = self::$connection;
         }
 
@@ -83,11 +88,20 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 ////////////////////////////////////////////////////////////////////////////////
 
     static function table($table, $id = 0){        if (
-            !class_exists($table, true) and
-            !class_exists($table = inflector::singular($table), true)
+            $class = $table and
+            (class_exists($class, true) or class_exists($class = $class.'_sql', true)) and
+            is_subclass_of($class, 'SQL')
         )
-            return new SQL($id, $table);
-        return new $table($id);
+            return new $class($id);
+
+        if (
+            $class = inflector::singular($table) and
+            (class_exists($class, true) or class_exists($class = $class.'_sql', true)) and
+            is_subclass_of($class, 'SQL')
+        )
+            return new $class($id);
+
+        return new SQL($id, $table);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -97,8 +111,8 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function raw($raw){
-        return new SQL_Raw($raw);
+    static function raw($query){
+        return new SQL_Raw($query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -217,12 +231,38 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
         $args = func_get_args();
         $type = array_shift($args);
 
-        return call_user_func_array(array(($this ? $this : 'self'), '_build_'.$type), $args);
+        return call_user_func_array(array($this, '_build_'.$type), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function hash($prefix = ''){        return $this->alias.'::'.$prefix.'['.spl_object_hash($this).']';
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function connect($dsn){
+        $pos = strrpos($dsn['database'], '/');
+        $host = substr($dsn['database'], 0, $pos);
+        $path = substr($dsn['database'], ($pos + 1));
+
+        $dsn = array(
+            'scheme' => ($dsn['type'] ? $dsn['type'] : 'mysql'),
+            'host' => $host,
+            'path' => $path,
+            'user' => $dsn['username'],
+            'pass' => $dsn['password'],
+            'prefix' => $dsn['prefix']
+        );
+
+        $class = 'DbSimple_'.ucfirst($dsn['scheme']);
+        $class = new $class($dsn);
+        $class->setIdentPrefix($class->prefix = $dsn['prefix']);
+
+        if ($class->error)
+            $class->link = false;
+
+        return $class;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

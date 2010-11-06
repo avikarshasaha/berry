@@ -10,7 +10,11 @@
 class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($id = 0, $class = ''){        $this->alias = strtolower($class ? $class : get_class($this));
+    function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
+
+        if (substr($class, -4) == '_sql')
+            $class = substr($class, 0, -4);
+        $this->alias = $class;
         $this->table = ($this->table ? $this->table : inflector::tableize($this->alias));
         $this->from[] = $this->table.' as '.$this->alias;
         $this->relations = self::deep_throat($this->alias);
@@ -18,7 +22,7 @@ class SQL extends SQL_Control {
         if ($id){            if (is_array($id))
                 list($this->primary_key, $id) = array(key($id), reset($id));
 
-            self::where($this->primary_key.' = ?d', ($this->id = $id));
+            self::where($this->primary_key.' = ?', ($this->id = $id));
         }
     }
 
@@ -72,7 +76,9 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function from($table){        foreach (func_get_args() as $arg)            if ($pos = stripos($arg, ' as ')){
+    function from($table){        if (!$this instanceof self and $table)
+            return self::table($table);
+        foreach (func_get_args() as $arg)            if ($pos = stripos($arg, ' as ')){
                 $this->from[] = self::table(trim(substr($arg, 0, $pos)))->table.substr($arg, $pos);
             } else {
                 $this->from[] = self::table($arg)->table;            }
@@ -143,8 +149,8 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function having(){
-        $args = func_get_args();
-        $this->having = array_merge($this->having, $args);
+        foreach (func_get_args() as $arg)
+            $this->having[] = (is_array($arg) ? join(' or ', $arg) : $arg);
 
         return $this;
     }
@@ -182,9 +188,19 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function union(){
-        $union = func_get_args();
-        return new SQL_Union($union);
+    static function union(){        $class = new self;
+        $class->table = $class->alias = '';
+
+        foreach (func_get_args() as $arg)
+            if ($arg instanceof SQL or $arg instanceof SQL_Query){
+                if (!$arg->select)
+                    $arg->select[] = '*';
+
+                $class->union[] = $arg->build('select');
+                $class->placeholders = array_merge($class->placeholders, $arg->placeholders);
+            }
+
+        return $class;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

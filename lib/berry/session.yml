@@ -1,0 +1,4 @@
+table: sessions
+check:
+    ip: false
+    user_agent: true
