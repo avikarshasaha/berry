@@ -10,7 +10,7 @@
 function tag_onplace($attr){
     $_SESSION['tag']['onplace'] = $attr;
     $attr['#text'] = preg_replace('/<!--(.*?)-->/s', '', $attr['#text']);
-    return piles::fill('span', array_merge($attr, array('id' => 'ajax[onplace]')));
+    return piles::show(piles::fill('span', array_merge($attr, array('id' => 'ajax[onplace]'))));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

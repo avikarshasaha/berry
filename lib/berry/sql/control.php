@@ -51,7 +51,11 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!array_key_exists($this->alias, $result))
             $result = array($this->alias => array(0)) + $result;
 
-        return ($full ? $result : self::_fetch_col($result[$this->alias]));
+        if ($full)
+            return $result;
+
+        self::_fetch_col($result = $result[$this->alias]);
+        return reset($result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,8 +118,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 }
             }
 
-            $result[$this->alias][] = $last = call_user_func_array(array(self::$connection, 'query'), $args);
-            //$this->into = $this->values = array();
+            $last = $result[$this->alias][] = call_user_func_array(array(self::$connection, 'query'), $args);
 
             if ($last === null)
                 return;
@@ -155,7 +158,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 $from[$k] = trim(substr($v, 0, $pos));
 
         $args = $this->placeholders;
-        array_unshift($args, $this->build('delete'), $from, $from);
+        array_unshift($args, $this->build('delete'), $from, ($this->limit ? self::SKIP : $from));
         return call_user_func_array(array(self::$connection, 'query'), $args);
     }
 
@@ -179,18 +182,11 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             if (!$ids = call_user_func_array(array(self::$connection, 'selectCol'), $args))
                 return array();
 
-            sort($ids);
-            $min = min($ids);
-            $max = max($ids);
             $self->where = $self->placeholders = array();
-
-            if (b::len($ids) == 1)                $self->where($this->primary_key.' = ?d', $ids[0]);
-            elseif ($ids == range($min, $max))
-                $self->where($this->primary_key.' >= ?d', $min)->where($this->primary_key.' <= ?d', $max);            else
-                $self->where($this->primary_key.' in (?a)', array($ids));
-
             $self->having = array();
             $self->limit = $self->offset = 0;
+
+            $self->where_between($this->primary_key, $ids);
             $query = $self->build('select');
         }
 

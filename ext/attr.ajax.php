@@ -44,18 +44,29 @@ function attr_ajax_call($attr){	$attr = array_merge(array(
     $attr[$on] .= ($attr[$on] ? '; ' : '')."attr_ajax_call('".$url."', '".$id."', this, ".$ajax['post'].", ".$ajax['nocache']."); return false;";
     html::block('head', html::js('
         function attr_ajax_call(url, id, that, data, nocache){
+            var req = new JsHttpRequest();
+
             that.disabled = true;
             that.previousSibling.style.display = "inline-block";
 
-            JsHttpRequest.query(
-                "'.b::q(0).'/" + url, data || that.form || {"#": ""},
-                function(_, result){                    that.disabled = false;
-                    that.previousSibling.style.display = "none";
+            req.chaching = !nocache;
+            req.onreadystatechange = function(){                if (req.readyState == 4){                    var block = document.getElementById("ajax[" + id + "]") || document.getElementById(id);
+                    block.innerHTML = req.responseText;
 
-                    var block = document.getElementById("ajax[" + id + "]") || document.getElementById(id);
-                    block.innerHTML = result;
-                }, nocache
-            );
+                    that.disabled = false;
+                    that.previousSibling.style.display = "none";
+                }
+            };
+
+            if (!data && that.form){
+                data = that.form;
+
+                if (data.enctype != "multipart/form-data")
+                    data.enctype = "multipart/form-data";
+            }
+
+            req.open("POST", "'.b::q(0).'/" + url, true);
+            req.send(data || {"#": ""});
         }
     '));
 

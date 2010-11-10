@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Service_LJ {    public $server = 'www.livejournal.com';
+class Service_LJ {    protected $server = 'www.livejournal.com';
 ////////////////////////////////////////////////////////////////////////////////
 
 	function __construct($username, $password, $journal = ''){

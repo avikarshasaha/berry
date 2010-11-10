@@ -227,7 +227,8 @@ class Check {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_aid($value){
-        return (preg_match('/^[^_\-][a-z0-9_\-]+[^_\-]$/i', $value) and !is_numeric($value));
+        $tmp = array_intersect(array($value[0], substr($value, -1)), array('-', '_'));
+        return (!$tmp and preg_match('/^[a-z0-9_\-]+$/i', $value) and !is_numeric($value));
     }
 
 ////////////////////////////////////////////////////////////////////////////////

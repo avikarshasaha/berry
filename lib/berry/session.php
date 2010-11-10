@@ -34,10 +34,16 @@ class Session {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function close(){
-        $gc = (ini_get('session.gc_probability') * ini_get('session.gc_divisor'));
+        if (!$divisor = ini_get('session.gc_divisor'))
+            $divisor = 100;
 
-        // Ппц
-        if (time()%$gc == 0)
+        if (!$probability = ini_get('session.gc_probability'))
+            $probability = 1;
+
+        $array = range($probability, ($probability * 2 - 1));
+        $value = arr::rand(range(1, $divisor));
+
+        if (in_array($value, $array))
             self::gc(ini_get('session.gc_maxlifetime'));
         return true;
     }

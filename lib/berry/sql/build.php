@@ -274,7 +274,7 @@ abstract class SQL_Build {
         $class = clone $this;
         $class->alias = inflector::tableize($this->alias);
 
-        $query[] = 'delete from `?_` using `?_`';
+        $query[] = 'delete from `?_` { using `?_` }';
         $query[] = ($this->join ? 'left join '.join("\r\n".'left join ', $this->join) : '');
         $query[] = ($this->where ? 'where ('.join(') and (', $this->where).')' : '');
         $query[] = ($this->order_by ? 'order by '.join(', ', $this->order_by) : '');

@@ -104,7 +104,11 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             self::$cache[$key] = new SQL_Element($class->fetch_array());
         }
 
-        if (isset(self::$cache[$key][$name]))            return self::$cache[$key][$name];
+        if (
+            isset(self::$cache[$key][$name]) or
+            (is_array(self::$cache[$key]) and array_key_exists($name, self::$cache[$key]))
+        )
+            return self::$cache[$key][$name];
 
         if (is_null($name)){
             $key = ($this->parallel ? (max(array_keys($this->parallel)) + 1) : 0);
@@ -182,15 +186,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function _set($name, $value){
-        if ($value !== null){            $is_int = (is_int($value) or is_float($value));
-
-            if (
-                ($is_int and $value === $this[$name]) or
-                (!$is_int and $value == $this[$name])
-            )
-                return;
-        }
+    protected function _set($name, $value){        $key = self::hash('_get');
 
         if (is_array($value) or $value instanceof SQL){            if ($name === null)
                 $name = max(array_keys($this->parallel));
@@ -205,21 +201,21 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
                 $value = $class;
             }
-        } elseif ($is_int){            $key = self::hash('_get');
+        } elseif (is_int($value) or is_float($value)){            self::$cache[$key.'[+-]'][$name][] = ($value - $this[$name]);
+            self::$cache[$key][$name] = $value;
 
-            if (!isset(self::$cache[$key.'[+-]'][$name]))
-                self::$cache[$key.'[+-]'][$name] = $value;
-
-            if (is_numeric($this[$name])){
-                $tmp = $value;
-                $value = ($value - self::$cache[$key.'[+-]'][$name]);
-                $value = self::raw(sprintf('(%s + %s)', $name, $value));
-                self::$cache[$key][$name] = $tmp;
-            }
-        } elseif ($value === null){            $value = self::raw('null');        }
+            if ($sum = array_sum(self::$cache[$key.'[+-]'][$name]))
+                $value = self::raw(sprintf('(%s + %s)', $name, $sum));
+            else                return;
+        } elseif ($value === null){            if ($value === $this[$name])
+                return;
+            $value = self::raw('null');
+            self::$cache[$key][$name] = null;        }
 
         if ($name === null){            $this->values[] = $value;
-        } elseif (self::_is_HABTM($name)){            $this->values[$name] = new ArrayObject($value);        } else {
+        } elseif (self::_is_HABTM($name)){            $this->values[$name] = new ArrayObject($value);        } else {            if ($value === $this[$name])
+                return;
+
             $this->values[$name] = $value;
         }
 
@@ -281,14 +277,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if (!$id = $this[$local['field']])
             return $class;
 
-        if ($relation['type'] == 'has_and_belongs_to_many')
-            return $class->where(
-                $name.'.'.$foreign['field2'].' in (?a)',
-                self::table($foreign['table1'])->
+        if ($relation['type'] == 'has_and_belongs_to_many'){            $ids = self::table($foreign['table1'])->
                 select($foreign['field3'])->
                 where($foreign['field1'].' = ?d', $id)->
-                fetch_col()
-            );
+                fetch_col();
+
+            return $class->where_between($name.'.'.$foreign['field2'], $ids);
+        }
 
         $class->where($foreign['field'].' = ?d', $id);
 

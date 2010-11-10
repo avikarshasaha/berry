@@ -390,4 +390,59 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    protected function where_between($field, $ids){        $len = b::len($ids);
+
+        if ($len == 1)
+            return $this->where($field.' = ?d', $ids[0]);
+
+        sort($ids);
+        $seq = $ids;
+        $query = $args = array();
+
+        for ($i = 0; $i < $len; $i += 2)
+            if (
+                (($i + 1) != $len and ($seq[$i] + 1) != $seq[$i + 1]) or
+                (($i + 1) == $len and ($seq[$i] - 1) != $seq[$i - 1])
+            ){
+                unset($seq[$i]);
+                $i -= 1;
+            }
+
+        if (b::len($seq) > 2){
+            $ids = array_diff($ids, $seq);
+            $tmp = $seq;
+            $seq = array(array());
+
+            foreach ($tmp as $k => $v){
+                end($seq);
+                $key = key($seq);
+                $seq[$key][] = $v;
+
+                if (($v + 1) != $tmp[$k + 1])
+                    array_push($seq, array());
+            }
+
+            foreach ($seq as $k => $v)
+                if (!$v){
+                    unset($seq[$k]);
+                } elseif (b::len($v) <= 2){
+                    unset($seq[$k]);
+                    $ids = array_merge($ids, $v);
+                } else {
+                    $query[] = $field.' >= ?d and '.$field.' <= ?d';
+                    $args[] = min($v);
+                    $args[] = max($v);
+                }
+        }
+
+        if ($ids){
+            $query[] = $field.' in (?a)';
+            $args[] = $ids;
+        }
+
+        array_unshift($args, '('.join(') or (', $query).')');
+        return call_user_func_array(array($this, 'where'), $args);    }
+
+////////////////////////////////////////////////////////////////////////////////
 }

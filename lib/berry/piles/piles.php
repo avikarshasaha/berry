@@ -172,6 +172,7 @@ class Piles extends Piles_Etc {
                     if ($attr['value'] === null)
                         $attr['value'] = '`'.$attr['#key'].'`';
 
+                    $attr['key'] = strtolower($attr['key']);
                     $tags[$key] += array(
                         $attr['key'] => $attr['value'],
                         '#'.$attr['key'] => '`'.$attr['#key'].'`'
