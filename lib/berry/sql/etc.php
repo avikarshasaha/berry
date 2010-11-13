@@ -7,13 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-defined('DBSIMPLE_SKIP') or define('DBSIMPLE_SKIP', log(0));
-defined('DBSIMPLE_ARRAY_KEY') or define('DBSIMPLE_ARRAY_KEY', 'array_key');
-defined('DBSIMPLE_PARENT_KEY') or define('DBSIMPLE_PARENT_KEY', 'parent_key');
-
-abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
-
-    protected $id;
+abstract class SQL_Etc extends SQL_Build {    protected $id;
     protected $table;
     protected $alias;
 
@@ -48,7 +42,6 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
     protected $relations = array();
     protected $multiple = array();
     protected $placeholders = array();
-    protected $subquery_placeholders = array();
 
     protected static $connection;
     protected static $connections = array();
@@ -74,10 +67,10 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
             $last = key(self::$connections);
         if (!$key or !isset(self::$connections[$key]))
             return $last;
-        if (is_object($dsn = self::$connections[$key])){            self::$connection = $dsn;
-        } elseif (is_array($dsn)){            $logger = self::$connection->_logger;
-            self::$connection = self::connect($dsn);
-            self::$connection->_logger = $logger;            self::$connections[$key] = self::$connection;
+
+        $dsn = self::$connections[$key];
+        if (is_object($dsn['link'])){            self::$connection = $dsn;
+        } elseif (is_array($dsn)){            self::$connection = self::connect($dsn);            self::$connections[$key] = self::$connection;
         }
 
         $current = $last;
@@ -106,7 +99,11 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function query(){        $args = func_get_args();        return new SQL_Query(is_array($args[0]) ? $args[0] : $args);
+    function query($query, $placeholders = null){        if ($placeholders === null and $this)
+            $placeholders = $this->placeholders;
+        elseif (!is_array($placeholders) or func_num_args() > 2)
+            $placeholders = array_slice(func_get_args(), 1);
+        return new SQL_Query($query, ($placeholders ? $placeholders : array()));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,52 +114,32 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_valid(){
-        return (bool)self::link();
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function link(){
-        return self::$connection->link;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     function last_id($table = ''){        return $this->build('last_id', ((!$table and $this) ? $this->table : $table));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function last_error($what = ''){        if (!$error = self::$connection->error)
+    static function last_error($what = ''){        $error = self::$connection['link']->errorInfo();
+        if (!isset($error[1]))
             return array();
 
-        unset($error['context']);
-        return ($what ? $error[$what] : $stat);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function last_query($what = ''){
-        if (!$query = self::$connection->_lastQuery)
-            return array();
-
-        $query = array('query' => $query[0], 'placeholders' => array_slice($query, 1));
-        return ($what ? $query[$what] : $query);
+        $error = array('code' => $error[1], 'string' => $error[2]);
+        return ($what ? $error[$what] : $error);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function stat($what = ''){        if (!self::$connection)
             return array('time' => 0, 'count' => 0);
-        $stat = self::$connection->getStatistics();
+        $stat = self::$cache['stat'];
 	    return ($what ? $stat[$what] : $stat);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function logger($func){
-	    return self::$connection->setLogger($func);
+    static function logger($func){        if (is_callable($func)){            self::$cache['logger'] = $func;
+	        return true;
+	    }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -172,57 +149,18 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
                 return $this->schema;
 
             $table = $this->table;
-        };
+        } elseif ($table){
+            if (strpos($table, '.'))
+                $table = end(explode('.', $table));
 
-        if ($vars = self::vars(inflector::singular($table)))
-            $table = ($vars['table'] ? $vars['table'] : $table);
-
-        if (strpos($table, '.'))
-            $table = end(explode('.', $table));
+            if ($vars = self::vars(inflector::singular($table)))
+                $table = ($vars['table'] ? $vars['table'] : $table);
+        } else {            return array();        }
 
         if (!$schema = cache::get('sql/schema/'.$table.'.php'))
             cache::set($schema = $this->build('schema', $table));
 
         return $schema;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function childrens($table = 0, $id = 0){        if (!$table and $this){
-            list($table, $id) = array($this->table, ($table ? $table : $this->id));
-            $primary_key = $this->primary_key;
-            $parent_key = $this->parent_key;
-        } else {
-            $vars = self::vars($table);
-            $primary_key = ($vars['primary_key'] ? $vars['primary_key'] : 'id');
-            $parent_key = $vars['parent_key'];
-        }
-
-        if (!$parent_key)
-            return array();
-        $array = self::$connection->query(
-            $this->build('childrens'),
-            $primary_key, $parent_key, $table
-        );
-        $array = (self::_childrens($array, $id));
-        $array[] = -1;
-
-        return $array;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected static function _childrens($array, $id, $parent = false, $result = array()){
-        foreach ($array as $k => $v){
-            if ($k == $id or $parent){
-                $result[] = $k;
-                $result = self::_childrens($v['childNodes'], $id, true, $result);
-            } else {
-                $result = self::_childrens($v['childNodes'], $id, $parent, $result);
-            }
-        }
-
-        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -241,28 +179,36 @@ abstract class SQL_Etc extends SQL_Build {    const SKIP = DBSIMPLE_SKIP;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function connect($dsn){
-        $pos = strrpos($dsn['database'], '/');
-        $host = substr($dsn['database'], 0, $pos);
-        $path = substr($dsn['database'], ($pos + 1));
+    protected static function connect($array){        $array = array_merge(array(
+            'driver' => 'mysql'
+        ), $array);
 
-        $dsn = array(
-            'scheme' => ($dsn['type'] ? $dsn['type'] : 'mysql'),
-            'host' => $host,
-            'path' => $path,
-            'user' => $dsn['username'],
-            'pass' => $dsn['password'],
-            'prefix' => $dsn['prefix']
-        );
+        if (!$array['dsn']){
+            if ($pos = strrpos($array['database'], '/')){
+                $array['host'] = substr($array['database'], 0, $pos);
+                $array['database'] = substr($array['database'], ($pos + 1));
+            }
 
-        $class = 'DbSimple_'.ucfirst($dsn['scheme']);
-        $class = new $class($dsn);
-        $class->setIdentPrefix($class->prefix = $dsn['prefix']);
+            if ($pos = strpos($array['host'], ':')){
+                $array['port'] = substr($array['host'], ($pos + 1));
+                $array['host'] = substr($array['host'], 0, $pos);            }
 
-        if ($class->error)
-            $class->link = false;
+            $array['dsn']  = $array['driver'].':';
+            $array['dsn'] .= 'dbname='.$array['database'];
 
-        return $class;
+            if (strpos($array['host'], '/') !== false){
+                $array['dsn'] .= '; unix_socket='.$array['host'];
+            } else {                $array['dsn'] .= '; host='.$array['host'];
+                $array['dsn'] .= ($port ? '; port='.$array['port'] : '');
+            }
+        }
+
+        $array['link'] = new PDO($array['dsn'], $array['username'], $array['password'], array(
+            PDO::ATTR_CASE => PDO::CASE_LOWER,
+            PDO::MYSQL_ATTR_INIT_COMMAND => 'set names utf8'
+        ));
+
+        return $array;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

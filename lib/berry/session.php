@@ -61,8 +61,13 @@ class Session {
     static function write($id, $data){        self::_cache($id);
         if (self::$cache[$id] === false or self::$cache[$id]['data'] == $data)
             return false;
-        $table = sql::table(self::$config['table']);
-        $table->id = $id;
+        $table = sql::table(self::$config['table'], $id);
+
+        if (!$table->exists()){
+            $table = sql::table(self::$config['table']);
+            $table->id = $id;
+        }
+
         $table->data = $data;
         $table->ip = $_SERVER['REMOTE_ADDR'];
         $table->user_agent = $_SERVER['HTTP_USER_AGENT'];

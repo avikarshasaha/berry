@@ -11,12 +11,16 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
+        $this->alias = (substr($class, -4) == '_sql' ? substr($class, 0, -4) : $class);
 
-        if (substr($class, -4) == '_sql')
-            $class = substr($class, 0, -4);
-        $this->alias = $class;
-        $this->table = ($this->table ? $this->table : inflector::tableize($this->alias));
-        $this->from[] = $this->table.' as '.$this->alias;
+        if (!$this->table){
+            $this->table  = self::$connection['database'];
+            $this->table .= '.'.self::$connection['prefix'];
+            $this->table .= inflector::tableize($this->alias);
+        } elseif (!strpos($this->table, '.')){
+            $this->table = self::$connection['database'].'.'.$this->table;        }
+        $this->table = trim($this->table, '.');
+        $this->from[] = $this->table.' as '.$this->alias;
         $this->relations = self::deep_throat($this->alias);
 
         if ($id){            if (is_array($id))
@@ -60,7 +64,10 @@ class SQL extends SQL_Control {
 ////////////////////////////////////////////////////////////////////////////////
 
     function select(){        foreach (func_get_args() as $arg)
-            if ($arg instanceof SQL or $arg instanceof SQL_Query){
+            if ($arg instanceof SQL_Raw){
+                $this->select[] = '?';
+                $this->placeholders[] = $arg;
+            } elseif ($arg instanceof SQL or $arg instanceof SQL_Query){
                 $this->select[] = $this->build('subquery', 'select', $arg);
             } elseif ($arg == '*'){                $this->select = array_merge($this->select, array_keys(self::schema($this->alias)));
             } elseif (substr($arg, -2) == '.*'){                $arg = substr($arg, 0, -2);
@@ -125,9 +132,7 @@ class SQL extends SQL_Control {
                 $arg->alias = 'subquery_'.$arg->alias;
                 $arg->from[0] = $arg->table.' as '.$arg->alias;
 
-                self::$connection->_placeholderArgs = array_reverse($arg->placeholders);
-                $query = self::$connection->_expandPlaceholdersFlow($arg->build('select'));
-
+                $query = $arg->query($arg->build('select'))->build('select');
                 $this->placeholders[] = self::raw($query);
             } else {
                 $this->placeholders[] = $arg;
@@ -166,14 +171,14 @@ class SQL extends SQL_Control {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function limit($limit){        $this->limit = (is_numeric($limit) ? $limit : self::$connection->escape($limit));
+    function limit($limit){        $this->limit = (is_numeric($limit) ? $limit : self::$connection->quote($limit));
         return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function offset($offset){        if ($offset > 0)
-            $this->offset = (is_numeric($offset) ? $offset : self::$connection->escape($offset));
+            $this->offset = (is_numeric($offset) ? $offset : self::$connection->quote($offset));
 
         return $this;
     }

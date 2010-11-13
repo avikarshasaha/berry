@@ -43,14 +43,10 @@ class Check {
                 $func = strtolower($match[1][$i]);
                 $args = array($value, self::_params($match[3][$i]), $name, $array, $data);
 
-                if ($func == 'or'){                    end($check);
-                    $tmp = key($check);
-
-                    if (!$check[$tmp]){
-                        unset($check[$tmp]);
-                    } else {                        $i++;
-                        continue;
-                    }
+                if ($func == 'or'){                    if (array_search(false, $check))
+                        $check = array();
+                    else
+                        break;
                 } elseif ($func[0] == '!'){
                     $func = substr($func, 1);
                     $not[$func] = true;
@@ -242,10 +238,13 @@ class Check {
     static function is_unique($value, $params = array()){        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
-        return !sql::query(
-            'select 1 from ?_ where lower(?#) = ? { and ? } limit 1',
-            $table, $field, strtolower($value), ($params[1] ? sql::raw($params[1]) : sql::SKIP)
-        )->fetch();
+        $class = sql::table($table);
+        $class->where('lower(?f) = ?', $field, strtolower($value));
+
+        if ($params[1])
+            $class->where('?', sql::raw($params[1]));
+
+        return !$class->limit(1)->exists();
     }
 
 ////////////////////////////////////////////////////////////////////////////////

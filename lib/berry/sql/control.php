@@ -12,11 +12,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function create(){
-        $query = self::$connection->query(
-            $this->build('create'),
-            inflector::tableize($this->alias),
-            $this->primary_key, $this->primary_key
-        );
+        $query = self::query($this->build('create'))->exec();
 
         if ($query === null)
             return 0;
@@ -32,8 +28,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             return 0;
 
         cache::remove('sql/schema/'.$this->table.'.php');
-        $args = array_merge(array($query, $this->table), $this->placeholders);
-        return call_user_func_array(array(self::$connection, 'query'), $args);
+        return self::query($query)->exec();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,10 +38,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         self::_check();
         self::_save($result);
-
-        if (isset(self::$cache['#transaction']))
-            foreach ($result as $k => $v)
-                self::$cache['#transaction'] = array_merge(self::$cache['#transaction'], $v);
 
         if (!array_key_exists($this->alias, $result))
             $result = array($this->alias => array(0)) + $result;
@@ -101,26 +92,29 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                     $this->where($this->primary_key.' = ?d', $result[$this->alias][0]);
             }
 
-        if ($values){
-            if ($this->into){
-                array_unshift($values, $this->table, $this->into);
-                $args = array_merge(array($this->build('insert')), $values);
-            } else {
-                $args = array($this->build('save'), $this->table);
-
-                if (!$this->where){
-                    $args[] = $values;
-                    $args[] = $values;
-                } else {
-                    $args[] = $this->alias;
-                    $args[] = $values;
-                    $args = array_merge($args, $this->placeholders);
+        if ($values){            if (!$this->where){                if (!$into = $this->into){                    $into = array_keys($values);
+                    $values = array(array_values($values));
                 }
+
+                $args = array_merge(array($into), $values, $this->placeholders);
+                $count = self::query($this->build('insert'), $args)->exec();
+
+                if ($count !== null){
+                    $id = self::$connection['link']->lastInsertId();
+                    $result[$this->alias][] = (int)$id;
+
+                    if ($id and b::len($values) > 1)
+                        $result[$this->alias] = array_merge(
+                            $result[$this->alias],
+                            range(($id + 1), ($id + $count - 1))
+                        );
+                } else {                    $result[$this->alias][] = $count;                }
+            } else {
+                $args = array_merge(array($values), $this->placeholders);
+                $result[$this->alias][] = self::query($this->build('update'), $args)->exec();
             }
 
-            $last = $result[$this->alias][] = call_user_func_array(array(self::$connection, 'query'), $args);
-
-            if ($last === null)
+            if (end($result[$this->alias]) === null)
                 return;
         }
 
@@ -157,6 +151,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             if ($pos = stripos($v, ' as '))
                 $from[$k] = trim(substr($v, 0, $pos));
 
+        return self::query($this->build('delete'))->exec();
+
         $args = $this->placeholders;
         array_unshift($args, $this->build('delete'), $from, ($this->limit ? self::SKIP : $from));
         return call_user_func_array(array(self::$connection, 'query'), $args);
@@ -176,10 +172,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $class->select = $class->group_by = array($this->primary_key);
             $class->join = array();
 
-            $args = $this->placeholders;
-            array_unshift($args, $class->build('select'));
-
-            if (!$ids = call_user_func_array(array(self::$connection, 'selectCol'), $args))
+            if (!$ids = $class->query($class->build('select'))->fetch_col())
                 return array();
 
             $self->where = $self->placeholders = array();
@@ -190,9 +183,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $query = $self->build('select');
         }
 
-        $args = array_merge($self->subquery_placeholders, $self->placeholders);
-        array_unshift($args, $query);
-        return call_user_func_array(array(self::$connection, 'select'), $args);
+        return $self->query($query)->fetch();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,58 +194,55 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         if (!$this->select)
             $class->select[] = '*';
 
-        $class->select[] = $this->alias.'.'.$this->primary_key.' as array_key_1';
+        $this->build('select');
 
-        if ($this->parent_key){
-            $class->select[] = $this->alias.'.'.$this->parent_key.' as parent_key';
+        if ($multiple = array_unique($this->multiple)){            $class->select[] = $this->primary_key.' as __';
 
-            foreach (arr::tree($class->fetch()) as $k => $v){
-                unset($array[$k]);
-                $array[$k][] = $v;
+            foreach ($multiple as $k => $v){
+                $vars = self::vars(inflector::singular(end(explode('.', $v))));
+                $field = $v.'.'.($vars['primary_key'] ? $vars['primary_key'] : 'id');
+                $class->select[] = $field.' as __'.$v;
             }
-        } else {
-            $this->build('select');
-
-            if ($multiple = array_unique($this->multiple)){
-                foreach ($multiple as $k => $v){
-                    $vars = self::vars(inflector::singular(end(explode('.', $v))));
-                    $field = $v.'.'.($vars['primary_key'] ? $vars['primary_key'] : 'id');
-                    $class->select[] = $field.' as array_key_'.($k + 2);
-                }
-            } else {
-                $class->select[] = 'null as array_key_2';
-            }
-
-            $array = $class->fetch();
         }
 
-        if (!$array)
+        if (!$array = $class->fetch())
             return array();
 
-        $result = array();
-        $multiple = ($multiple ? array_reverse($multiple) : array('Красивый-красивый мистер Биглз'));
-        $len = b::len($multiple);
+        if (!$multiple){
+            $result = arr::assoc($array);
+            return ($this->id ? $result[0] : $result);
+        }
 
-        foreach (arr::flat($array) as $k => $v){
-            if ($v === null)
-                continue;
+        $result = $repl = $values = array();
+        $func = create_function('$a, $b', 'return (substr_count($a, ".") < substr_count($b, "."));');
 
-            $k = str_replace('\.', '.', $k);
-            $keys = explode('.', $k, ($len + 2));
+        foreach ($array as $row){            $i = $row['__'];
+            unset($row['__']);
 
-            foreach ($multiple as $i => $w){
-                $i = ($len - $i);
-                $current = $keys[$len + 1];
+            if (!isset($result[$i]))
+                $result[$i] = array();
 
-                if (strpos($current, $w) === 0){
-                    $w_len = b::len($w);
-                    $keys[$len + 1] = substr($current, 0, $w_len).'.'.$keys[$i].substr($current, $w_len);
-                }
+            foreach ($row as $k => $v)
+                if (substr($k, 0, 2) == '__'){
+                    unset($row[$k]);
 
-                unset($keys[$i]);
+                    if ($v !== null){                        $key = substr($k, 2);
+                        $repl[$key] = $key.'.'.$v;
+                    }
+                } elseif ($v === null){                    unset($row[$k]);                }
+
+            uasort($repl, $func);
+
+            foreach ($row as $k => $v){                $key = str_replace(array_keys($repl), array_values($repl), $k);
+                $row[$key] = $v;
+
+                if (
+                    ($pos = strrpos($k, '.')) and
+                    isset($repl[$key = substr($k, 0, $pos)])
+                )                    unset($row[$k]);
             }
 
-            $result[join('.', $keys)] = $v;
+            $result[$i] += $row;
         }
 
         $result = self::_fetch_array(arr::assoc($result));
@@ -343,24 +331,19 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function begin(){        self::$cache['#transaction'] = array();
-        self::$connection->transaction();
+    function begin(){
+        return self::$connection['link']->beginTransaction();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function commit(){        $transaction = self::$cache['#transaction'];
-        unset(self::$cache['#transaction']);
-        if (in_array(null, $transaction))
+    function commit(){        if (!self::$connection['link']->commit())
             throw new SQL_Except;
-
-        self::$connection->commit();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rollback(){        unset(self::$cache['#transaction']);
-        self::$connection->rollback();
+    function rollback(){        return self::$connection['link']->rollback();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
