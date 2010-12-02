@@ -110,7 +110,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         )
             return self::$cache[$key][$name];
 
-        if (is_null($name)){
+        if ($name === null){
             $key = ($this->parallel ? (max(array_keys($this->parallel)) + 1) : 0);
 
             if ($this->where and $key < ($count = b::len($this)))
@@ -212,11 +212,11 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             $value = self::raw('null');
             self::$cache[$key][$name] = null;        }
 
-        if ($name === null){            $this->values[] = $value;
-        } elseif (self::_is_HABTM($name)){            $this->values[$name] = new ArrayObject($value);        } else {            if ($value === $this[$name])
+        if ($name === null){            $this->values[] = self::$cache[$key][] = $value;
+        } elseif (self::_is_HABTM($name)){            $this->values[$name] = self::$cache[$key][$name] = new ArrayObject($value);        } else {            if ($value === $this[$name])
                 return;
 
-            $this->values[$name] = $value;
+            $this->values[$name] = self::$cache[$key][$name] = $value;
         }
 
         if ($relation = $this->relations['#']){

@@ -30,6 +30,14 @@ function attr_if($attr){    $token = token_get_all('<?php '.$attr['if']);
 
 ////////////////////////////////////////////////////////////////////////////////
 
+function attr_check_for($attr){
+	$attr['#skip'] = !check::$errors[piles::name2var($attr['check_for'])];
+    unset($attr['check_for']);
+	return $attr;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 function attr_check_re($attr){
 	$attr = array_merge(array(
 	    'check_type' => 'e'

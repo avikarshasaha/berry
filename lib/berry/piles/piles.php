@@ -169,7 +169,7 @@ class Piles extends Piles_Etc {
                         }
                     }
 
-                    if ($attr['value'] === null)
+                    if (!array_key_exists('value', $attr))
                         $attr['value'] = '`'.$attr['#key'].'`';
 
                     $attr['key'] = strtolower($attr['key']);

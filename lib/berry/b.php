@@ -30,10 +30,15 @@ class B {    static $path = array('');
         $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
         $lang and !self::$lang and self::$lang = $lang;
 
-        $len = self::len(dirname($_SERVER['PHP_SELF']));
-        $url = parse_url(str::clean($_SERVER['REQUEST_URI']));
+        if ($_SERVER['QUERY_STRING'])
+            $uri = substr($_SERVER['REQUEST_URI'], 0, -b::len($_SERVER['QUERY_STRING']));
+        else
+            $uri = $_SERVER['REQUEST_URI'];
 
-        $path = substr($url['path'], ($len - 1));
+        $uri = parse_url(str::clean($uri));
+        $len = self::len(dirname($_SERVER['PHP_SELF']));
+
+        $path = substr($uri['path'], ($len - 1));
         $path = ($path ? trim($path, '/') : 'home');
 
         self::$query = $path;

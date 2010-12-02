@@ -40,9 +40,7 @@
     <p>
         <input name="test[int]" type="text" check:re="int(0, 15)" check:need="Введите число от 0 до 15." />
 
-        <? if (${errors}){ ?>
-            <span style="color: #c60000">&lt;- тут ошибка: ${errors.test\.int.1}</span>
-        <? } ?>
+        <span check:for="test[int]" style="color: #c60000">&lt;- тут ошибка: нужно число от 0 до 15.</span>
     </p>
 
     <p>Тут дата в формате ГГГГ-ММ-ДД:</p>

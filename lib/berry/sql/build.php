@@ -251,8 +251,8 @@ abstract class SQL_Build {
 
     protected function _build_insert(){        $keywords = b::config('lib.sql.insert');
         $query  = 'insert into '.$this->table;
-        $query .= ' (?f) values (?a)';
-        $query .= ($this->into ? str_repeat(', (?a) ', b::len($this->values) - 1) : ' ');
+        $query .= ' (?f) values (?a) ';
+        $query .= ($this->into ? str_repeat(', (?a) ', b::len($this->values) - 1) : '');
 
         return $this->rebuild(substr($query, 0, -1), $keywords);
     }

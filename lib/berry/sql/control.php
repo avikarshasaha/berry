@@ -99,20 +99,23 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 $args = array_merge(array($into), $values, $this->placeholders);
                 $count = self::query($this->build('insert'), $args)->exec();
 
-                if ($count !== null){
+                if ($count){
                     $id = self::$connection['link']->lastInsertId();
-                    $result[$this->alias][] = (int)$id;
+                    $result[$this->alias][] = $id;
 
-                    if ($id and b::len($values) > 1)
-                        $result[$this->alias] = array_merge(
-                            $result[$this->alias],
-                            range(($id + 1), ($id + $count - 1))
-                        );
+                    if ($count > 1)                        foreach (range(($id + 1), ($id + $count - 1)) as $k => $v)
+                            $result[$this->alias][] = (string)$v;
+
+                    $key = self::hash('_get');
+                    $this->id = self::$cache[$key][$this->primary_key] = $id;
+                    $this->where($this->primary_key.' = ?d', $id);
                 } else {                    $result[$this->alias][] = $count;                }
             } else {
                 $args = array_merge(array($values), $this->placeholders);
                 $result[$this->alias][] = self::query($this->build('update'), $args)->exec();
             }
+
+            $this->into = $this->values = array();
 
             if (end($result[$this->alias]) === null)
                 return;
