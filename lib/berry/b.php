@@ -137,13 +137,13 @@ class B {    static $path = array('');
                         }
                     }
 
-                    $array = arr::flat(yaml::load($file));
+                    $array = yaml::load($file);
                     $array['#file'] = $file;
-                    $config = arr::merge($config, array($key => $array));
+                    $config = arr::merge($config, arr::assoc(array($key => $array)));
                     $config['#files'][] = $file;
                 }
 
-                cache::set($config = arr::assoc($config));
+                cache::set($config);
             }
         }
 
