@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path = array('');
+class B {    static $path = '.';
     static $lang = 'ru';
     static $query = '';
     protected static $cache = array();
@@ -19,9 +19,7 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        self::$cache['stat'] = microtime(true);
-        if (!self::$path[0])
-            self::$path[0] = realpath(dirname(__file__).'/../..');
+    static function init(){        self::$cache['stat'] = microtime(true);        self::$path .= ';'.realpath(dirname(__file__).'/../..');
 
         spl_autoload_register(array('self', 'autoload'));
         date_default_timezone_set(self::config('lib.b.timezone'));
@@ -105,7 +103,7 @@ class B {    static $path = array('');
 
         if (!$config){            $dirs = array();
 
-            foreach (self::$path as $path)
+            foreach (array_reverse(explode(';', self::$path)) as $path)
                 foreach (array('mod', 'lib', 'ext', '') as $dir)
                     if (is_dir($path.'/'.$dir))                        $dirs[] = $path.'/'.$dir;
 
@@ -253,7 +251,7 @@ class B {    static $path = array('');
 
         if (!$call){            $dirs = array();
 
-            foreach (self::$path as $path)
+            foreach (array_reverse(explode(';', self::$path)) as $path)
                 $dirs[] = $path.'/ext';
             if (!$call = cache::get('b/call.php', array('file' => $dirs))){                $files = array();
 
@@ -321,8 +319,14 @@ class B {    static $path = array('');
         if (!isset(self::$cache['autoload']))
             self::$cache['autoload'] = array();
 
-        if (!self::$path[1] or !is_dir($dir = self::$path[1].'/tmp'))
-            $dir = self::$path[0].'/tmp';
+        $paths = explode(';', self::$path);
+        $dir = end($paths).'/tmp';
+
+        foreach ($paths as $v)
+            if (is_dir($dir = $v.'/tmp')){
+                $dir = $v.'/tmp';
+                break;
+            }
 
         if (is_file($cache = $dir.'/b/autoload.php'))
             self::$cache['autoload'] = array_merge(
@@ -347,7 +351,7 @@ class B {    static $path = array('');
             $Name
         );
 
-        if ($prev = substr(str_replace(b::$path, '', dirname($prev)), 5))
+        if ($prev = substr(str_replace($paths, '', dirname($prev)), 5))
             $files = array_merge($files, array(
                 $prev.'/'.$files[0],
                 $prev.'/'.$files[1],
@@ -360,22 +364,22 @@ class B {    static $path = array('');
                 $prev.'/'.$Name
             ));
 
-        foreach ($files as $file)
-            if (
-                (self::$path[1] and is_file($path = self::$path[1].'/lib/'.$file.'.php')) or
-                is_file($path = self::$path[0].'/lib/berry/'.$file.'.php') or
-                is_file($path = self::$path[0].'/lib/'.$file.'.php')
-            ){
-                include self::$cache['autoload'][$name] = $prev = $path;
+        foreach ($paths as $path)
+            foreach ($files as $file)
+                if (
+                    is_file($tmp = $path.'/lib/berry/'.$file.'.php') or
+                    is_file($tmp = $path.'/lib/'.$file.'.php')
+                ){
+                    include self::$cache['autoload'][$name] = $prev = $tmp;
 
-                $contents  = "<?php\r\n";
-                $contents .= 'return '.var_export(self::$cache['autoload'], true);
-                $contents .= ";\r\n";
+                    $contents  = "<?php\r\n";
+                    $contents .= 'return '.var_export(self::$cache['autoload'], true);
+                    $contents .= ";\r\n";
 
-                file::mkdir(dirname($cache));
-                file_put_contents($cache, $contents);
-                return true;
-            }
+                    file::mkdir(dirname($cache));
+                    file_put_contents($cache, $contents);
+                    return true;
+                }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -482,8 +486,8 @@ class B {    static $path = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function references(){
-        $dir = self::$path[0].'/lib';
+    static function references(){        $paths = explode(';', self::$path);
+        $dir = end($paths).'/lib';
         $result = array();
 
         foreach (file::dir($dir, '/\.php$/i') as $file => $info){

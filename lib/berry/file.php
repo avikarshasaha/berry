@@ -10,11 +10,12 @@
 class File {
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function path($filename){
-        if (b::$path[1] and file_exists($path = b::$path[1].'/'.$filename))
-            return $path;
+    static function path($filename){        $paths = explode(';', b::$path);
+        foreach ($paths as $path)
+            if (file_exists($file = $path.'/'.$filename))
+                return $file;
 
-        return b::$path[0].'/'.$filename;
+        return end($paths).'/'.$filename;
     }
 ////////////////////////////////////////////////////////////////////////////////
 
