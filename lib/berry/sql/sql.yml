@@ -58,6 +58,6 @@ placeholders: |
           |
         (?>
             # Placeholder
-            (\?) ( [dsafnkvtf]? )                           #2 #3
+            (\?) ( [sdnakvtf]? )                           #2 #3
         )
     }sx
