@@ -426,6 +426,7 @@ abstract class SQL_Build {
     protected function _build_subquery_select($parent){        if (!$this->relations[$table = $parent->alias])
             $table = inflector::tableize($table);
 
+        $this->placeholders = array_merge($parent->placeholders, $this->placeholders);
         $query = trim($parent->build('select'));
 
         if ($query[0] != '(')
