@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path = '.';
+class B {    static $path = '';
     static $lang = 'ru';
     static $query = '';
     protected static $cache = array();
@@ -19,7 +19,7 @@ class B {    static $path = '.';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        self::$cache['stat'] = microtime(true);        self::$path .= ';'.realpath(dirname(__file__).'/../..');
+    static function init(){        self::$cache['stat'] = microtime(true);        self::$path .= '.;'.realpath(dirname(__file__).'/../..');
 
         spl_autoload_register(array('self', 'autoload'));
         date_default_timezone_set(self::config('lib.b.timezone'));
