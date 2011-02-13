@@ -10,10 +10,19 @@
 class Piles extends Piles_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($string = '', $filter = null){        $name = ($string ? $string : b::config('lib.b.show'));
+    function __construct($string = '', $filter = null){        $this->file = array($string);
+        $name = ($string ? $string : b::config('lib.b.show'));
         $name = str_replace('.', '/', $name);
-        $files = array('ext/'.$name, 'mod/'.$name, 'lib/berry/'.$name, 'lib/'.$name);
-        $this->file = array($string);
+        $files = array(
+            'ext/'.$name,
+            'ext/'.$name.'/index',
+            'mod/'.$name,
+            'mod/'.$name.'/index',
+            'lib/berry/'.$name,
+            'lib/berry/'.$name.'/'.$name,
+            'lib/'.$name,
+            'lib/'.$name.'/'.$name
+        );
 
         if (is_array($filter))
             foreach ($filter as $k => $v){
@@ -24,10 +33,7 @@ class Piles extends Piles_Etc {
             }
 
         foreach ($files as $file)
-            if (
-                is_file($path = file::path($file.'.phtml')) or
-                is_file($path = file::path($file.'/index.phtml'))
-            ){
+            if (is_file($path = file::path($file.'.phtml'))){
                 $this->file = array($name, $path);
                 break;
             }    }

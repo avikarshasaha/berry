@@ -105,7 +105,7 @@ class B {    static $path = '';
 
             foreach (array_reverse(explode(';', self::$path)) as $path)
                 foreach (array('mod', 'lib', 'ext', '') as $dir)
-                    if (is_dir($path.'/'.$dir))                        $dirs[] = $path.'/'.$dir;
+                    if (is_dir($dir = $path.($dir ? '/'.$dir : '')))                        $dirs[] = $dir;
 
             if ($config = cache::get('b/config.php'))
                 $dirs = array_merge($dirs, $config['#files']);
@@ -122,10 +122,10 @@ class B {    static $path = '';
                 }
 
                 foreach ($files as $file => $dir){                    $key = substr(basename($file), 0, -4);
+                    $array = yaml::load($file);
+                    $array['#file'] = $file;
 
-                    if ($dir == 'lib'){
-                        $key = $dir.'.'.$key;
-                    } elseif ($dir == 'mod'){                        $dir2 = basename(dirname($file));
+                    if ($dir == 'mod'){                        $dir2 = basename(dirname($file));
                         $dir3 = basename(dirname(dirname($file)));
                         if (basename($file) == 'index.yml'){
                             $key = $dir.'.'.$dir2;
@@ -133,11 +133,13 @@ class B {    static $path = '';
                         } else {
                             $key = $dir.'.'.$key;
                         }
-                    }
 
-                    $array = yaml::load($file);
-                    $array['#file'] = $file;
-                    $config = arr::merge($config, arr::assoc(array($key => $array)));
+                        $array = array($key => $array);
+                    } elseif ($dir == 'lib'){
+                        $array = array($dir.'.'.$key => $array);
+                    } elseif ($dir == 'ext'){                        $array = array($key => $array);                    }
+
+                    $config = arr::merge($config, arr::assoc($array));
                     $config['#files'][] = $file;
                 }
 
@@ -408,13 +410,19 @@ class B {    static $path = '';
     static function show($name = '', $_ = array()){
         $name = ($name ? $name : b::config('lib.b.show'));
         $name = str_replace('.', '/', $name);
-        $files = array('ext/'.$name, 'mod/'.$name, 'lib/berry/'.$name, 'lib/'.$name);
+        $files = array(
+            'ext/'.$name,
+            'ext/'.$name.'/index',
+            'mod/'.$name,
+            'mod/'.$name.'/index',
+            'lib/berry/'.$name,
+            'lib/berry/'.$name.'/'.$name,
+            'lib/'.$name,
+            'lib/'.$name.'/'.$name
+        );
 
         foreach ($files as $file)
-            if (
-                is_file(self::$cache['show'] = file::path($file.'.phtml')) or
-                is_file(self::$cache['show'] = file::path($file.'/index.phtml'))
-            ){
+            if (is_file(self::$cache['show'] = file::path($file.'.phtml'))){
                 !cache::exists('b/call.php') and self::call('#');
                 $funcs = include cache::exists('b/call.php');
 
