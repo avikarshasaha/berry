@@ -77,7 +77,7 @@ abstract class SQL_Build {
                         $array[$key] .= $token[$j][1].'.';
                         $j += 1;
                     } else {
-                        if (substr($array[$key], -1) == '.'){
+                        if (!is_array($array[$key]) and substr($array[$key], -1) == '.'){
                             $array[$key] = array(substr($array[$key], 0, -1), $token[$j][1]);
                         } else {
                             $array[] = (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
@@ -170,7 +170,7 @@ abstract class SQL_Build {
             $quote = false;
 
             foreach ($value as $k => $v){
-                if (trim($v) === '')
+                if (!is_array($v) and trim($v) === '')
                     continue;
 
                 if (is_array($v)){

@@ -73,7 +73,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         foreach ($values as $k => $v)
             if (self::_is_HABTM($k)){
-                $v = array_unique($v);
+                $v = array_unique((array)$v);
                 sort($v);
                 unset($values[$k]);
 

@@ -19,7 +19,7 @@ class B {    static $path = '';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        self::$cache['stat'] = microtime(true);        self::$path .= '.;'.realpath(dirname(__file__).'/../..');
+    static function init(){        self::$cache['stat'] = microtime(true);        self::$path .= './;'.realpath(dirname(__file__).'/../..');
 
         spl_autoload_register(array('self', 'autoload'));
         date_default_timezone_set(self::config('lib.b.timezone'));
@@ -336,6 +336,7 @@ class B {    static $path = '';
                 self::$cache['autoload']
             );
 
+        $Name = str_replace('\\', '/', $Name);
         $name = strtolower($Name);
 
         if (isset(self::$cache['autoload'][$name]))
@@ -371,7 +372,9 @@ class B {    static $path = '';
                 if (
                     is_file($tmp = $path.'/lib/berry/'.$file.'.php') or
                     is_file($tmp = $path.'/lib/'.$file.'.php')
-                ){
+                ){                    if (in_array($tmp, self::$cache['autoload']))
+                        return true;
+
                     include self::$cache['autoload'][$name] = $prev = $tmp;
 
                     $contents  = "<?php\r\n";
