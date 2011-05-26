@@ -105,6 +105,15 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
         return array();
     }
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    function build(){
+        $args = func_get_args();
+        $type = array_shift($args);
+
+        return call_user_func_array(array($this, '_build_'.$type), $args);
+    }    
 
 ////////////////////////////////////////////////////////////////////////////////
 

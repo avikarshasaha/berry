@@ -7,8 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL extends SQL_Control {
-////////////////////////////////////////////////////////////////////////////////
+class SQL extends SQL_Control {////////////////////////////////////////////////////////////////////////////////
 
     function __construct($id = 0, $class = ''){        $class = strtolower($class ? $class : get_class($this));
         $this->alias = (substr($class, -4) == '_sql' ? substr($class, 0, -4) : $class);
@@ -212,22 +211,6 @@ class SQL extends SQL_Control {
 
     function __call($method, $params){
         $method = strtolower($method);
-
-        if (substr($method, 0, 3) == 'by_' and $params){
-            $method = substr($method, 3);
-
-            if (!strpos($method, '_')){
-                $select[] = $method;
-            } else {                $pos = strrpos($method, '_');
-                $select[] = str_replace('_', '.', substr($method, 0, $pos));
-                $select[] = substr($method, ($pos + 1));
-            }
-
-            foreach ($params as $param)
-                self::where(join('.', $select).' = ?'.(is_array($param) ? 'a' : ''), $param);
-
-            return $this;
-        }
 
         if (!$scope = $this->scope[$method])
             trigger_error(sprintf('Call to undefined method %s::%s()', get_class($this), $method), E_USER_ERROR);

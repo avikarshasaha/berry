@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_Etc extends SQL_Build {    protected $id;
+abstract class SQL_Etc {    protected $id;
     protected $table;
     protected $alias;
 
@@ -168,8 +168,11 @@ abstract class SQL_Etc extends SQL_Build {    protected $id;
     function build(){
         $args = func_get_args();
         $type = array_shift($args);
+        
+        $builder = 'SQL_Build_'.self::$connection['driver'];
+        $builder = new $builder($this);
 
-        return call_user_func_array(array($this, '_build_'.$type), $args);
+        return call_user_func_array(array($builder, '_'.$type), $args);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

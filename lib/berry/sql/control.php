@@ -346,7 +346,73 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rollback(){        return self::$connection['link']->rollback();
+    function rollback(){
+        return self::$connection['link']->rollback();
+    }
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    function find($find = null){
+        if (is_numeric($find))
+            $this->where($this->primary_key.' = ?', $find);
+        
+        if (is_array($find))
+            foreach ($find as $k => $v){                                        
+                if (is_int($k) and is_array($v)){
+                    $keys = array_keys($v);
+                    $args = array_values($v);
+                                        
+                    foreach ($keys as $i => $key)
+                        if (!strpos($key, '?'))
+                            $keys[$i] .= ' = ?';
+
+                    array_unshift($args, $keys);                    
+                    call_user_func_array(array($this, 'where'), $args); 
+                } else {
+                    if (!strpos($k, '?'))
+                        $k .= ' = ?';
+
+                    $this->where($k, $v);
+                }
+            }
+                
+        return $this;
+    }
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    function find_one($find = null){
+        if ($result = $this->find($find)->limit(1)->fetch_array())
+            $result = $result[0];
+            
+        return $result;
+    }
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    function find_all($find = null){
+        return $this->find($find)->fetch_array();
+    }   
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    function with($with){
+        foreach ((array)$with as $v)
+            $this->select($v);
+    
+        return $this;
+    }         
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    function sort($sort = null){
+        if (!$sort)
+            $sort = $this->primary_key;
+        
+        foreach((array)$sort as $v)
+            $this->order_by($v);
+            
+        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

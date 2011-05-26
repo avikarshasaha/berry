@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
+abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function __isset($name){
@@ -207,10 +208,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             if ($sum = array_sum(self::$cache[$key.'[+-]'][$name]))
                 $value = self::raw(sprintf('(%s + %s)', $name, $sum));
             else                return;
-        } elseif ($value === null){            if ($value === $this[$name])
+        } elseif ($value === null){
+            if ($value === $this[$name])
                 return;
-            $value = self::raw('null');
-            self::$cache[$key][$name] = null;        }
+
+            $value = self::raw('null');
+            self::$cache[$key][$name] = null;
+        }
 
         if ($name === null){            $this->values[] = self::$cache[$key][] = $value;
         } elseif (self::_is_HABTM($name)){            $this->values[$name] = self::$cache[$key][$name] = new ArrayObject($value);        } else {            if ($value === $this[$name])

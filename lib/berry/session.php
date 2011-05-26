@@ -9,7 +9,8 @@
                                                                    \/|*/
 class Session {
     protected static $config;
-    protected static $cache = array();
+    protected static $cache = array();
+
 ////////////////////////////////////////////////////////////////////////////////
 
     static function init(){        $class = new self;
@@ -59,9 +60,11 @@ class Session {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function write($id, $data){        self::_cache($id);
-        if (self::$cache[$id] === false or self::$cache[$id]['data'] == $data)
+
+        if (self::$cache[$id] === false or self::$cache[$id]['data'] == $data)
             return false;
-        $table = sql::table(self::$config['table'], $id);
+
+        $table = sql::table(self::$config['table'], $id);
 
         if (!$table->exists()){
             $table = sql::table(self::$config['table']);
@@ -86,7 +89,8 @@ class Session {
     static function gc($lifetime){        $table = sql::table(self::$config['table']);
         $table->where('timestamp < ?d', (time() - $lifetime));
         $table->limit(25);
-        return ($table->delete() !== null);
+
+        return ($table->delete() !== null);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
