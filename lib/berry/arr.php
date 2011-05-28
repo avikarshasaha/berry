@@ -7,25 +7,38 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Arr {
+class Arr {
+
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function files($files = array()){        if (!$files)
-            $files = $_FILES;
+    static function files($key = ''){
+        $result = array();
+        $len = (b::len($key) + 1);        
+        foreach (self::flat($_FILES) as $k => $v){
+            if (substr_count($k, '.') == 1){
+                $result[$k] = $v;
+            } else {
+                $k = explode('.', $k);
+                $second = $k[1];
+                $last = array_pop($k);
+                
+                unset($k[1]);
+                array_push($k, $last);
+                array_push($k, $second);
+                
+                $k = join('.', $k);
+                $result[$k] = $v;
+            } 
+            
+            if ($key){
+                unset($result[$k]);
 
-        foreach ($files as $k1 => $v1)
-            foreach ($v1 as $k2 => $v2){
-                if (is_array($v2))
-                    foreach ($v2 as $k3 => $v3){
-                        $files[$k1][$k3][$k2] = $v3;
-                        unset($files[$k1][$k2][$k3]);
-                    }
-
-                if ($files[$k1][$k2] === array())
-                    unset($files[$k1][$k2]);
+                if (substr($k, 0, $len) == $key.'.')
+                    $result[substr($k, $len)] = $v;
             }
-
-        return $files;
+        }
+        
+        return self::assoc($result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
