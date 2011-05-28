@@ -13,7 +13,8 @@ class Except extends Exception {
     public $code = 0;
     public $file;
     public $line = 0;
-    protected $colors = array(array('ccc', 'f3f3f3'), array('ffcccc', 'ffe6e6'));
+    protected $colors = array(array('ccc', 'f3f3f3'), array('ffcccc', 'ffe6e6'));
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////

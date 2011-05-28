@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Int {
+class Int {
+
 ////////////////////////////////////////////////////////////////////////////////
 
     static function size($filesize, $size = array()){        $size = array_merge(b::lang('lib.int.size'), $size);
