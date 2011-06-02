@@ -391,12 +391,12 @@ class B {    static $path;
 ////////////////////////////////////////////////////////////////////////////////
 
     static function router($array){
-        $q = b::q();
+        $q = self::q();
         array_shift($q);
 
-        for ($i = b::len($q); $i >= -1; $i--)
+        for ($i = self::len($q); $i >= -1; $i--)
             if (
-                ($class = $array[b::q(1, $i)]) or
+                ($class = $array[self::q(1, $i)]) or
                 ($i == -1 and $class = $array['home'])
             ){
                 $q = array_slice($q, ($i == -1 ? 0 : $i));
