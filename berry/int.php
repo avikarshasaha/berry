@@ -11,7 +11,7 @@ class Int {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function size($filesize, $size = array()){        $size = array_merge(b::lang('lib.int.size'), $size);
+    static function size($filesize, $size = array()){        $size = array_merge(b::lang('int.size'), $size);
         $map = array(
             'gb' => self::bytes('1G'),
             'mb' => self::bytes('1M'),

@@ -9,7 +9,8 @@
                                                                    \/|*/
 function tag_player($attr){    $ext = strtolower(pathinfo($attr['src'], PATHINFO_EXTENSION));
     $func = 'tag_player_'.($ext == 'mp3' ? 'audio' : 'video');
-    return $func($attr);}
+    return $func($attr);}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // http://wpaudioplayer.com/standalone
@@ -17,10 +18,10 @@ function tag_player_audio($attr){    static $i = 0;
 
     $attr = array_merge((array)b::config('tag.player_audio'), $attr);
 
-    html::block('head', html::js('~/tag/swfobject.js'));
+    html::block('head', html::js('~/ext/tag/swfobject.js'));
     html::block('head',
-        html::js('~/tag/player/audio/player.js').
-        html::js('AudioPlayer.setup("~/tag/player/audio/player.swf", {width: 300, transparentpagebg: "yes", initialvolume: 100});')
+        html::js('~/ext/tag/player/audio/player.js').
+        html::js('AudioPlayer.setup("~/ext/tag/player/audio/player.swf", {width: 300, transparentpagebg: "yes", initialvolume: 100});')
     );
 
     $attr['id'] = 'tag_player_audio['.$i++.']';
@@ -44,10 +45,10 @@ function tag_player_video($attr){
         'flashvars_viral.functions' => false
     ),(array)b::config('tag.player_video'), $attr);
 
-    $attr['flashvars_skin'] = '~/tag/player/video/'.$attr['flashvars_skin'].'.swf';
+    $attr['flashvars_skin'] = '~/ext/tag/player/video/'.$attr['flashvars_skin'].'.swf';
 	$attr['flashvars_file'] = $attr['src'];
 	$attr['flashvars_image'] = $attr['image'];
-	$attr['src'] = '~/tag/player/video/player.swf';
+	$attr['src'] = '~/ext/tag/player/video/player.swf';
 
     return b::call('tag_swfobject', $attr);
 }

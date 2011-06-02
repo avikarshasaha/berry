@@ -11,38 +11,6 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function files($key = ''){
-        $result = array();
-        $len = (b::len($key) + 1);        
-        foreach (self::flat($_FILES) as $k => $v){
-            if (substr_count($k, '.') == 1){
-                $result[$k] = $v;
-            } else {
-                $k = explode('.', $k);
-                $second = $k[1];
-                $last = array_pop($k);
-                
-                unset($k[1]);
-                array_push($k, $last);
-                array_push($k, $second);
-                
-                $k = join('.', $k);
-                $result[$k] = $v;
-            } 
-            
-            if ($key){
-                unset($result[$k]);
-
-                if (substr($k, 0, $len) == $key.'.')
-                    $result[substr($k, $len)] = $v;
-            }
-        }
-        
-        return self::assoc($result);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function html($item){
         if (is_array($item))
             return array_map(array('self', 'html'), $item);

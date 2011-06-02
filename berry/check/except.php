@@ -11,7 +11,7 @@ class Check_Except extends Except {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($message = array(), $string = ''){        $this->string = array();
+    function __construct($message = array(), $string = ''){        $this->message = $this->string = array();
 
         if (!$string){
             $_post = arr::flat($_POST);

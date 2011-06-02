@@ -29,10 +29,10 @@ class Mail {
         else
             $mail->set_to($to);
 
-        if (preg_match('/(.*)(?>\s<([^>]*)>)/', b::config('lib.mail.sender'), $match))
+        if (preg_match('/(.*)(?>\s<([^>]*)>)/', b::config('mail.sender'), $match))
             $mail->set_from($match[2], $match[1]);
         else
-            $mail->set_from(b::config('lib.mail.sender'));
+            $mail->set_from(b::config('mail.sender'));
 
         if (is_array($params['message'])){            if ($params['message']['text'])
                 $mail->set_text(str::format($params['message']['text'], $tags));
@@ -44,9 +44,9 @@ class Mail {
             $mail->set_text(str::format($params['message'], $tags));
         }
 
-        if (b::config('lib.mail.smtp.on')){
-            $mail->set_smtp_host(b::config('lib.mail.smtp.host'), b::config('lib.mail.smtp.port'));
-            $mail->set_smtp_auth(b::config('lib.mail.smtp.user'), b::config('lib.mail.smtp.password'));
+        if (b::config('mail.smtp.on')){
+            $mail->set_smtp_host(b::config('mail.smtp.host'), b::config('mail.smtp.port'));
+            $mail->set_smtp_auth(b::config('mail.smtp.user'), b::config('mail.smtp.password'));
         }
 
         foreach ((array)$params['attach'] as $filename)
@@ -71,7 +71,7 @@ class Mail {
         $attach  = arr::trim(explode(',', $attach[1]));
 
         if (!$type = trim($type[1]))
-            $type = b::config('lib.mail.type');
+            $type = b::config('mail.type');
 
         return compact('subject', 'message', 'attach', 'type');
     }

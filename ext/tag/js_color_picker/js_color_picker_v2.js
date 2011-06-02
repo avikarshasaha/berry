@@ -17,7 +17,7 @@
 	var MSIE = navigator.userAgent.indexOf('MSIE')>=0?true:false;
 	var navigatorVersion = navigator.appVersion.replace(/.*?MSIE (\d\.\d).*/g,'$1')/1;
 
-	var form_widget_amount_slider_handle = '~/tag/js_color_picker/images/slider_handle.gif';
+	var form_widget_amount_slider_handle = '~/ext/tag/js_color_picker/images/slider_handle.gif';
 	var slider_handle_image_obj = false;
 	var sliderObjectArray = new Array();
 	var slider_counter = 0;
@@ -233,14 +233,14 @@
 					thisObj.className='colorPickerTab_active';
 					thisObj.style.zIndex = 50;
 					var img = thisObj.getElementsByTagName('IMG')[0];
-					img.src = "~/tag/js_color_picker/images/tab_right_active.gif"
+					img.src = "~/ext/tag/js_color_picker/images/tab_right_active.gif"
 					img.src = img.src.replace(/inactive/,'active');
 					contentDiv.style.display='block';
 					activeColorDiv = contentDiv;
 				}else{
 					subDiv.className = 'colorPickerTab_inactive';
 					var img = subDiv.getElementsByTagName('IMG')[0];
-					img.src = "~/tag/js_color_picker/images/tab_right_inactive.gif";
+					img.src = "~/ext/tag/js_color_picker/images/tab_right_inactive.gif";
 					if(activeColorDiv)
 						subDiv.style.zIndex = initZIndex - counter;
 					else
@@ -287,7 +287,7 @@
 			tabSpan.innerHTML = tabs[no];
 			tabDiv.appendChild(tabSpan);
 			var tabImg = document.createElement('IMG');
-			tabImg.src = "~/tag/js_color_picker/images/tab_right_" + suffix + ".gif";
+			tabImg.src = "~/ext/tag/js_color_picker/images/tab_right_" + suffix + ".gif";
 			tabDiv.appendChild(tabImg);
 			div.appendChild(tabDiv);
 			if(navigatorVersion<6 && MSIE){	/* Lower IE version fix */

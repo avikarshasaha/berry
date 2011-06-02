@@ -10,7 +10,7 @@
 function tag_msg($attr){	if ($attr['#text']){		html::msg($attr['id'], $attr['#text']);		return;	}
 
 	if ($messages = html::msg($attr['id']))
-        return piles::show('tag.msg.'.$attr['id'], compact('messages'));
+        return piles::show('ext.tag.msg.'.$attr['id'], compact('messages'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@ function tag_quote($attr){	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote
 	    	unset($attr['cite']);
 	}
 
-    return piles::show('tag.quote', compact('attr'));
+    return piles::show('ext.tag.quote', compact('attr'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

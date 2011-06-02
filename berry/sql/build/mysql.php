@@ -12,7 +12,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _select(){
-        $keywords = b::config('lib.sql.select');
+        $keywords = b::config('sql.select');
         $query = '';
 
         foreach ($keywords as $k => $v){
@@ -44,7 +44,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _insert(){
-        $keywords = b::config('lib.sql.insert');
+        $keywords = b::config('sql.insert');
         $query  = 'insert into '.$this->o->table;
         $query .= ' (?f) values (?a) ';
         $query .= ($this->o->into ? str_repeat(', (?a) ', b::len($this->o->values) - 1) : '');
@@ -55,7 +55,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _update(){
-        $keywords = b::config('lib.sql.update');
+        $keywords = b::config('sql.update');
         $query  = 'update '.$this->o->table;
         $query .= ' as '.$this->o->alias;
         $query .= ' set ?a';
@@ -75,7 +75,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
         $class = clone $this;
         $class->o->alias = inflector::tableize($this->o->alias);
 
-        $keywords = b::config('lib.sql.delete');
+        $keywords = b::config('sql.delete');
         $query  = 'delete from '.$this->o->table;
         $query .= ' where ('.join(') and (', $this->o->where).')';
         $query .= ' order by '.join(', ', $this->o->order_by);

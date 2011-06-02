@@ -7,21 +7,17 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Piles extends Piles_Etc {
+class Piles extends Piles_Etc {
+
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($string = '', $filter = null){        $this->file = array($string);
-        $name = ($string ? $string : b::config('lib.b.show'));
+    function __construct($name, $filter = null){
+        $this->file = array($name);
+
         $name = str_replace('.', '/', $name);
         $files = array(
-            'ext/'.$name,
-            'ext/'.$name.'/index',
-            'mod/'.$name,
-            'mod/'.$name.'/index',
-            'lib/berry/'.$name,
-            'lib/berry/'.$name.'/'.$name,
-            'lib/'.$name,
-            'lib/'.$name.'/'.$name
+            $name,
+            $name.'/'.$name
         );
 
         if (is_array($filter))

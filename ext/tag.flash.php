@@ -44,7 +44,7 @@ function tag_swfobject($attr){
 	    'params_menu' => 'false'
 	), $attr);
 
-	html::block('head', html::js('~/tag/swfobject.js'));
+	html::block('head', html::js('~/ext/tag/swfobject.js'));
 
 	$attr['id'] = 'tag_swfobject['.$i++.']';
 	$attr['params'] = arr::json(piles::attr_group('params', $attr));

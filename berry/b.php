@@ -7,40 +7,41 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path = '';
-    static $lang = 'ru';
-    static $query = '';
+class B {    static $path;
+    static $lang;
+    static $query;
     protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function version($what = ''){        $version = array('name' => 'Chuck', 'id' => '0.9.dev');
+    static function version($what = ''){        $version = array('name' => 'Holly', 'id' => '1.0.dev');
         return ($what ? $version[$what] : $version);    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        self::$cache['stat'] = microtime(true);        self::$path .= './;'.realpath(dirname(__file__).'/../..');
-
-        spl_autoload_register(array('self', 'autoload'));
-        date_default_timezone_set(self::config('lib.b.timezone'));
-        setlocale(LC_ALL, self::lang('lib.b.locale'));
-
-        $lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
-        $lang and !self::$lang and self::$lang = $lang;
-
+    static function init($config = array()){
         if ($_SERVER['QUERY_STRING'])
-            $uri = substr($_SERVER['REQUEST_URI'], 0, -b::len($_SERVER['QUERY_STRING']));
+            $uri = substr($_SERVER['REQUEST_URI'], 0, -self::len($_SERVER['QUERY_STRING']));
         else
             $uri = $_SERVER['REQUEST_URI'];
 
-        $uri = parse_url(str::clean($uri));
+        $uri = trim(preg_replace('/\/+/', '/', $uri), '/');
+        $uri = parse_url($uri);
         $len = self::len(dirname($_SERVER['PHP_SELF']));
+        $query = substr($uri['path'], ($len - 1));
+        
+        $config = array_merge(array(
+            'path' => './',
+            'lang' => strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2)),
+            'query' => ($query ? trim($query, '/') : 'home')
+        ), $config);        
 
-        $path = substr($uri['path'], ($len - 1));
-        $path = ($path ? trim($path, '/') : 'home');
+        self::$cache['stat'] = microtime(true);
+        self::$path = $config['path'].';'.realpath(dirname(__file__).'/..');
+        self::$lang = $config['lang'];
+        self::$query = $config['query'];
 
-        self::$query = $path;
-        self::router();
+        spl_autoload_register(array('self', 'autoload'));      
     }
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -101,45 +102,21 @@ class B {    static $path = '';
     static function config(){
         static $config;
 
-        if (!$config){            $dirs = array();
-
-            foreach (array_reverse(explode(';', self::$path)) as $path)
-                foreach (array('mod', 'lib', 'ext', '') as $dir)
-                    if (is_dir($dir = $path.($dir ? '/'.$dir : '')))                        $dirs[] = $dir;
-
+        if (!$config){            $files = array();
+            
             if ($config = cache::get('b/config.php'))
-                $dirs = array_merge($dirs, $config['#files']);
-            if (!$config = cache::get('b/config.php', array('file' => $dirs))){                $files = array();
-                foreach ($dirs as $dir){                    $name = basename($dir);
-
-                    if (in_array($name, array('mod', 'lib')))
-                        $array = file::dir($dir);
-                    else                        $array = array_flip(file::glob($dir.'/*.yml'));
-
-                    foreach ($array as $file => $info)
-                        if (substr($file, -4) == '.yml')
-                            $files[$file] = $name;
+                $files = $config['#files'];
+            if (!$config = cache::get('b/config.php', array('file' => $files))){                $files = array();
+                foreach (array_reverse(explode(';', self::$path)) as $dir){
+                    if (is_dir($dir))    
+                        foreach (file::dir($dir, '/\.yml$/i') as $file => $info)
+                            $files[] = $file;
                 }
 
-                foreach ($files as $file => $dir){                    $key = substr(basename($file), 0, -4);
+                foreach ($files as $file){                    $key = substr(basename($file), 0, -4);
                     $array = yaml::load($file);
                     $array['#file'] = $file;
-
-                    if ($dir == 'mod'){                        $dir2 = basename(dirname($file));
-                        $dir3 = basename(dirname(dirname($file)));
-                        if (basename($file) == 'index.yml'){
-                            $key = $dir.'.'.$dir2;
-                        } elseif ($dir3 == $dir){                            $key = $dir.'.'.$dir2.'.'.$key;
-                        } else {
-                            $key = $dir.'.'.$key;
-                        }
-
-                        $array = array($key => $array);
-                    } elseif ($dir == 'lib'){
-                        $array = array($dir.'.'.$key => $array);
-                    } elseif ($dir == 'ext'){                        $array = array($key => $array);                    }
-
-                    $config = arr::merge($config, arr::assoc($array));
+                    $config = arr::merge($config, arr::assoc(array($key => $array)));
                     $config['#files'][] = $file;
                 }
 
@@ -150,7 +127,10 @@ class B {    static $path = '';
         $args = func_get_args();
 
         if (!func_num_args()){            return $config;
-        } elseif (func_num_args() == 1){            if (isset(self::$cache['config'][$args[0]]))
+        } elseif (func_num_args() == 1){
+            if (is_array($args[0]))
+                return $config = arr::merge($config, arr::assoc($args[0]));
+            if (isset(self::$cache['config'][$args[0]]))
                 return self::$cache['config'][$args[0]];
 
             $var = piles::varname($args[0], '$config');
@@ -205,16 +185,14 @@ class B {    static $path = '';
         }
         if (
             self::config($found = $string.'.'.self::$lang) or
-            self::config($found = $string.'.en')){
+            self::config($found = $string.'.en')
+        ){
             $result = $found;
         } else {
             $pos = array();
 
             for ($i = 0, $c = substr_count($string, '.'); $i < $c; $i++){
                 $pos[] = $tmp = strpos($string, '.', (end($pos) + 1));
-
-                if (!$i)
-                    continue;
 
                 if (
                     self::config($found = substr($string, 0, $tmp).'.'.self::$lang) or
@@ -233,12 +211,6 @@ class B {    static $path = '';
             return str::format(self::$cache['lang'][$string], $array);
 
         return self::$cache['lang'][$string];
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function is_windows(){
-        return (substr(PHP_OS, 0, 3) == 'WIN');
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -344,17 +316,17 @@ class B {    static $path = '';
 
         $files = array(
             str_replace('_', '/', $name),
-            substr($name, 0, strpos($name, '_')).'/'.substr($name, strpos($name, '_') + 1),
+            substr($name, 0, strpos($name, '_')).'/'.substr($name, (strpos($name, '_') + 1)),
             $name.'/'.$name,
             $name,
 
             str_replace('_', '/', $Name),
-            substr($Name, 0, strpos($Name, '_')).'/'.substr($Name, strpos($Name, '_') + 1),
+            substr($Name, 0, strpos($Name, '_')).'/'.substr($Name, (strpos($Name, '_') + 1)),
             $Name.'/'.$Name,
             $Name
         );
 
-        if ($prev = substr(str_replace($paths, '', dirname($prev)), 5))
+        if ($prev = str_replace($paths, '', dirname($prev)))
             $files = array_merge($files, array(
                 $prev.'/'.$files[0],
                 $prev.'/'.$files[1],
@@ -370,8 +342,9 @@ class B {    static $path = '';
         foreach ($paths as $path)
             foreach ($files as $file)
                 if (
-                    is_file($tmp = $path.'/lib/berry/'.$file.'.php') or
-                    is_file($tmp = $path.'/lib/'.$file.'.php')
+                    is_file($tmp = $path.'/berry/'.$file.'.php') or
+                    is_file($tmp = $path.'/lib/'.$file.'.php') or
+                    is_file($tmp = $path.'/'.$file.'.php')
                 ){                    if (in_array($tmp, self::$cache['autoload']))
                         return true;
 
@@ -389,39 +362,11 @@ class B {    static $path = '';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function load($name = '', $_ = array()){
-        $name = ($name ? $name : b::config('lib.b.load'));
-        $files = array(
-            str_replace('.', '/', $name),
-            str_replace('.', '/', substr($name, 0, strrpos($name, '.'))).strrchr($name, '.')
-        );
-
-        foreach ($files as $file)
-            if (
-                is_file(self::$cache['load'] = file::path('mod/'.$file.'.php')) or
-                is_file(self::$cache['load'] = file::path('mod/'.$file.'/index.php'))
-            ){
-                unset($name, $files, $file);
-                extract($_);
-                include_once self::$cache['load'];
-                return self::$cache['load'];
-            }
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function show($name = '', $_ = array()){
-        $name = ($name ? $name : b::config('lib.b.show'));
+    static function show($name, $_ = array()){
         $name = str_replace('.', '/', $name);
         $files = array(
-            'ext/'.$name,
-            'ext/'.$name.'/index',
-            'mod/'.$name,
-            'mod/'.$name.'/index',
-            'lib/berry/'.$name,
-            'lib/berry/'.$name.'/'.$name,
-            'lib/'.$name,
-            'lib/'.$name.'/'.$name
+            $name,
+            $name.'/'.$name
         );
 
         foreach ($files as $file)
@@ -445,34 +390,40 @@ class B {    static $path = '';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function router(){
-        $rules = self::config('lib.b.router');
+    static function router($array){
+        $q = b::q();
+        array_shift($q);
 
-        if (func_num_args()){
-            list($key, $array) = func_get_args();
+        for ($i = b::len($q); $i >= -1; $i--)
+            if (
+                ($class = $array[b::q(1, $i)]) or
+                ($i == -1 and $class = $array['home'])
+            ){
+                $q = array_slice($q, ($i == -1 ? 0 : $i));
 
-            if (preg_match_all('/\[([^\]]*)\]/', $rules[$key]['url'], $match)){
-                for ($i = 0, $c = self::len($match[0]); $i < $c; $i++)
-                    $match[1][$i] = $rules[$match[1][$i]]['url'];
+                if (is_callable($class)){
+                    echo call_user_func_array($class, $q);
+                    return true;
+                }
 
-                $rules[$key]['url'] = str_replace($match[0], $match[1], $rules[$key]['url']);
+                if (is_string($class) and class_exists($class, true))
+                    $class = new $class;
+                elseif (!is_object($class))
+                    return false;
+                    
+                if ($method = array_shift($q)){
+                    $method .= ($method[0] == '_' ? '?' : '');
+                } else {
+                    $method = 'index';
+                }
+
+                ob_start();
+                    call_user_func_array(array($class, $method), $q);
+                $class->body = ob_get_clean();
+
+                echo $class;
+                return true;
             }
-
-            return str::format($rules[$key]['url'], ($array ? $array : array()));
-        }
-
-        foreach ($rules as $k => $v){
-            if (preg_match_all('/\[([^\]]*)\]/', $v['re'], $match))
-                for ($i = 0, $c = self::len($match[0]); $i < $c; $i++)
-                    $rules[$k]['re'] = str_replace($match[0][$i], $rules[$match[1][$i]]['re'], $v['re']);
-        }
-
-        foreach ($rules as $rule)            self::$query = preg_replace('/^'.str_replace('/', '\/', trim($rule['re'], '/')).'$/i', $rule['route'], self::$query);
-
-        if (($url = parse_url(self::$query)) and $url['query']){
-            parse_str($url['query'], $query);
-            $_GET = array_merge($_GET, $query);
-        }
     }
 
 ////////////////////////////////////////////////////////////////////////////////

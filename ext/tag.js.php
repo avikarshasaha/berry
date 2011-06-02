@@ -12,7 +12,7 @@ function tag_js_calendar($attr){	static $calendar;
 	$attr = array_merge(array(
 	    'lang'   => 'ru',
 	    'style'  => 'style/system',
-	    'img'    => '~/tag/js_calendar/calendar.png',
+	    'img'    => '~/ext/tag/js_calendar/calendar.png',
 	    'format' => '%Y-%m-%d %H:%M:%S',
 	    'timeFormat' => 24,
 	    'showsTime'  => true,
@@ -22,7 +22,7 @@ function tag_js_calendar($attr){	static $calendar;
 	$md5 = md5(join('', $attr));
 
 	if (!$calendar[$md5])
-		$calendar[$md5] = new JS_Calendar('~/tag/js_calendar/', $attr['lang'], $attr['style'], true);
+		$calendar[$md5] = new JS_Calendar('~/ext/tag/js_calendar/', $attr['lang'], $attr['style'], true);
 
 	foreach ($attr as $k => $v)
 	    $calendar[$md5]->set_option($k, $v);
@@ -39,14 +39,14 @@ function tag_js_calendar($attr){	static $calendar;
 
 function tag_js_color_picker($attr){
 	$attr = array_merge(array(
-	    'img' => '~/tag/js_color_picker/color_picker.jpg',
+	    'img' => '~/ext/tag/js_color_picker/color_picker.jpg',
 	    'for' => ''
 	), $attr);
 
     html::block('head',
-    	html::css('~/tag/js_color_picker/js_color_picker_v2.css').
-    	html::js('~/tag/js_color_picker/color_functions.js').
-    	html::js('~/tag/js_color_picker/js_color_picker_v2.js')
+    	html::css('~/ext/tag/js_color_picker/js_color_picker_v2.css').
+    	html::js('~/ext/tag/js_color_picker/color_functions.js').
+    	html::js('~/ext/tag/js_color_picker/js_color_picker_v2.js')
     );
 	return str::format('
 	    <a href="#" onclick="showColorPicker(this, \'%for\'); return false;"><img align="middle" border="0" src="%img" /></a>

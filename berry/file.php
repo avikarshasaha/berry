@@ -17,11 +17,12 @@ class File {
                 return $file;
 
         return end($paths).'/'.$filename;
-    }
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 
     static function mkdir($path){
-        if (b::is_windows())
+        if (substr(PHP_OS, 0, 3) == 'WIN')
             $path = str_replace('/', '\\', $path);
 
         if (!$path)

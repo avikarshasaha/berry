@@ -30,7 +30,7 @@ function tag_img2($attr){    $attr = array_merge(array(
 
         $tmp = getimagesize($tmp);
         $attr['width'] = $tmp[0];
-        $attr['height'] = $tmp[1];        $attr['src'] = '~/'.$file[1].'/'.$file[2].'/'.$file[3].$query;
+        $attr['height'] = $tmp[1];        $attr['src'] = '~/ext/'.$file[1].'/'.$file[2].'/'.$file[3].$query;
 
         $image->close();
         return piles::fill('img', $attr);    }

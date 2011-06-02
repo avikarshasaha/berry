@@ -28,7 +28,7 @@ class Session {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function open($path, $name){        self::$config = b::config('lib.session');
+    static function open($path, $name){        self::$config = b::config('session');
         return true;
     }
 

@@ -43,10 +43,10 @@ function tag_zxchart($attr){    $titles = array('');
 	    'height' => 300
 	), $attr);
 
-	$attr['src'] .= '~/tag/zxchart/zxchart.swf';
+	$attr['src'] .= '~/ext/tag/zxchart/zxchart.swf';
 	$attr['src'] .= '?datafile='.$attr['file'];
 	$attr['src'] .= '&RefreshPeriod='.$attr['refresh'];
-	$attr['src'] .= '&stylefile=~/tag/zxchart/styles/'.$attr['style'].'.stl';
+	$attr['src'] .= '&stylefile=~/ext/tag/zxchart/styles/'.$attr['style'].'.stl';
 
 	if (!is_file($file = $dir.'/'.$key))
 	    file_put_contents($file, iconv('utf-8', 'cp1251', $data));
@@ -56,4 +56,4 @@ function tag_zxchart($attr){    $titles = array('');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-if (b::q(1, 2) == 'tag/zxchart')	exit(file_get_contents(file::path('tmp').'/tag/zxchart/'.b::q(3)));
+if (b::q(1, 2) == 'ext/tag/zxchart')	exit(file_get_contents(file::path('tmp').'/tag/zxchart/'.b::q(3)));

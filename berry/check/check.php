@@ -8,19 +8,27 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Check {
-    static $errors = array();
+    static $errors = array(); 
+    
+////////////////////////////////////////////////////////////////////////////////
+
+    static function is_valid($re, $data = array()){
+        $data = ($data ? $data : $_POST);
+        $error = false;
+        
+        foreach ($re as $k => $v){
+            $v = (array)$v;
+            
+            if (!self::_validate($k, $v[0], $data))
+                $error = true;
+        }
+
+        return !$error;
+    }    
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_valid($name, $re = array(), $data = '_post'){        if (is_array($name)){            foreach ($name as $k => $v){                $v = (array)$v;
-
-                if (!self::is_valid($k, $v[0], $re))
-                    $error = true;
-            }
-
-            return !$error;        }
-
-        $data = (!is_array($data) ? b::l($data) : $data);
+    protected static function _validate($name, $re, $data){
         $array = arr::flat($data);
         $name = piles::name2var($name);
         $value = $array[$name];
@@ -87,63 +95,6 @@ class Check {
         }
 
         return $params;    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function is_valid_session($array = null){        if (!is_array($array))
-            $array = b::l('_session'.($array ? '.'.$array : ''));
-
-        if ($array and $_SESSION['berry'])
-            return $array;
-
-        return array();
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function is_valid_get($array = null){
-        if (!is_array($array))
-            $array = b::l('_get'.($array ? '.'.$array : ''));
-
-        if (
-            $array and
-            //self::is_valid_session() and
-            (!self::$errors or !array_intersect_key(self::$errors, arr::flat($array)))
-        )
-            return $array;
-
-        return array();
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function is_valid_post($array = null){        if (!is_array($array))
-            $array = b::l('_post'.($array ? '.'.$array : ''));
-
-        if (
-            $array and
-            //self::is_valid_session() and
-            (!self::$errors or !array_intersect_key(self::$errors, arr::flat($array)))
-        )
-            return $array;
-
-        return array();
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function is_valid_files($array = null){        if (!is_array($array))
-            $array = b::l('_files'.($array ? '.'.$array : ''));
-
-        if ($array /*and self::is_valid_session()*/){            foreach (array_keys(arr::flat(arr::files($array))) as $k)
-                $files[substr($k, 0, strrpos($k, '.'))] = $k;
-
-            if (!self::$errors or !array_intersect_key(self::$errors, $files))
-                return $array;
-        }
-
-        return array();
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -9,7 +9,7 @@ class Inflector {
 
 	static function uncountable($string){
 		if (!isset(self::$uncountable)){
-			self::$uncountable = b::config('lib.inflector.uncountable');
+			self::$uncountable = b::config('inflector.uncountable');
 			self::$uncountable = array_combine(self::$uncountable, self::$uncountable);
 		}
 
@@ -30,7 +30,7 @@ class Inflector {
 			return self::$cache[$key] = $string;
 
 		if (!isset(self::$irregular))
-			self::$irregular = b::config('lib.inflector.irregular');
+			self::$irregular = b::config('inflector.irregular');
 
 		if ($irregular = array_search($string, self::$irregular))
 			$string = $irregular;
@@ -58,7 +58,7 @@ class Inflector {
 			return self::$cache[$key] = $string;
 
 		if (!isset(self::$irregular))
-			self::$irregular = b::config('lib.inflector.irregular');
+			self::$irregular = b::config('inflector.irregular');
 
 		if (isset(self::$irregular[$string]))
 			$string = self::$irregular[$string];

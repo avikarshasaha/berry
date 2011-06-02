@@ -157,7 +157,7 @@ class SQL_Query extends SQL_Etc {    protected $query;
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _placeholders($query){
-        return preg_replace_callback(b::config('lib.sql.placeholders'), array($this, '_placeholdersCallback'), $query);
+        return preg_replace_callback(b::config('sql.placeholders'), array($this, '_placeholdersCallback'), $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

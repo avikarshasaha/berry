@@ -11,7 +11,8 @@ class Date {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function now(){        return date('Y-m-d H:i:s');    }
+    static function now(){        return date('Y-m-d H:i:s');    }
+
 ////////////////////////////////////////////////////////////////////////////////
 
     static function format($format, $timestamp = 0){
@@ -36,7 +37,7 @@ class Date {
     static function ago($second, $len = 3, $plural = array()){        if (b::len($second) == 10 or !is_numeric($second))
             $second = (time() - self::time($second));
 
-        $plural = array_merge(b::lang('lib.date.ago'), array('separator' => ','), $plural);
+        $plural = array_merge(b::lang('date.ago'), array('separator' => ','), $plural);
         $period = array(
             'years'   => 31556926,
             'months'  => 2629743,
