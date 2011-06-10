@@ -92,7 +92,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                     $this->where($this->primary_key.' = ?d', $result[$this->alias][0]);
             }
 
-        if ($values){            if (!$this->where){                if (!$into = $this->into){                    $into = array_keys($values);
+        if ($values){
+            if (!$this->where){
+                if (!$into = $this->into){
+                    $into = array_keys($values);
                     $values = array(array_values($values));
                 }
 
@@ -103,13 +106,16 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                     $id = self::$connection['link']->lastInsertId();
                     $result[$this->alias][] = $id;
 
-                    if ($count > 1)                        foreach (range(($id + 1), ($id + $count - 1)) as $k => $v)
+                    if ($count > 1)
+                        foreach (range(($id + 1), ($id + $count - 1)) as $k => $v)
                             $result[$this->alias][] = (string)$v;
 
                     $key = self::hash('_get');
                     $this->id = self::$cache[$key][$this->primary_key] = $id;
                     $this->where($this->primary_key.' = ?d', $id);
-                } else {                    $result[$this->alias][] = $count;                }
+                } else {
+                    $result[$this->alias][] = $count;
+                }
             } else {
                 $args = array_merge(array($values), $this->placeholders);
                 $result[$this->alias][] = self::query($this->build('update'), $args)->exec();
@@ -199,7 +205,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         $this->build('select');
 
-        if ($multiple = array_unique($this->multiple)){            $class->select[] = $this->primary_key.' as __';
+        if ($multiple = array_unique($this->multiple)){
+            $class->select[] = $this->primary_key.' as __';
 
             foreach ($multiple as $k => $v){
                 $vars = self::vars(inflector::singular(end(explode('.', $v))));
@@ -219,7 +226,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
         $result = $repl = $values = array();
         $func = create_function('$a, $b', 'return (substr_count($a, ".") < substr_count($b, "."));');
 
-        foreach ($array as $row){            $i = $row['__'];
+        foreach ($array as $row){
+            $i = $row['__'];
             unset($row['__']);
 
             if (!isset($result[$i]))
@@ -229,20 +237,25 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                 if (substr($k, 0, 2) == '__'){
                     unset($row[$k]);
 
-                    if ($v !== null){                        $key = substr($k, 2);
+                    if ($v !== null){
+                        $key = substr($k, 2);
                         $repl[$key] = $key.'.'.$v;
                     }
-                } elseif ($v === null){                    unset($row[$k]);                }
+                } elseif ($v === null){
+                    unset($row[$k]);
+                }
 
             uasort($repl, $func);
 
-            foreach ($row as $k => $v){                $key = str_replace(array_keys($repl), array_values($repl), $k);
+            foreach ($row as $k => $v){
+                $key = str_replace(array_keys($repl), array_values($repl), $k);
                 $row[$key] = $v;
 
                 if (
                     ($pos = strrpos($k, '.')) and
                     isset($repl[$key = substr($k, 0, $pos)])
-                )                    unset($row[$k]);
+                )
+                    unset($row[$k]);
             }
 
             $result[$i] += $row;
@@ -319,7 +332,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function exists(){        if (!$this->where)
+    function exists(){
+        if (!$this->where)
             return;
 
         $class = self::table($this->alias);
@@ -340,7 +354,8 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function commit(){        if (!self::$connection['link']->commit())
+    function commit(){
+        if (!self::$connection['link']->commit())
             throw new SQL_Except;
     }
 

@@ -155,6 +155,7 @@ abstract class SQL_Build_Base extends SQL_Etc {
                                     array($local['alias'], $local['field']),
                                 ')'
                             ));
+
                             if ($relation['type'] == 'has_and_belongs_to_many'){
                                 $table2 = $foreign['table2'];
 
