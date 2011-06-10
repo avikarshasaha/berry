@@ -170,15 +170,16 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch(){
-        if (!$this->select)
-            $this->select[] = '*';
-
-        $query = $this->build('select');
         $self = clone $this;
 
-        if ($this->multiple and !$this->group_by and ($this->limit or $this->where)){
-            $class = clone $this;
-            $class->select = $class->group_by = array($this->primary_key);
+        if (!$self->select)
+            $self->select('*');
+
+        $query = $self->build('select');
+
+        if ($self->multiple and !$self->group_by and ($self->limit or $self->where)){
+            $class = clone $self;
+            $class->select = $class->group_by = array($self->primary_key);
             $class->join = array();
 
             if (!$ids = $class->query($class->build('select'))->fetch_col())
@@ -188,7 +189,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $self->having = array();
             $self->limit = $self->offset = 0;
 
-            $self->where_between($this->primary_key, $ids);
+            $self->where_between($self->primary_key, $ids);
             $query = $self->build('select');
         }
 
@@ -200,13 +201,13 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function fetch_array(){
         $class = clone $this;
 
-        if (!$this->select)
-            $class->select[] = '*';
+        if (!$class->select)
+            $class->select('*');
 
-        $this->build('select');
+        $class->build('select');
 
-        if ($multiple = array_unique($this->multiple)){
-            $class->select[] = $this->primary_key.' as __';
+        if ($multiple = array_unique($class->multiple)){
+            $class->select[] = $class->primary_key.' as __';
 
             foreach ($multiple as $k => $v){
                 $vars = self::vars(inflector::singular(end(explode('.', $v))));
@@ -220,7 +221,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         if (!$multiple){
             $result = arr::assoc($array);
-            return ($this->id ? $result[0] : $result);
+            return ($class->id ? $result[0] : $result);
         }
 
         $result = $repl = $values = array();
@@ -263,7 +264,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
         $result = self::_fetch_array(arr::assoc($result));
         $result = array_values($result);
-        return ($this->id ? $result[0] : $result);
+        return ($class->id ? $result[0] : $result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -364,7 +365,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function rollback(){
         return self::$connection['link']->rollback();
     }
-    
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function find($where = null){
@@ -373,24 +374,24 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $class = new $class;
             return $class->find($where);
         }
-        
+
         if (is_numeric($where))
             $this->where($this->primary_key.' = ?', $where);
-        
+
         if (is_array($where))
-            foreach ($where as $k => $v){                                        
+            foreach ($where as $k => $v){
                 if (is_int($k) and is_array($v)){
                     $keys = array_keys($v);
                     $args = array_values($v);
-                                        
+
                     foreach ($keys as $i => $key)
                         if (!strpos($key, '?'))
                             $keys[$i] .= ' = ?';
 
-                    array_unshift($args, $keys);                    
+                    array_unshift($args, $keys);
                     call_user_func_array(array($this, 'where'), $args);
                 } elseif (is_int($k)){
-                    $this->where($v);             
+                    $this->where($v);
                 } else {
                     if (!strpos($k, '?'))
                         $k .= ' = ?';
@@ -398,43 +399,54 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                     $this->where($k, $v);
                 }
             }
-                
+
         return $this;
     }
-    
+
 ////////////////////////////////////////////////////////////////////////////////
 
-    function find_one($where = null){ 
-        if ($result = self::find($where)->limit(1)->fetch_array())
-            $result = $result[0];
-            
-        return $result;
+    function find_one($where = null){
+        if (!$this or !$this instanceof SQL)
+            $class = get_called_class();
+        else
+            $class = $this;
+
+        $class = new $class;
+        $result = $class->limit(1)->find_all($where);
+
+        return ($result ? $result[0] : $result);
     }
-    
+
 ////////////////////////////////////////////////////////////////////////////////
 
-    function find_all($where = null){            
-        return self::find($where)->fetch_array();
-    }   
-    
+    function find_all($where = null){
+        if (!$this or !$this instanceof SQL)
+            $class = get_called_class();
+        else
+            $class = $this;
+
+        $class = new $class;
+        return $class->find($where)->fetch_array();
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function with($select){
         foreach ((array)$select as $v)
             $this->select($v);
-    
+
         return $this;
-    }         
-    
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function sort($order_by = null){
         if (!$order_by)
             $order_by = $this->primary_key;
-        
+
         foreach((array)$order_by as $v)
             $this->order_by($v);
-            
+
         return $this;
     }
 
