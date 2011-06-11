@@ -406,26 +406,27 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function find_one($where = null){
-        if (!$this or !$this instanceof SQL)
+        if (!$this or !$this instanceof SQL){
             $class = get_called_class();
-        else
-            $class = $this;
+            $class = new $class;
+        } else {
+            $class = clone $this;
+        }
 
-        $class = new $class;
         $result = $class->limit(1)->find_all($where);
-
         return ($result ? $result[0] : $result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function find_all($where = null){
-        if (!$this or !$this instanceof SQL)
+        if (!$this or !$this instanceof SQL){
             $class = get_called_class();
-        else
-            $class = $this;
+            $class = new $class;
+        } else {
+            $class = clone $this;
+        }
 
-        $class = new $class;
         return $class->find($where)->fetch_array();
     }
 
