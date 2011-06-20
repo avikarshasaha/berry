@@ -368,15 +368,20 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function find($where = null){
+    function find($where = null, $placeholders = array()){
         if (!$this or !$this instanceof SQL){
             $class = get_called_class();
             $class = new $class;
-            return $class->find($where);
+            return $class->find($where, $placeholders);
         }
 
         if (is_numeric($where))
             $this->where($this->primary_key.' = ?', $where);
+
+        if (is_string($where)){
+            array_unshift($placeholders, $where);
+            call_user_func_array(array($this, 'where'), $placeholders);
+        }
 
         if (is_array($where))
             foreach ($where as $k => $v){
@@ -405,7 +410,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function find_one($where = null){
+    function find_one($where = null, $placeholders = array()){
         if (!$this or !$this instanceof SQL){
             $class = get_called_class();
             $class = new $class;
@@ -413,13 +418,13 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $class = clone $this;
         }
 
-        $result = $class->limit(1)->find_all($where);
+        $result = $class->limit(1)->find_all($where, $placeholders);
         return ($result ? $result[0] : $result);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function find_all($where = null){
+    function find_all($where = null, $placeholders = array()){
         if (!$this or !$this instanceof SQL){
             $class = get_called_class();
             $class = new $class;
@@ -427,7 +432,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $class = clone $this;
         }
 
-        return $class->find($where)->fetch_array();
+        return $class->find($where, $placeholders)->fetch_array();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
