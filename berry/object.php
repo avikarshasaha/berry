@@ -11,8 +11,10 @@ class Object implements ArrayAccess, Countable, Iterator {    protected $scope 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($scope = array()){        if ($scope)
-            $this->scope = $scope;    }
+    function __construct($scope = array()){
+        if ($scope)
+            $this->scope = $scope;
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
