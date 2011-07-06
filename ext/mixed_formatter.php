@@ -9,7 +9,7 @@
                                                                    \/|*/
 function tag_formatter($attr){
     foreach ($attr as $k => $v)
-        if ($k[0] != '#' and b::function_exists($func = 'formatter_'.$k))
+        if ($k == $v and b::function_exists($func = 'formatter_'.$v))
             $attr['#text'] = b::call($func, $attr['#text']);
 
     return $attr['#text'];
