@@ -121,21 +121,6 @@ function _tag_toc($items, $tag){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function tag_formatter($attr){
-	$format = strtolower($attr['format']);
-
-    if ($format == 'text+br')
-      $attr['#text'] = nl2br(str::unhtml($attr['#text']));
-    elseif ($format == 'text')
-      $attr['#text'] = str::unhtml($attr['#text']);
-	elseif ($format == 'html+br')
-      $attr['#text'] = nl2br($attr['#text']);
-
-    return $attr['#text'];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 function tag_typo($attr){
     $attr = array_merge(array(
         'lang' => b::$lang
