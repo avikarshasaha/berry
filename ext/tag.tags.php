@@ -7,7 +7,11 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function tag_msg($attr){	if ($attr['#text']){		html::msg($attr['id'], $attr['#text']);		return;	}
+function tag_msg($attr){
+	if ($attr['#text']){
+		html::msg($attr['id'], $attr['#text']);
+		return;
+	}
 
 	if ($messages = html::msg($attr['id']))
         return piles::show('ext.tag.msg.'.$attr['id'], compact('messages'));
@@ -21,8 +25,11 @@ function tag_block($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function tag_quote($attr){	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote';
-	if ($attr['cite']){	    $pos = strpos($attr['cite'], 'http://');
+function tag_quote($attr){
+	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote';
+
+	if ($attr['cite']){
+	    $pos = strpos($attr['cite'], 'http://');
 	    $href = substr($attr['cite'], $pos);
 	    $text = substr($attr['cite'], 0, $pos);
 	    $text = ($text ? $text : $href);
@@ -50,11 +57,16 @@ function tag_group($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function tag_toc($attr){    $ref = '';
+function tag_toc($attr){
+    $ref = '';
     $string = '<a name="%s"></a><a href="#%s">%s</a>';
-    if (preg_match_all('/<ref>(.*?)<\/ref>/i', $attr['#text'], $match)){
-        for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){            $id = 'ref-'.($i + 1);            $ref[] = sprintf($string, $id, '_'.$id, '↑').' '.$match[1][$i];
-            $attr['#text'] = str_replace($match[0][$i], sprintf($string, '_'.$id, $id, '<sup>[?]</sup>'), $attr['#text']);        }
+
+    if (preg_match_all('/<ref>(.*?)<\/ref>/i', $attr['#text'], $match)){
+        for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){
+            $id = 'ref-'.($i + 1);
+            $ref[] = sprintf($string, $id, '_'.$id, '↑').' '.$match[1][$i];
+            $attr['#text'] = str_replace($match[0][$i], sprintf($string, '_'.$id, $id, '<sup>[?]</sup>'), $attr['#text']);
+        }
 
         if ($ref)
             $ref = '<li>'.join('</li><li>', $ref).'</li>';
@@ -63,7 +75,7 @@ function tag_toc($attr){    $ref = '';
     $toc = array('*' => '', '#' => '');
     $result = array();
     $last = 0;
-    $string = '';
+    $string = '';
     if (preg_match_all('/<h(\d+)( (.*?))?>(.*)<\/h\\1>/i', $attr['#text'], $match)){
         for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){
         	preg_match('/ id=("|\')(.*?)\\1/', $match[2][$i], $id);
@@ -81,8 +93,10 @@ function tag_toc($attr){    $ref = '';
         	$last = $match[1][$i];
         }
 
-        if ($result){            $result = arr::assoc($result);
-            if (strpos($attr['#text'], '%toc.*') !== false)
+        if ($result){
+            $result = arr::assoc($result);
+
+            if (strpos($attr['#text'], '%toc.*') !== false)
                 $toc['*'] = _tag_toc($result, 'ul');
 
             if (strpos($attr['#text'], '%toc.#') !== false)
@@ -95,12 +109,15 @@ function tag_toc($attr){    $ref = '';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function _tag_toc($items, $tag){    foreach ($items as $item)        if (is_array($item))
+function _tag_toc($items, $tag){
+    foreach ($items as $item)
+        if (is_array($item))
             $result .= '<'.$tag.'>'._tag_toc($item, $tag).'</'.$tag.'>';
         else
             $result .= '<li>'.$item.'</li>';
 
-    return $result;}
+    return $result;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -113,6 +130,19 @@ function tag_formatter($attr){
       $attr['#text'] = str::unhtml($attr['#text']);
 	elseif ($format == 'html+br')
       $attr['#text'] = nl2br($attr['#text']);
+
+    return $attr['#text'];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function tag_typo($attr){
+    $attr = array_merge(array(
+        'lang' => b::$lang
+    ), $attr);
+
+    if (b::function_exists($func = 'typo_'.$attr['lang']))
+        $attr['#text'] = b::call($func, $attr['#text']);
 
     return $attr['#text'];
 }

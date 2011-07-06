@@ -7,12 +7,6 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function tag_typo_ru($attr){
-    return typo_ru($attr['#text']);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 function typo_ru($content, $skip = array()){    $skip = array_merge(array('code', 'script', 'style', 'notypo'), $skip);    $replace = array(
         'string' => array(
             '(c)'  => '©',
