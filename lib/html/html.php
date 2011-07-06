@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class HTML {
+class HTML {
+
 ////////////////////////////////////////////////////////////////////////////////
 
     static function block($key, $value = null, $sort = 50){
@@ -98,7 +99,7 @@ class HTML {
 
         if (strtolower(substr($text, -4)) != '.css' or strpos($text, "\n")){
             $attr['#text'] = $text;
-            return tags::fill('style', $attr);
+            return piles::fill('style', $attr);
         }
 
         $attr['href'] = $text;
@@ -133,7 +134,7 @@ class HTML {
             if (!$level = substr_count($left, '>'))
                 $level = substr_count($left, '&gt;');
 
-            $result[] = ($level ? '<span class="'.$class.'_'.$level.'">'.$line.'</span>' : $line);
+            $result[] = ($level ? '<span class="'.$class.'-'.$level.'">'.$line.'</span>' : $line);
         }
 
         return join("\r\n", $result);
