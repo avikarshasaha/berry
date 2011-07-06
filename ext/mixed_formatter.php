@@ -8,8 +8,6 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 function tag_formatter($attr){
-	$format = strtolower($attr['format']);
-
     foreach ($attr as $k => $v)
         if ($k[0] != '#' and b::function_exists($func = 'formatter_'.$k))
             $attr['#text'] = b::call($func, $attr['#text']);
