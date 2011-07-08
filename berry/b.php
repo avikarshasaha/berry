@@ -7,15 +7,18 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class B {    static $path;
+class B {
+    static $path;
     static $lang;
     static $query;
     protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function version($what = ''){        $version = array('name' => 'Holly', 'id' => '1.0.dev');
-        return ($what ? $version[$what] : $version);    }
+    static function version($what = ''){
+        $version = array('name' => 'Holly', 'id' => '1.0.dev');
+        return ($what ? $version[$what] : $version);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,21 +32,22 @@ class B {    static $path;
         $uri = parse_url($uri);
         $len = self::len(dirname($_SERVER['PHP_SELF']));
         $query = substr($uri['path'], ($len - 1));
-        
+
         $config = array_merge(array(
             'path' => './',
             'lang' => strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2)),
             'query' => ($query ? trim($query, '/') : 'home')
-        ), $config);        
+        ), $config);
 
         self::$cache['stat'] = microtime(true);
         self::$path = $config['path'].';'.realpath(dirname(__file__).'/..');
         self::$lang = $config['lang'];
         self::$query = $config['query'];
 
-        spl_autoload_register(array('self', 'autoload'));      
+        spl_autoload_register(array('self', 'autoload'));
     }
-////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 
     static function q($i = '', $c = '', $s = '/'){
         if (!isset(self::$cache['q'][self::$query])){
@@ -83,7 +87,8 @@ class B {    static $path;
         $args = func_get_args();
         $var = piles::varname($args[0], '$GLOBALS');
 
-        if (func_num_args() == 1){            if ($func = create_function('', 'if (isset('.$var.')) return '.$var.';'))
+        if (func_num_args() == 1){
+            if ($func = create_function('', 'if (isset('.$var.')) return '.$var.';'))
                 return $func();
         } else {
             if ($func = create_function('$def', 'return '.$var.' = $def;'))
@@ -102,18 +107,23 @@ class B {    static $path;
     static function config(){
         static $config;
 
-        if (!$config){            $files = array();
-            
+        if (!$config){
+            $files = array();
+
             if ($config = cache::get('b/config.php'))
                 $files = $config['#files'];
-            if (!$config = cache::get('b/config.php', array('file' => $files))){                $files = array();
-                foreach (array_reverse(explode(';', self::$path)) as $dir){
-                    if (is_dir($dir))    
+
+            if (!$config = cache::get('b/config.php', array('file' => $files))){
+                $files = array();
+
+                foreach (array_reverse(explode(';', self::$path)) as $dir){
+                    if (is_dir($dir))
                         foreach (file::dir($dir, '/\.yml$/i') as $file => $info)
                             $files[] = $file;
                 }
 
-                foreach ($files as $file){                    $key = substr(basename($file), 0, -4);
+                foreach ($files as $file){
+                    $key = substr(basename($file), 0, -4);
                     $array = yaml::load($file);
                     $array['#file'] = $file;
                     $config = arr::merge($config, arr::assoc(array($key => $array)));
@@ -126,30 +136,37 @@ class B {    static $path;
 
         $args = func_get_args();
 
-        if (!func_num_args()){            return $config;
+        if (!func_num_args()){
+            return $config;
         } elseif (func_num_args() == 1){
             if (is_array($args[0]))
                 return $config = arr::merge($config, arr::assoc($args[0]));
-            if (isset(self::$cache['config'][$args[0]]))
+
+            if (isset(self::$cache['config'][$args[0]]))
                 return self::$cache['config'][$args[0]];
 
             $var = piles::varname($args[0], '$config');
 
             if ($func = create_function('$config', 'if (isset('.$var.')) return '.$var.';'))
                 return self::$cache['config'][$args[0]] = $func($config);
-        } else {            $array = explode('.', str_replace('\.', piles::char('.'), $args[0]));
+        } else {
+            $array = explode('.', str_replace('\.', piles::char('.'), $args[0]));
 
-            for ($i = 0, $c = self::len($array); $i < $c; $i++){                $section = join('.', $array);
+            for ($i = 0, $c = self::len($array); $i < $c; $i++){
+                $section = join('.', $array);
                 $var = piles::varname($section, '$config');
                 $tmp = 'if (is_array('.$var.') and isset('.$var.'["#file"])) return '.$var.';';
 
                 if (
                     ($func = create_function('$config', $tmp)) and
                     ($tmp = $func($config))
-                ){                    $data = $tmp;
+                ){
+                    $data = $tmp;
                     break;
                 }
-                array_pop($array);            }
+
+                array_pop($array);
+            }
 
             if (!$data)
                 return;
@@ -177,32 +194,20 @@ class B {    static $path;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function lang($string, $array = array()){        if (isset(self::$cache['lang'][$string])){
+    static function lang($string, $array = array()){
+        if (isset(self::$cache['lang'][$string])){
             if (!is_array(self::$cache['lang'][$string]))
                 return str::format(self::$cache['lang'][$string], $array);
 
             return self::$cache['lang'][$string];
         }
-        if (
-            self::config($found = $string.'.'.self::$lang) or
-            self::config($found = $string.'.en')
-        ){
+
+        if (self::config($found = self::$lang.'.'.$string))
             $result = $found;
-        } else {
-            $pos = array();
-
-            for ($i = 0, $c = substr_count($string, '.'); $i < $c; $i++){
-                $pos[] = $tmp = strpos($string, '.', (end($pos) + 1));
-
-                if (
-                    self::config($found = substr($string, 0, $tmp).'.'.self::$lang) or
-                    self::config($found = substr($string, 0, $tmp).'.en')
-                ){
-                    $result = $found.substr($string, $tmp);
-                    break;
-                }
-            }
-        }
+        elseif (self::config($found = $string.'.'.self::$lang))
+            $result = $found;
+        elseif (self::config($found = $string))
+            $result = $found;
 
         if (!$result)
             return;
@@ -215,24 +220,32 @@ class B {    static $path;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function call(){        static $call;
+    static function call(){
+        static $call;
 
         $args = func_get_args();
         $name = array_shift($args);
 
-        if (!is_array($name) and ($name = trim($name)) and $name[0] == '*'){            $name = substr($name, 1);
-            $args = $args[0];        }
+        if (!is_array($name) and ($name = trim($name)) and $name[0] == '*'){
+            $name = substr($name, 1);
+            $args = $args[0];
+        }
 
-        if (!$call){            $dirs = array();
+        if (!$call){
+            $dirs = array();
 
             foreach (array_reverse(explode(';', self::$path)) as $path)
                 $dirs[] = $path.'/ext';
-            if (!$call = cache::get('b/call.php', array('file' => $dirs))){                $files = array();
+
+            if (!$call = cache::get('b/call.php', array('file' => $dirs))){
+                $files = array();
 
                 foreach ($dirs as $dir)
                     $files = array_merge($files, file::glob($dir.'/*.php'));
 
-                foreach ($files as $k => $v)                    foreach (token_get_all(file_get_contents($v)) as $token){                        if ($token[0] == T_CLASS)
+                foreach ($files as $k => $v)
+                    foreach (token_get_all(file_get_contents($v)) as $token){
+                        if ($token[0] == T_CLASS)
                             break;
 
                         if ($token[0] == T_FUNCTION)
@@ -245,12 +258,16 @@ class B {    static $path;
                     }
 
                 cache::set($call);
-            }        }
+            }
+        }
 
-        if (!is_array($name)){            if ($file = $call[$name]){                if (!function_exists($name))
+        if (!is_array($name)){
+            if ($file = $call[$name]){
+                if (!function_exists($name))
                     include $file;
 
-                return call_user_func_array($name, $args);            }
+                return call_user_func_array($name, $args);
+            }
 
             if (strpos($name, '::'))
                 $name = explode('::', $name);
@@ -345,7 +362,8 @@ class B {    static $path;
                     is_file($tmp = $path.'/berry/'.$file.'.php') or
                     is_file($tmp = $path.'/lib/'.$file.'.php') or
                     is_file($tmp = $path.'/'.$file.'.php')
-                ){                    if (in_array($tmp, self::$cache['autoload']))
+                ){
+                    if (in_array($tmp, self::$cache['autoload']))
                         return true;
 
                     include self::$cache['autoload'][$name] = $prev = $tmp;
@@ -410,7 +428,7 @@ class B {    static $path;
                     $class = new $class;
                 elseif (!is_object($class))
                     return false;
-                    
+
                 if ($method = array_shift($q)){
                     $method .= ($method[0] == '_' ? '?' : '');
                 } else {
@@ -428,7 +446,8 @@ class B {    static $path;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function stat($what = ''){        $stat = array(
+    static function stat($what = ''){
+        $stat = array(
             'pgt' => (microtime(true) - self::$cache['stat']),
             'sql' => self::call('sql::stat'),
             'piles' => self::call('piles::stat'),
@@ -448,7 +467,8 @@ class B {    static $path;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function references(){        $paths = explode(';', self::$path);
+    static function references(){
+        $paths = explode(';', self::$path);
         $dir = end($paths).'/lib';
         $result = array();
 
@@ -479,7 +499,8 @@ class B {    static $path;
                 else
                     $array[$k] = trim($v);
 
-            if ($array){                $file = substr($file, (self::len($dir) + 1));
+            if ($array){
+                $file = substr($file, (self::len($dir) + 1));
                 $result[$file.': '.$class] = array_values($array);
             }
         }
@@ -489,4 +510,5 @@ class B {    static $path;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+}

@@ -1,5 +1,15 @@
-ru:
-    ago:
+ago:
+    seconds: second/seconds/seconds
+    minutes: minute/minutes/minutes
+    hours: hour/hours/hours
+    days: day/days/days
+    weeks: week/weeks/weeks
+    months: month/months/months
+    years: year/years/years
+    ago: ago
+    and: and
+
+    ru:
         seconds: секунду/секунды/секунд
         minutes: минуту/минуты/минут
         hours: час/часа/часов
@@ -9,15 +19,3 @@ ru:
         years: год/года/лет
         ago: назад
         and: и
-
-en:
-    ago:
-        seconds: second/seconds/seconds
-        minutes: minute/minutes/minutes
-        hours: hour/hours/hours
-        days: day/days/days
-        weeks: week/weeks/weeks
-        months: month/months/months
-        years: year/years/years
-        ago: ago
-        and: and
