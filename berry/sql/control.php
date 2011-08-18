@@ -399,7 +399,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                     $this->where($v);
                 } else {
                     if (!strpos($k, '?'))
-                        $k .= ' = ?';
+                        $k .= (is_array($v) ? ' in (?)' : ' = ?');
 
                     $this->where($k, $v);
                 }
