@@ -368,19 +368,15 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function find($where = null, $placeholders = array()){
-        if (!$this or !$this instanceof SQL){
-            $class = get_called_class();
-            $class = new $class;
-            return $class->find($where, $placeholders);
-        }
+    static function find($where = null, $placeholders = array()){
+        $class = self::table(get_called_class());
 
         if (is_numeric($where))
-            $this->where($this->primary_key.' = ?', $where);
+            $class->where($class->primary_key.' = ?', $where);
 
         if (is_string($where)){
             array_unshift($placeholders, $where);
-            call_user_func_array(array($this, 'where'), $placeholders);
+            call_user_func_array(array($class, 'where'), $placeholders);
         }
 
         if (is_array($where))
@@ -394,45 +390,18 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                             $keys[$i] .= ' = ?';
 
                     array_unshift($args, $keys);
-                    call_user_func_array(array($this, 'where'), $args);
+                    call_user_func_array(array($class, 'where'), $args);
                 } elseif (is_int($k)){
-                    $this->where($v);
+                    $class->where($v);
                 } else {
                     if (!strpos($k, '?'))
                         $k .= (is_array($v) ? ' in (?)' : ' = ?');
 
-                    $this->where($k, $v);
+                    $class->where($k, $v);
                 }
             }
 
-        return $this;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function find_one($where = null, $placeholders = array()){
-        if (!$this or !$this instanceof SQL){
-            $class = get_called_class();
-            $class = new $class;
-        } else {
-            $class = clone $this;
-        }
-
-        $result = $class->limit(1)->find_all($where, $placeholders);
-        return ($result ? $result[0] : $result);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function find_all($where = null, $placeholders = array()){
-        if (!$this or !$this instanceof SQL){
-            $class = get_called_class();
-            $class = new $class;
-        } else {
-            $class = clone $this;
-        }
-
-        return $class->find($where, $placeholders)->fetch_array();
+        return $class;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -466,12 +435,6 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
             $this->group_by($v);
 
         return $this;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    function __invoke($one = false){
-        return ($one ? self::find_one() : self::find_all());
     }
 
 ////////////////////////////////////////////////////////////////////////////////
