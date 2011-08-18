@@ -201,12 +201,6 @@ abstract class SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function hash($prefix = ''){
-        return $this->alias.'::'.$prefix.'['.spl_object_hash($this).']';
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     protected static function connect($array){
         $array = array_merge(array(
             'driver' => 'mysql'
@@ -244,6 +238,12 @@ abstract class SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    protected function hash($prefix = ''){
+        return $this->alias.'::'.$prefix.'['.spl_object_hash($this).']';
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     protected function vars($table){
         static $cache = array();
 
@@ -258,7 +258,52 @@ abstract class SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function relations($table1, $type, $table2){
+    protected function deep_throat($class, $parent = '', $main = '', $result = array()){
+        if (is_array($class))
+            list($class, $vars) = array(key($class), reset($class));
+
+        $current = inflector::singular(substr($parent, strrpos($parent, '.')));
+        $parent .= ($parent ? '.' : '');
+        $main = ($main ? $main : $class);
+        $vars = ($vars ? $vars : self::vars($class));
+
+        foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
+            foreach ((array)$vars[$has] as $key => $table){
+                if ($table == $main)
+                    continue;
+
+                $relation = self::relations($class, $has, array($key => $table));
+                $local = &$relation['local'];
+                $foreign = &$relation['foreign'];
+
+                if ($foreign['alias1']){
+                    $alias = $foreign['alias2'];
+                    $foreign['alias1'] = $parent.$foreign['alias1'];
+                    $foreign['alias2'] = $parent.$foreign['alias2'];
+                } else {
+                    $alias = $foreign['alias'];
+                    $foreign['alias'] = $parent.$foreign['alias'];
+                }
+
+                $tmp = inflector::tableize($local['alias']);
+
+                if ($parent and ($relation['type'] == 'has_many' or strpos($parent, $tmp.'.') !== false))
+                    $local['alias'] = $tmp;
+
+                $table = inflector::singular($alias);
+                $alias = $parent.$alias;
+                $result[$alias] = $relation;
+
+                if ($class != $current)
+                    $result = array_merge($result, self::deep_throat($table, $alias, $main, $result));
+            }
+
+        return $result;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function relations($table1, $type, $table2){
         if (is_array($table2)){
             $key = key($table2);
 
@@ -323,51 +368,6 @@ abstract class SQL_Etc {
         }
 
         return compact('local', 'type', 'foreign', 'table');
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function deep_throat($class, $parent = '', $main = '', $result = array()){
-        if (is_array($class))
-            list($class, $vars) = array(key($class), reset($class));
-
-        $current = inflector::singular(substr($parent, strrpos($parent, '.')));
-        $parent .= ($parent ? '.' : '');
-        $main = ($main ? $main : $class);
-        $vars = ($vars ? $vars : self::vars($class));
-
-        foreach (array('has_one', 'belongs_to', 'has_many', 'has_and_belongs_to_many') as $has)
-            foreach ((array)$vars[$has] as $key => $table){
-                if ($table == $main)
-                    continue;
-
-                $relation = self::relations($class, $has, array($key => $table));
-                $local = &$relation['local'];
-                $foreign = &$relation['foreign'];
-
-                if ($foreign['alias1']){
-                    $alias = $foreign['alias2'];
-                    $foreign['alias1'] = $parent.$foreign['alias1'];
-                    $foreign['alias2'] = $parent.$foreign['alias2'];
-                } else {
-                    $alias = $foreign['alias'];
-                    $foreign['alias'] = $parent.$foreign['alias'];
-                }
-
-                $tmp = inflector::tableize($local['alias']);
-
-                if ($parent and ($relation['type'] == 'has_many' or strpos($parent, $tmp.'.') !== false))
-                    $local['alias'] = $tmp;
-
-                $table = inflector::singular($alias);
-                $alias = $parent.$alias;
-                $result[$alias] = $relation;
-
-                if ($class != $current)
-                    $result = array_merge($result, self::deep_throat($table, $alias, $main, $result));
-            }
-
-        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
