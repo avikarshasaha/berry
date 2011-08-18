@@ -34,7 +34,7 @@ class B {
         $query = substr($uri['path'], ($len - 1));
 
         $config = array_merge(array(
-            'path' => './',
+            'path' => '.',
             'lang' => strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2)),
             'query' => ($query ? trim($query, '/') : 'home')
         ), $config);
@@ -344,17 +344,8 @@ class B {
         );
 
         if ($prev = str_replace($paths, '', dirname($prev)))
-            $files = array_merge($files, array(
-                $prev.'/'.$files[0],
-                $prev.'/'.$files[1],
-                $prev.'/'.$name.'/'.$name,
-                $prev.'/'.$name,
-
-                $prev.'/'.$files[4],
-                $prev.'/'.$files[5],
-                $prev.'/'.$Name.'/'.$Name,
-                $prev.'/'.$Name
-            ));
+            foreach ($files as $file)
+                $files[] = $prev.'/'.$file;
 
         foreach ($paths as $path)
             foreach ($files as $file)
