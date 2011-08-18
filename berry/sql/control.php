@@ -458,4 +458,16 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function group($group_by = null){
+        if (!$group_by)
+            $group_by = $this->primary_key;
+
+        foreach((array)$group_by as $v)
+            $this->group_by($v);
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
 }
