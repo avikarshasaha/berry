@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class SQL_Etc {    protected $id;
+abstract class SQL_Etc {
+    protected $id;
     protected $table;
     protected $alias;
 
@@ -49,10 +50,13 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init($dsn){        if (isset($dsn['database'])){            self::$connection = self::connect($dsn);
+    static function init($dsn){
+        if (isset($dsn['database'])){
+            self::$connection = self::connect($dsn);
             return;
         }
-        self::$connections += $dsn;
+
+        self::$connections += $dsn;
         self::$connection = self::connect(current($dsn));
         self::$connections[key($dsn)] = self::$connection;
 
@@ -61,26 +65,34 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function using($key = ''){        static $last;
+    static function using($key = ''){
+        static $last;
 
         if (!$last)
             $last = key(self::$connections);
-        if (!$key or !isset(self::$connections[$key]))
+
+        if (!$key or !isset(self::$connections[$key]))
             return $last;
 
         $dsn = self::$connections[$key];
-        if (is_object($dsn['link'])){            self::$connection = $dsn;
-        } elseif (is_array($dsn)){            self::$connection = self::connect($dsn);            self::$connections[$key] = self::$connection;
+
+        if (is_object($dsn['link'])){
+            self::$connection = $dsn;
+        } elseif (is_array($dsn)){
+            self::$connection = self::connect($dsn);
+            self::$connections[$key] = self::$connection;
         }
 
         $current = $last;
         $last = $key;
 
-        return $current;    }
+        return $current;
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function table($table, $id = 0){        if (
+    static function table($table, $id = 0){
+        if (
             $class = $table and
             (class_exists($class, true) or class_exists($class = $class.'_sql', true)) and
             is_subclass_of($class, 'SQL')
@@ -99,11 +111,13 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function query($query, $placeholders = null){        if ($placeholders === null and $this)
+    function query($query, $placeholders = null){
+        if ($placeholders === null and $this)
             $placeholders = $this->placeholders;
         elseif (!is_array($placeholders) or func_num_args() > 2)
             $placeholders = array_slice(func_get_args(), 1);
-        return new SQL_Query($query, ($placeholders ? $placeholders : array()));
+
+        return new SQL_Query($query, ($placeholders ? $placeholders : array()));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,13 +128,16 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function last_id($table = ''){        return $this->build('last_id', ((!$table and $this) ? $this->table : $table));
+    function last_id($table = ''){
+        return $this->build('last_id', ((!$table and $this) ? $this->table : $table));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function last_error($what = ''){        $error = self::$connection['link']->errorInfo();
-        if (!isset($error[1]))
+    static function last_error($what = ''){
+        $error = self::$connection['link']->errorInfo();
+
+        if (!isset($error[1]))
             return array();
 
         $error = array('code' => $error[1], 'string' => $error[2]);
@@ -129,22 +146,27 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function stat($what = ''){        if (!self::$connection)
+    static function stat($what = ''){
+        if (!self::$connection)
             return array('time' => 0, 'count' => 0);
-        $stat = self::$cache['stat'];
+
+        $stat = self::$cache['stat'];
 	    return ($what ? $stat[$what] : $stat);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function logger($func){        if (is_callable($func)){            self::$cache['logger'] = $func;
+    static function logger($func){
+        if (is_callable($func)){
+            self::$cache['logger'] = $func;
 	        return true;
 	    }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function schema($table = ''){        if (!$table and $this){
+    function schema($table = ''){
+        if (!$table and $this){
             if ($this->schema)
                 return $this->schema;
 
@@ -155,7 +177,9 @@ abstract class SQL_Etc {    protected $id;
 
             if ($vars = self::vars(inflector::singular($table)))
                 $table = ($vars['table'] ? $vars['table'] : $table);
-        } else {            return array();        }
+        } else {
+            return array();
+        }
 
         if (!$schema = cache::get('sql/schema/'.$table.'.php'))
             cache::set($schema = $this->build('schema', $table));
@@ -168,7 +192,7 @@ abstract class SQL_Etc {    protected $id;
     function build(){
         $args = func_get_args();
         $type = array_shift($args);
-        
+
         $builder = 'SQL_Build_'.self::$connection['driver'];
         $builder = new $builder($this);
 
@@ -177,12 +201,14 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function hash($prefix = ''){        return $this->alias.'::'.$prefix.'['.spl_object_hash($this).']';
+    protected function hash($prefix = ''){
+        return $this->alias.'::'.$prefix.'['.spl_object_hash($this).']';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function connect($array){        $array = array_merge(array(
+    protected static function connect($array){
+        $array = array_merge(array(
             'driver' => 'mysql'
         ), $array);
 
@@ -194,14 +220,16 @@ abstract class SQL_Etc {    protected $id;
 
             if ($pos = strpos($array['host'], ':')){
                 $array['port'] = substr($array['host'], ($pos + 1));
-                $array['host'] = substr($array['host'], 0, $pos);            }
+                $array['host'] = substr($array['host'], 0, $pos);
+            }
 
             $array['dsn']  = $array['driver'].':';
             $array['dsn'] .= 'dbname='.$array['database'];
 
             if (strpos($array['host'], '/') !== false){
                 $array['dsn'] .= '; unix_socket='.$array['host'];
-            } else {                $array['dsn'] .= '; host='.$array['host'];
+            } else {
+                $array['dsn'] .= '; host='.$array['host'];
                 $array['dsn'] .= ($port ? '; port='.$array['port'] : '');
             }
         }
@@ -216,7 +244,8 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function vars($table){        static $cache = array();
+    protected function vars($table){
+        static $cache = array();
 
         if (isset($cache[$table]))
             return $cache[$table];
@@ -224,7 +253,8 @@ abstract class SQL_Etc {    protected $id;
         $class = (($this and $table == $this->alias) ? clone $this : self::table($table));
         $class->alias = $class->table;
 
-        return $cache[$table] = get_object_vars($class);    }
+        return $cache[$table] = get_object_vars($class);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -285,7 +315,8 @@ abstract class SQL_Etc {    protected $id;
             $foreign['field3'] = inflector::singular($foreign['alias2']).'_'.$foreign['field'];
 
             unset($foreign['table'], $foreign['alias'], $foreign['field']);
-        } elseif ($keys){            if ($keys['local'] and $keys['foreign'])
+        } elseif ($keys){
+            if ($keys['local'] and $keys['foreign'])
                 list($local['field'], $foreign['field']) = array($keys['local'], $keys['foreign']);
             else
                 list($local['field'], $foreign['field']) = $keys;
@@ -296,7 +327,8 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function deep_throat($class, $parent = '', $main = '', $result = array()){        if (is_array($class))
+    protected function deep_throat($class, $parent = '', $main = '', $result = array()){
+        if (is_array($class))
             list($class, $vars) = array(key($class), reset($class));
 
         $current = inflector::singular(substr($parent, strrpos($parent, '.')));
@@ -340,7 +372,8 @@ abstract class SQL_Etc {    protected $id;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function where_between($field, $ids){        $len = b::len($ids);
+    protected function where_between($field, $ids){
+        $len = b::len($ids);
 
         if ($len == 1)
             return $this->where($field.' = ?d', $ids[0]);
@@ -391,7 +424,9 @@ abstract class SQL_Etc {    protected $id;
         }
 
         array_unshift($args, '('.join(') or (', $query).')');
-        return call_user_func_array(array($this, 'where'), $args);    }
+        return call_user_func_array(array($this, 'where'), $args);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+}
