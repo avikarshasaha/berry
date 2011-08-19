@@ -159,10 +159,12 @@ class Check {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_string($value, $params = array()){
-        if ($params)
-            return (b::len($value) >= $params[0] and b::len($value) <= $params[1]);
+        $len = b::len($value);
 
-        return ($value !== '');
+        if ($params)
+            return ($len >= $params[0] and $len <= $params[1]);
+
+        return $len;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
