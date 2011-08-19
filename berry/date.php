@@ -11,13 +11,22 @@ class Date {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function now(){        return date('Y-m-d H:i:s');    }
+    static function now(){
+        return date('Y-m-d H:i:s');
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function format($format, $timestamp = 0){
-        $date = strftime($format, self::time($timestamp));
-        return (b::is_windows() ? str::iconv($date) : $date);
+    static function format($format, $timestamp = 0, $simple = false){
+        if (is_bool($timestamp))
+            list($timestamp, $simple) = array(0, $timestamp);
+
+        if ($simple)
+            $date = date($format, self::time($timestamp));
+        else
+            $date = strftime($format, self::time($timestamp));
+
+        return $date;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +43,8 @@ class Date {
 ////////////////////////////////////////////////////////////////////////////////
 
     // http://php.net/datetime/#78025
-    static function ago($second, $len = 3, $plural = array()){        if (b::len($second) == 10 or !is_numeric($second))
+    static function ago($second, $len = 3, $plural = array()){
+        if (b::len($second) == 10 or !is_numeric($second))
             $second = (time() - self::time($second));
 
         $plural = array_merge(b::lang('date.ago'), array('separator' => ','), $plural);
@@ -106,7 +116,9 @@ class Date {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function calendar($year = '', $month = ''){        $year = ($year ? $year : date('Y'));        $result = $months = array();
+    static function calendar($year = '', $month = ''){
+        $year = ($year ? $year : date('Y'));
+        $result = $months = array();
 
         if (is_array($month))
             $months = array_fill($month[0], ($month[1] - 1), array());
@@ -115,8 +127,12 @@ class Date {
         else
             $months = array_fill(1, 12, array());
 
-        if (is_array($year)){            for ($i = $year[0]; $i <= $year[1]; $i++)
-                $result[$i] = $months;        } else {            $result[$year] = $months;        }
+        if (is_array($year)){
+            for ($i = $year[0]; $i <= $year[1]; $i++)
+                $result[$i] = $months;
+        } else {
+            $result[$year] = $months;
+        }
 
         foreach ($result as $year => $months)
             foreach ($months as $month => $array)
@@ -127,4 +143,5 @@ class Date {
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+}
