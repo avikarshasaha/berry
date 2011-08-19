@@ -8,23 +8,23 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class Check {
-    static $errors = array(); 
-    
+    static $errors = array();
+
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_valid($re, $data = array()){
         $data = ($data ? $data : $_POST);
         $error = false;
-        
+
         foreach ($re as $k => $v){
             $v = (array)$v;
-            
+
             if (!self::_validate($k, $v[0], $data))
                 $error = true;
         }
 
         return !$error;
-    }    
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +39,7 @@ class Check {
             !array_key_exists($name, $array) and
             !array_key_exists(preg_replace('/^([^\.]*)\./', '\\1.name.', $name), $array)
         )
-            return true;
+            $array[$name] = '';
 
         if (preg_match('/\W?\/(.*)\/([imsxeuADSUXJ]+)?(\s|$)/', $re, $match)){
             $check['regexp'] = preg_match($match[0], $value);
@@ -51,7 +51,8 @@ class Check {
                 $func = strtolower($match[1][$i]);
                 $args = array($value, self::_params($match[3][$i]), $name, $array, $data);
 
-                if ($func == 'or'){                    if (array_search(false, $check))
+                if ($func == 'or'){
+                    if (array_search(false, $check))
                         $check = array();
                     else
                         break;
@@ -82,9 +83,11 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _params($params = ''){        if (!$params)
+    protected static function _params($params = ''){
+        if (!$params)
             return array();
-        $params = str_replace('\"', '"', preg_replace('/(\'|")(.*?)\\1/es', "'\\1'.str_replace(',', '¬', '\\2').'\\1'", $params));
+
+        $params = str_replace('\"', '"', preg_replace('/(\'|")(.*?)\\1/es', "'\\1'.str_replace(',', '¬', '\\2').'\\1'", $params));
         $params = explode(',', $params);
 
         foreach ($params as &$v){
@@ -94,7 +97,8 @@ class Check {
                 $v = substr($v, 1, -1);
         }
 
-        return $params;    }
+        return $params;
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -133,7 +137,8 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_date($value, $params = array()){        $time = strtotime($value);
+    static function is_date($value, $params = array()){
+        $time = strtotime($value);
         return (
             preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) and
             $time and checkdate($m[2], $m[3], $m[1]) and
@@ -153,7 +158,8 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_string($value, $params = array()){        if ($params)
+    static function is_string($value, $params = array()){
+        if ($params)
             return (b::len($value) >= $params[0] and b::len($value) <= $params[1]);
 
         return ($value !== '');
@@ -186,7 +192,8 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_unique($value, $params = array()){        $tmp = explode('.', $params[0]);
+    static function is_unique($value, $params = array()){
+        $tmp = explode('.', $params[0]);
         list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
         $class = sql::table($table);
@@ -206,14 +213,17 @@ class Check {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function is_isbn($value){        $number = strtolower(str_replace('-', '', $value));
+    static function is_isbn($value){
+        $number = strtolower(str_replace('-', '', $value));
         $len = b::len($number);
         $sum = 0;
 
-        if ($len == 10 and preg_match('/\d+-\d+-\d+-(\d{1}|x)/', $value)){            for ($i = 0; $i < ($len - 1); $i++)
+        if ($len == 10 and preg_match('/\d+-\d+-\d+-(\d{1}|x)/', $value)){
+            for ($i = 0; $i < ($len - 1); $i++)
                 $sum += ($number[$i] * ($i + 1));
 
-            return (($sum % 11) == ($number[$i] == 'x' ? 10 : $number[$i]));        }
+            return (($sum % 11) == ($number[$i] == 'x' ? 10 : $number[$i]));
+        }
 
         if ($len == 13 and preg_match('/\d+-\d+-\d+-\d+-\d{1}/', $value)){
             for ($i = 0; $i < $len; $i += 2)
