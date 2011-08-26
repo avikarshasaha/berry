@@ -334,15 +334,9 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function exists(){
-        if (!$this->where)
-            return;
-
-        $class = self::table($this->alias);
-        $class->select[] = 1;
-        $class->where = $this->where;
-        $class->having = $this->having;
+        $class = clone $this;
+        $class->select = array(1);
         $class->limit = 1;
-        $class->placeholders = $this->placeholders;
 
         return (bool)$class->fetch_cell();
     }
