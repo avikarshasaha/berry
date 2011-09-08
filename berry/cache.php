@@ -9,20 +9,23 @@
                                                                    \/|*/
 class Cache {
     static $file;
-    protected static $tags;
+    protected static $data;
     protected static $scope = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function get($key, $array = array(), $_array = array()){
-        self::$scope[$key] = self::$file = file::path('tmp/').$key;
-
-        if (!isset(self::$tags)){
+        if (!isset(self::$data)){
             if (!is_file($file = file::path('tmp/').'cache.php'))
                 arr::export($file, array());
 
-            self::$tags = include $file;
+            self::$data = include $file;
         }
+        
+        if ($file = self::exists($key))
+            self::$scope[$key] = self::$file = $file;
+        else
+            self::$scope[$key] = self::$file = file::path('tmp/').$key;
 
         if (is_object($array))
             return new self($key, $array, $_array);
@@ -39,14 +42,17 @@ class Cache {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function get_path($key, $array = array(), $_array = array()){
-        self::$scope[$key] = self::$file = file::path('tmp/').$key;
-
-        if (!isset(self::$tags)){
+        if (!isset(self::$data)){
             if (!is_file($file = file::path('tmp/').'cache.php'))
                 arr::export($file, array());
 
-            self::$tags = include $file;
+            self::$data = include $file;
         }
+        
+        if ($file = self::exists($key))
+            self::$scope[$key] = self::$file = $file;
+        else
+            self::$scope[$key] = self::$file = file::path('tmp/').$key;
 
         if (self::expired($key, $array))
             return;
@@ -59,10 +65,14 @@ class Cache {
 
     static function set($value, $tags = array()){        $file = end(self::$scope);
         $name = str_replace(file::path('tmp/'), '', $file);
-        $array = (isset(self::$tags[$name]) ? self::$tags[$name] : array());
-        self::$tags[$name] = array_merge($array, $tags);
+        $tags = array_merge((isset(self::$data[$name]['tags']) ? self::$data[$name]['tags'] : array()), $tags);
+        self::$data[$name] = array(
+            'file' => $file,
+            'time' => time(),
+            'tags' => $tags
+        );
 
-        arr::export(file::path('tmp/').'cache.php', self::$tags);
+        arr::export(file::path('tmp/').'cache.php', self::$data);
         file::mkdir(dirname($dir = $file));
         b::call((is_array($value) ? 'arr::export' : 'file_put_contents'), $file, $value);
         array_pop(self::$scope);
@@ -82,30 +92,30 @@ class Cache {
 
         $result = array();
 
-        foreach (self::$tags as $k => $v)
-            if (array_intersect($v, $key) and is_file($file = file::path('tmp/').$k)){
-                unset(self::$tags[$k]);
-                $result[$k] = unlink($file);
+        foreach (self::$data as $k => $v)
+            if (array_intersect($v, $key) and is_file($v['file'])){
+                $result[$k] = unlink($v['file']);
+                unset(self::$data[$k]);
             }
 
-        arr::export(file::path('tmp/').'cache.php', self::$tags);
+        arr::export(file::path('tmp/').'cache.php', self::$data);
         return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function exists($key){
-        if (is_file($file = file::path('tmp/').$key))
-            return $file;
+        if (self::$data[$key])
+            return self::$data[$key]['file'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function expired($key, $array){
-        if (!$file = self::exists($key))
+        if (!self::exists($key))
             return true;
 
-        $mtime = filemtime($file);
+        $mtime = self::$data[$key]['time'];
         $result = array();
 
         foreach ($array as $k => $tmp){
