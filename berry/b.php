@@ -426,9 +426,26 @@ class B {
                     $method = 'index';
                 }
 
+                try {
+                    $len = max(0, (b::len($q) - 1));
+                    new ReflectionParameter(array($class, $method), $len);
+                } catch (ReflectionException $e){
+                    if ($method[0] != '_')
+                        $method = '_'.$method.'_'.b::len($q);
+                }
+
                 ob_start();
                     call_user_func_array(array($class, $method), $q);
-                $class->body = ob_get_clean();
+                $content = ob_get_clean();
+
+                try {
+                    $reflection = new ReflectionClass($class);
+                    $reflection = $reflection->getProperty('content');
+                    $reflection->setAccessible(true);
+                    $reflection->setValue($class, $content);
+                } catch (ReflectionException $e){
+                    $class->content = $content;
+                }
 
                 echo $class;
                 return true;
