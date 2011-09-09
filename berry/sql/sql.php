@@ -78,7 +78,7 @@ class SQL extends SQL_Control {
             } elseif ($arg instanceof SQL or $arg instanceof SQL_Query){
                 $this->select[] = $this->build('subquery', 'select', $arg);
             } elseif ($arg == '*'){
-                $this->select = array_merge($this->select, array_keys(self::schema($this->alias)));
+                $this->select = array_merge($this->select, array_keys($this->schema()));
             } elseif (substr($arg, -2) == '.*'){
                 $arg = substr($arg, 0, -2);
 

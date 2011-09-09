@@ -26,9 +26,11 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function alter(){
         if (!$query = $this->build('alter'))
             return 0;
-
-        cache::remove('sql/schema/'.$this->table.'.php');
-        return self::query($query)->exec();
+            
+        if ($query = self::query($query)->exec())
+            cache::remove('sql/schema/'.self::$connection['database'].'.'.$this->table.'.php');
+            
+        return $query;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

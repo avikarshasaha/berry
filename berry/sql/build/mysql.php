@@ -138,6 +138,9 @@ class SQL_Build_MySQL extends SQL_Build_Base {
                 $this->o->placeholders[] = $after['default'];
                 $after['default'] = '?';
             }
+            
+            $after['type'] .= ($after['length'] ? '('.$after['length'].')' : '');
+            $after['type'] .= ' '.$after['attr'];
 
             $query[] = ($before ? 'change '.$k : 'add').' '.
                        $name.' '.$after['type'].' '.(!$after['null'] ? 'not' : '').' null '.
@@ -203,18 +206,23 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 
     function _schema($table){
         $result = array();
-        $query = new SQL_Query('desc ?t', array($table));
+        $query = new SQL_Query('desc ?t', array('songs'));
         $keys = array('p' => 'p', 'u' => 'u', 'k' => 'k', 'm' => 'k');
 
-        foreach ($query->fetch() as $info)
+        foreach ($query->fetch() as $info){
+            preg_match('/(\w+)(\((\d+)\))?( (.*))?/i', $info['type'], $m);
+            
             $result[$info['field']] = array(
                 'name' => $info['field'],
-                'type' => $info['type'],
+                'type' => $m[1],
+                'length' => (int)$m[3],
+                'attr' => ($info['extra'] == 'auto_increment' ? $m[5] : $m[5].$info['extra']),
                 'null' => ($info['null'] == 'yes'),
                 'key'  => (string)$keys[strtolower($info['key'][0])],
                 'auto' => ($info['extra'] == 'auto_increment'),
                 'default' => $info['default']
             );
+        }
 
         return $result;
     }

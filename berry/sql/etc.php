@@ -166,6 +166,8 @@ abstract class SQL_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     function schema($table = ''){
+        $database = self::$connection['database'];
+
         if (!$table and $this){
             if ($this->schema)
                 return $this->schema;
@@ -173,7 +175,7 @@ abstract class SQL_Etc {
             $table = $this->table;
         } elseif ($table){
             if (strpos($table, '.'))
-                $table = end(explode('.', $table));
+                list($database, $table) = explode('.', $table, 2);
 
             if ($vars = self::vars(inflector::singular($table)))
                 $table = ($vars['table'] ? $vars['table'] : $table);
@@ -181,7 +183,7 @@ abstract class SQL_Etc {
             return array();
         }
 
-        if (!$schema = cache::get('sql/schema/'.$table.'.php'))
+        if (!$schema = cache::get('sql/schema/'.$database.'.'.$table.'.php'))
             cache::set($schema = $this->build('schema', $table));
 
         return $schema;
