@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class SQL_Query extends SQL_Etc {    protected $query;
+class SQL_Query extends SQL_Etc {
+    protected $query;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +22,8 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function exec(){        $time = microtime(true);
+    function exec(){
+        $time = microtime(true);
         $count = self::$connection['link']->exec($this->query);
         self::$cache['stat']['count'] += 1;
         self::$cache['stat']['time'] += (microtime(true) - $time);
@@ -35,7 +37,9 @@ class SQL_Query extends SQL_Etc {    protected $query;
             return;
         }
 
-        if (stripos(trim($this->query), 'insert ') === 0){            if (self::$cache['logger']){                $id = self::$connection['link']->lastInsertId();
+        if (stripos(trim($this->query), 'insert ') === 0){
+            if (self::$cache['logger']){
+                $id = self::$connection['link']->lastInsertId();
                 $this->log('-- %d row%s, id %d, %f', $count, ($count != 1 ? 's' : ''), $id, (microtime(true) - $time));
             }
         } elseif (self::$cache['logger']){
@@ -91,7 +95,8 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _fetch_col(&$v){        if (!is_array($cell = reset($v)))
+    protected static function _fetch_col(&$v){
+        if (!is_array($cell = reset($v)))
             $v = $cell;
         else
             array_walk($v, array('self', '_fetch_col'));
@@ -105,7 +110,7 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
         return array();
     }
-    
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function build(){
@@ -113,7 +118,7 @@ class SQL_Query extends SQL_Etc {    protected $query;
         $type = array_shift($args);
 
         return call_user_func_array(array($this, '_build_'.$type), $args);
-    }    
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -181,10 +186,10 @@ class SQL_Query extends SQL_Etc {    protected $query;
 
         if ($type == 't')
             if (!is_array($value)){
-                return $this->quote(self::$connection['prefix'].$value, $quote);
+                return $this->quote($value, $quote);
             } else {
                 foreach ($value as $v)
-                    $parts[] = $this->quote(self::$connection['prefix'].$v, $quote);
+                    $parts[] = $this->quote($v, $quote);
 
                 return join(', ', $parts);
             }
@@ -252,4 +257,5 @@ class SQL_Query extends SQL_Etc {    protected $query;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+}
