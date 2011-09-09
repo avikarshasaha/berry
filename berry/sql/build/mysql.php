@@ -206,7 +206,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 
     function _schema($table){
         $result = array();
-        $query = new SQL_Query('desc ?t', array('songs'));
+        $query = new SQL_Query('desc ?t', array($table));
         $keys = array('p' => 'p', 'u' => 'u', 'k' => 'k', 'm' => 'k');
 
         foreach ($query->fetch() as $info){
