@@ -207,24 +207,29 @@ abstract class SQL_Etc {
         ), $array);
 
         if (!$array['dsn']){
-            if ($pos = strrpos($array['database'], '/')){
-                $array['host'] = substr($array['database'], 0, $pos);
-                $array['database'] = substr($array['database'], ($pos + 1));
-            }
-
-            if ($pos = strpos($array['host'], ':')){
-                $array['port'] = substr($array['host'], ($pos + 1));
-                $array['host'] = substr($array['host'], 0, $pos);
-            }
-
-            $array['dsn']  = $array['driver'].':';
-            $array['dsn'] .= 'dbname='.$array['database'];
-
-            if (strpos($array['host'], '/') !== false){
-                $array['dsn'] .= '; unix_socket='.$array['host'];
+            if ($array['driver'] == 'sqlite'){
+                $array['dsn'] = $array['driver'].':'.$array['database'];
+                $array['database'] = str_replace(array('/', '.'), '_', $array['database']);
             } else {
-                $array['dsn'] .= '; host='.$array['host'];
-                $array['dsn'] .= ($port ? '; port='.$array['port'] : '');
+                if ($pos = strrpos($array['database'], '/')){
+                    $array['host'] = substr($array['database'], 0, $pos);
+                    $array['database'] = substr($array['database'], ($pos + 1));
+                }
+    
+                if ($pos = strpos($array['host'], ':')){
+                    $array['port'] = substr($array['host'], ($pos + 1));
+                    $array['host'] = substr($array['host'], 0, $pos);
+                }
+    
+                $array['dsn']  = $array['driver'].':';
+                $array['dsn'] .= 'dbname='.$array['database'];
+    
+                if (strpos($array['host'], '/') !== false){
+                    $array['dsn'] .= '; unix_socket='.$array['host'];
+                } else {
+                    $array['dsn'] .= '; host='.$array['host'];
+                    $array['dsn'] .= ($port ? '; port='.$array['port'] : '');
+                }
             }
         }
 
