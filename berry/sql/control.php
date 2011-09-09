@@ -26,10 +26,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function alter(){
         if (!$query = $this->build('alter'))
             return 0;
-            
+
         if ($query = self::query($query)->exec())
             cache::remove('sql/schema/'.self::$connection['database'].'.'.$this->table.'.php');
-            
+
         return $query;
     }
 
@@ -112,7 +112,7 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
                         foreach (range(($id + 1), ($id + $count - 1)) as $k => $v)
                             $result[$this->alias][] = (string)$v;
 
-                    $key = self::hash('_get');
+                    $key = self::hash();
                     $this->id = self::$cache[$key][$this->primary_key] = $id;
                     $this->where($this->primary_key.' = ?d', $id);
                 } else {
@@ -403,10 +403,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function with($select){
-        foreach ((array)$select as $v)
-            $this->select($v);
+        if (!is_array($select))
+            $select = func_get_args();
 
-        return $this;
+        return call_user_func_array(array($this, 'select'), (array)$select);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -414,11 +414,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function sort($order_by = null){
         if (!$order_by)
             $order_by = $this->primary_key;
+        elseif (!is_array($order_by))
+            $order_by = func_get_args();
 
-        foreach((array)$order_by as $v)
-            $this->order_by($v);
-
-        return $this;
+        return call_user_func_array(array($this, 'order_by'), (array)$order_by);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -426,11 +425,10 @@ abstract class SQL_Control extends SQL_Vars implements Countable {
     function group($group_by = null){
         if (!$group_by)
             $group_by = $this->primary_key;
+        elseif (!is_array($group_by))
+            $group_by = func_get_args();
 
-        foreach((array)$group_by as $v)
-            $this->group_by($v);
-
-        return $this;
+        return call_user_func_array(array($this, 'group_by'), (array)$group_by);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

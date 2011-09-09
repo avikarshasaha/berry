@@ -109,7 +109,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _get($name){
-        $key = self::hash('_get');
+        $key = self::hash();
 
         if ($this->select and !isset(self::$cache[$key])){
             $class = clone $this;
@@ -202,7 +202,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _set($name, $value){
-        $key = self::hash('_get');
+        $key = self::hash();
 
         if (is_array($value) or $value instanceof SQL){
             if ($name === null)
