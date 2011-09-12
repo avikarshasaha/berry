@@ -115,7 +115,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             $class = clone $this;
             $class->select[] = $class->primary_key;
 
-            self::$cache[$key] = new SQL_Element($class->fetch_array());
+            self::$cache[$key] = new SQL_Element($class->fetch_array(), $class->relations);
         }
 
         if (
@@ -193,7 +193,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
         if (!isset($this->parallel[$this->alias])){
             $array = ($this->where ? $this->fetch_array() : array());
-            $this->parallel[$this->alias] = new SQL_Element($array);
+            $this->parallel[$this->alias] = new SQL_Element($array, $this->relations);
         }
 
         return $this->parallel[$this->alias][$name];
