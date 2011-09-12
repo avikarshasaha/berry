@@ -8,7 +8,11 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class SQL_Element extends Object {
+    protected $_scope = array();
     protected $relations = array();
+
+    protected $limit = 0;
+    protected $offset = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -157,6 +161,37 @@ class SQL_Element extends Object {
             $order_by = func_get_args();
 
         return call_user_func_array(array($this, 'order_by'), (array)$order_by);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function limit($limit){
+        if ($this->limit = (is_numeric($limit) ? $limit : 0)){
+            $this->_scope = ($this->_scope ? $this->_scope : $this->scope);
+            $this->scope = array_slice($this->_scope, $this->offset, $this->limit);
+        }
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function offset($offset){
+        if ($this->offset = (is_numeric($offset) ? $offset : 0)){
+            $this->_scope = ($this->_scope ? $this->_scope : $this->scope);
+            $this->scope = array_slice($this->_scope, $this->offset, $this->limit);
+        }
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function page($page){
+        if ($page > 0)
+            $this->offset($page * $this->limit - $this->limit);
+
+        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
