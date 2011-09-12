@@ -7,11 +7,12 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Object implements ArrayAccess, Countable, Iterator {    protected $scope = array();
+class Object implements ArrayAccess, Countable, Iterator {
+    protected $scope = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($scope = array()){
+    function __construct($scope = null){
         if ($scope)
             $this->scope = $scope;
     }
@@ -24,7 +25,8 @@ class Object implements ArrayAccess, Countable, Iterator {    protected $scope 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __unset($name){        unset($this[$name]);
+    function __unset($name){
+        unset($this[$name]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,29 +37,35 @@ class Object implements ArrayAccess, Countable, Iterator {    protected $scope 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __set($name, $value){        $this[$name] = $value;
+    function __set($name, $value){
+        $this[$name] = $value;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetExists($offset){        return isset($this->scope[$offset]);
+    function offsetExists($offset){
+        return isset($this->scope[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetUnset($offset){        unset($this->scope[$offset]);
+    function offsetUnset($offset){
+        unset($this->scope[$offset]);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetGet($offset){        if (is_array($this->scope[$offset]))
+    function offsetGet($offset){
+        if (is_array($this->scope[$offset]))
             $this->scope[$offset] = new $this($this->scope[$offset]);
-        return $this->scope[$offset];
+
+        return $this->scope[$offset];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function offsetSet($offset, $value){        if ($offset === null)
+    function offsetSet($offset, $value){
+        if ($offset === null)
             return $this->scope[] = $value;
 
         $this->scope[$offset] = $value;
@@ -65,11 +73,14 @@ class Object implements ArrayAccess, Countable, Iterator {    protected $scope 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function count(){        return b::len($this->scope);    }
+    function count(){
+        return b::len($this->scope);
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function rewind(){        reset($this->scope);
+    function rewind(){
+        reset($this->scope);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
