@@ -13,10 +13,10 @@ class SQL_Element extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($o = null){
-        if (is_array($o))
-            $this->scope = $this->_scope = $o;
-        elseif ($this->o = $o)
+    function __construct($object = null){
+        if (is_array($object))
+            $this->scope = $this->_scope = $object;
+        elseif ($this->o = $object)
             $this->scope = $this->_scope = $o->fetch_array();
     }
 
