@@ -44,6 +44,11 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _insert(){
+        if (!$this->o->table){
+            $vars = $this->o->vars($this->o->alias);
+            $this->o->table = $vars['table'];
+        }
+
         $keywords = b::config('sql.insert');
         $query  = 'insert into '.$this->o->table;
         $query .= ' (?f) values (?a) ';
@@ -55,6 +60,11 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _update(){
+        if (!$this->o->table){
+            $vars = $this->o->vars($this->o->alias);
+            $this->o->table = $vars['table'];
+        }
+
         $keywords = b::config('sql.update');
         $query  = 'update '.$this->o->table;
         $query .= ' as '.$this->o->alias;
@@ -69,6 +79,11 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _delete(){
+        if (!$this->o->table){
+            $vars = $this->o->vars($this->o->alias);
+            $this->o->table = $vars['table'];
+        }
+
         if (!$this->o->where and !$this->o->limit)
             return 'truncate table '.$this->o->table;
 
@@ -87,6 +102,11 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 ////////////////////////////////////////////////////////////////////////////////
 
     function _create(){
+        if (!$this->o->table){
+            $vars = $this->o->vars($this->o->alias);
+            $this->o->table = $vars['table'];
+        }
+
         $query  = 'create table '.$this->o->table;
         $query .= ' (';
         $query .= $this->o->primary_key.' int not null auto_increment,';
@@ -138,7 +158,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
                 $this->o->placeholders[] = $after['default'];
                 $after['default'] = '?';
             }
-            
+
             $after['type'] .= ($after['length'] ? '('.$after['length'].')' : '');
             $after['type'] .= ' '.$after['attr'];
 
@@ -160,8 +180,14 @@ class SQL_Build_MySQL extends SQL_Build_Base {
             }
         }
 
-        if ($query)
+        if ($query){
+            if (!$this->o->table){
+                $vars = $this->o->vars($this->o->alias);
+                $this->o->table = $vars['table'];
+            }
+
             return 'alter table '.$this->o->table.' '.join(', ', $query);
+        }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -211,7 +237,7 @@ class SQL_Build_MySQL extends SQL_Build_Base {
 
         foreach ($query->fetch() as $info){
             preg_match('/(\w+)(\((\d+)\))?( (.*))?/i', $info['type'], $m);
-            
+
             $result[$info['field']] = array(
                 'name' => $info['field'],
                 'type' => $m[1],
@@ -267,6 +293,11 @@ class SQL_Build_MySQL extends SQL_Build_Base {
             (!$relation = $this->o->relations[$table = inflector::tableize($table)])
         )
             return;
+
+        if (!$parent->table){
+            $vars = $this->o->vars($parent->alias);
+            $parent->table = $vars['table'];
+        }
 
         $this->o->placeholders = array_merge($parent->placeholders, $this->o->placeholders);
 
