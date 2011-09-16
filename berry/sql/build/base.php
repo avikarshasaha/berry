@@ -214,11 +214,12 @@ abstract class SQL_Build_Base extends SQL_Etc {
                 } elseif (strtolower(end($array)) == 'as'){
                     $array[] = '`'.$v.'`';
                 } elseif (
-                    $key == 'from' or strtolower($v) == 'as' or
-                    !preg_match('/^\w+$/i', $v) or is_numeric($v) or
+                    strtolower($v) == 'as' or !preg_match('/^\w+$/i', $v) or is_numeric($v) or
                     in_array(strtolower($v), (array)$keywords[$key])
                 ){
                     $array[] = $v;
+                } elseif (in_array($key, array('from', 'insert', 'update', 'delete'))){
+                    $array[] = '`'.$v.'`';
                 } elseif (end($array) == '?'){
                     array_pop($array);
                     $array[] = '?'.$v;
