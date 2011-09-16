@@ -16,7 +16,10 @@ class SQL extends SQL_Control {
         $this->alias = (substr($class, -4) == '_sql' ? substr($class, 0, -4) : $class);
 
         if (!$this->table){
-            $this->table = self::$connection['prefix'].inflector::tableize($this->alias);
+            $this->table  = self::$connection['database'].'.';
+            $this->table .= self::$connection['prefix'].inflector::tableize($this->alias);
+        } elseif (!strpos($this->table, '.')){
+            $this->table = self::$connection['database'].'.'.$this->table;
         } else {
             $tmp = self::$connection;
             unset($tmp['link']);
