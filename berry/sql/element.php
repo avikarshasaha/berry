@@ -17,7 +17,7 @@ class SQL_Element extends SQL_Vars implements Countable {
         if (is_array($object))
             $this->scope = $this->_scope = $object;
         elseif ($this->o = $object)
-            $this->scope = $this->_scope = $o->fetch_array();
+            $this->scope = $this->_scope = $object->fetch_array();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
