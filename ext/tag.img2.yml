@@ -1,6 +1,0 @@
-default:
-    text: %widthx%height %hsize
-    position: br
-    font: #fff
-    background: #000 25
-    padding: 5

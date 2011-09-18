@@ -36,13 +36,15 @@ class B {
         $config = array_merge(array(
             'path' => '.',
             'lang' => strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2)),
-            'query' => ($query ? trim($query, '/') : 'home')
+            'query' => ($query ? trim($query, '/') : 'home'),
+            'config' => array()
         ), $config);
 
         self::$cache['stat'] = microtime(true);
         self::$path = $config['path'].';'.realpath(dirname(__file__).'/..');
         self::$lang = $config['lang'];
         self::$query = $config['query'];
+        self::$cache['config'] = $config['config'];
 
         spl_autoload_register(array('self', 'autoload'));
     }
@@ -109,6 +111,10 @@ class B {
 
         if (!$config){
             $files = array();
+            $types = array('ini');
+
+            if (self::$cache['config'])
+                $types = array_merge($types, array_keys(self::$cache['config']));
 
             if ($config = cache::get('b/config.php'))
                 $files = $config['#files'];
@@ -118,15 +124,20 @@ class B {
 
                 foreach (array_reverse(explode(';', self::$path)) as $dir){
                     if (is_dir($dir))
-                        foreach (file::dir($dir, '/\.yml$/i') as $file => $info)
+                        foreach (file::dir($dir, '/\.('.join('|', $types).')$/i') as $file => $info)
                             $files[] = $file;
                 }
 
                 foreach ($files as $file){
-                    $key = substr(basename($file), 0, -4);
-                    $array = yaml::load($file);
+                    $path = pathinfo($file);
+
+                    if ($path['extension'] == 'ini')
+                        $array = parse_ini_file($file, true);
+                    elseif ($func = self::$cache['config'][$path['extension']]['get'])
+                        $array = $func($file);
+
                     $array['#file'] = $file;
-                    $config = arr::merge($config, arr::assoc(array($key => $array)));
+                    $config = arr::merge($config, arr::assoc(array($path['filename'] => $array)));
                     $config['#files'][] = $file;
                 }
 
@@ -134,11 +145,12 @@ class B {
             }
         }
 
+        if (!func_num_args())
+            return $config;
+
         $args = func_get_args();
 
-        if (!func_num_args()){
-            return $config;
-        } elseif (func_num_args() == 1){
+        if (func_num_args() == 1){
             if (is_array($args[0]))
                 return $config = arr::merge($config, arr::assoc($args[0]));
 
@@ -149,73 +161,93 @@ class B {
 
             if ($func = create_function('$config', 'if (isset('.$var.')) return '.$var.';'))
                 return self::$cache['config'][$args[0]] = $func($config);
-        } else {
-            $array = explode('.', str_replace('\.', piles::char('.'), $args[0]));
 
-            for ($i = 0, $c = self::len($array); $i < $c; $i++){
-                $section = join('.', $array);
-                $var = piles::varname($section, '$config');
-                $tmp = 'if (is_array('.$var.') and isset('.$var.'["#file"])) return '.$var.';';
+            return;
+        }
 
-                if (
-                    ($func = create_function('$config', $tmp)) and
-                    ($tmp = $func($config))
-                ){
-                    $data = $tmp;
-                    break;
-                }
+        $array = explode('.', str_replace('\.', piles::char('.'), $args[0]));
 
-                array_pop($array);
+        for ($i = 0, $c = self::len($array); $i < $c; $i++){
+            $section = join('.', $array);
+            $var = piles::varname($section, '$config');
+            $tmp = 'if (is_array('.$var.') and isset('.$var.'["#file"])) return '.$var.';';
+
+            if (
+                ($func = create_function('$config', $tmp)) and
+                ($tmp = $func($config))
+            ){
+                $data = $tmp;
+                break;
             }
 
-            if (!$data)
-                return;
-
-            if ($data == $args[1])
-                return 0;
-
-            $file = $data['#file'];
-            unset($data['#file']);
-
-            if ($section = (substr($args[0], self::len($section) + 1)))
-                $set = arr::merge($data, arr::assoc(array($section => $args[1])));
-            else
-                $set = $args[1];
-
-            if ($data == $set)
-                return 0;
-
-            self::$cache['config'][$args[0]] = $args[1];
-            cache::remove('b/config.php');
-            file::chmod(dirname($file));
-            return (bool)file_put_contents($file, yaml::dump($set));
+            array_pop($array);
         }
+
+        if (!$data)
+            return;
+
+        if ($data == $args[1])
+            return 0;
+
+        $file = $data['#file'];
+        $type = pathinfo($file, PATHINFO_EXTENSION);
+        $config = arr::merge($config, arr::assoc(array($args[0] => $args[1])));
+
+        unset($data['#file']);
+
+        if ($section = (substr($args[0], self::len($section) + 1)))
+            $set = arr::merge($data, arr::assoc(array($section => $args[1])));
+        else
+            $set = $args[1];
+
+        if ($data == $set)
+            return 0;
+
+        self::$cache['config'][$args[0]] = $args[1];
+        cache::remove('b/config.php');
+        file::chmod(dirname($file));
+
+        if ($type == 'ini'){
+            $data = '';
+
+            foreach (arr::flat($set) as $k => $v){
+                $data .= $k.' = ';
+                $data .= (is_numeric($v) ? $v : '"'.str_replace('"', '\"', $v).'"');
+                $data .= "\r\n";
+            }
+        } elseif ($func = self::$cache['config'][$type]['set']){
+            $data = $func($set);
+        } else {
+            return;
+        }
+
+        return (bool)file_put_contents($file, $data);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function lang($string, $array = array()){
-        if (isset(self::$cache['lang'][$string])){
-            if (!is_array(self::$cache['lang'][$string]))
-                return str::format(self::$cache['lang'][$string], $array);
+    static function lang($key, $array = array()){
+        if (isset(self::$cache['lang'][$key])){
+            if (!is_array(self::$cache['lang'][$key]))
+                return str::format(self::$cache['lang'][$key], $array);
 
-            return self::$cache['lang'][$string];
+            return self::$cache['lang'][$key];
         }
 
-        if (self::config($found = self::$lang.'.'.$string))
+        if (self::config($found = self::$lang.'.'.$key))
             $result = $found;
-        elseif (self::config($found = $string.'.'.self::$lang))
+        elseif (self::config($found = $key.'.'.self::$lang))
             $result = $found;
-        elseif (self::config($found = $string))
+        elseif (self::config($found = $key))
             $result = $found;
 
         if (!$result)
             return;
 
-        if (!is_array(self::$cache['lang'][$string] = self::config($result)))
-            return str::format(self::$cache['lang'][$string], $array);
+        if (!is_array(self::$cache['lang'][$key] = self::config($result)))
+            return str::format(self::$cache['lang'][$key], $array);
 
-        return self::$cache['lang'][$string];
+        return self::$cache['lang'][$key];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
