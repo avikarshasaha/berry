@@ -68,12 +68,21 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
     function rewind(){
         if (!isset($this->iterator)){
-            $class = clone $this;
-            $class->select = array('count(*)');
-            $class->join = $class->order_by = array();
-            $class->group_by = ($class->group_by ? $class->group_by : array($this->primary_key));
+            $class = self::table($this->table)->with('count(*)');
 
-            if ($len = array_sum($class->fetch_col()))
+            foreach ($this->query->getPart('where') as $v)
+                $class->query->where($v);
+
+            foreach ($this->query->getPart('having') as $v)
+                $class->query->having($v);
+
+            foreach ($this->query->getPart('group') as $v)
+                $class->query->group($v);
+
+            if (!$this->query->getPart('group'))
+                $class->group();
+
+            if ($len = array_sum($class->fetch_column()))
                 $this->iterator = range(0, ($len - 1));
             else
                 $this->iterator = array();
@@ -109,10 +118,10 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _get($name){
-        $key = self::hash();
+        $key = self::_hash();
 
-        if ($this->select and !isset(self::$cache[$key])){
-            $this->select[] = $this->primary_key;
+        if ($this->with and !isset(self::$cache[$key])){
+            $this->query->columns($this->_name($this->primary_key));
             self::$cache[$key] = new SQL_Element($this);
         }
 
@@ -123,48 +132,54 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             return self::$cache[$key][$name];
 
         if ($name === null){
-            $key = ($this->parallel ? (max(array_keys($this->parallel)) + 1) : 0);
+            $key = ($this->children ? (max(array_keys($this->children)) + 1) : 0);
 
-            if ($this->where and $key < ($count = b::len($this)))
+            if ($this->query->getPart('where') and $key < ($count = b::len($this)))
                 $key = $count;
 
             $class = clone $this;
-            $class->parallel = $class->where = array();
+            $class->query = clone $this->query;
+            $class->children = array();
 
-            return $this->parallel[$key] = $class;
+            $class->query->reset('where');
+
+            return $this->children[$key] = $class;
         }
 
         if (isset($this->values[$name]))
             return $this->values[$name];
 
         if ($this->relations[$name]){
-            if (!isset($this->parallel[$name]))
-                $this->parallel[$name] = self::_object($name);
+            if (!isset($this->children[$name]))
+                $this->children[$name] = self::_object($name);
 
-            return $this->parallel[$name];
+            return $this->children[$name];
         }
 
         if (is_int($name)){
-            if (!isset($this->parallel[$name])){
-                if ($this->parent and !$this->where)
+            if (!isset($this->children[$name])){
+                if ($this->parent and !$this->query->getPart('where'))
                     return;
 
                 $class = clone $this;
-                $class->parallel = array();
-                $class->select = $class->group_by = array($this->primary_key);
-                $array = $class->fetch_col();
+                $class->query = clone $this->query;
+                $class->children = array();
+
+                $class->query->reset('group');
+                $class->with($class->primary_key)->group();
+
+                $array = $class->fetch_column();
 
                 if (!$class->id = $array[$name])
                     return;
 
-                $class->select = $this->select;
-                $class->group_by = $this->group_by;
-                $class->where($this->primary_key.' = ?d', $class->id);
+                $class->query->reset('group')->group($this->query->getPart('group'));
+                $class->with('*')->where($class->id);
 
-                $this->parallel[$name] = $class;
+                $this->children[$name] = $class;
             }
 
-            return $this->parallel[$name];
+            return $this->children[$name];
         }
 
         if ($_name = self::_is_HABTM($name)){
@@ -173,10 +188,8 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             if ($id = $this[$relation['local']['field']]){
                 $foreign = $relation['foreign'];
                 $this->values[$name] = new ArrayObject(
-                    self::table($foreign['table1'])->
-                    select($foreign['field3'])->
-                    where($foreign['field1'].' = ?', $id)->
-                    fetch_col()
+                    self::table($foreign['table1'])->with($foreign['field3'])->
+                    where(array($foreign['field1'] => $id))->fetch_column()
                 );
             } else {
                 $this->values[$name] = new ArrayObject;
@@ -189,20 +202,20 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             return $this->values[$name];
         }
 
-        if (!isset($this->parallel[$this->alias]))
-            $this->parallel[$this->alias] = new SQL_Element($this->where ? $this->fetch_array() : null);
+        if (!isset($this->children[$this->alias]))
+            $this->children[$this->alias] = new SQL_Element($this->query->getPart('where') ? $this->fetch_array() : null);
 
-        return $this->parallel[$this->alias][$name];
+        return $this->children[$this->alias][$name];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _set($name, $value){
-        $key = self::hash();
+        $key = self::_hash();
 
         if (is_array($value) or $value instanceof SQL){
             if ($name === null)
-                $name = max(array_keys($this->parallel));
+                $name = max(array_keys($this->children));
 
             if ($class = self::_get($name)){
                 $values = (is_array($value) ? $value : $value->values);
@@ -248,9 +261,9 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
             if ($relation['type'] == 'has_one' and !$this->parent[$local['field']]){
                 $class = clone $this->parent;
-                $class->parallel = array();
+                $class->children = array();
                 $class->values = array('#'.$local['field'] => $foreign['alias']);
-                $this->parent->parallel[] = $class;
+                $this->parent->children[] = $class;
             }
 
             if ($relation['type'] == 'belongs_to' or $relation['type'] == 'has_many'){
@@ -262,7 +275,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
             if ($relation['type'] == 'has_and_belongs_to_many' and !$this->id){
                 $class = self::table($foreign['alias1']);
-                $class->parallel = array();
+                $class->children = array();
                 $class->values = array('#'.$foreign['field3'] => inflector::singular($foreign['alias2']));
 
                 if ($this->parent->id)
@@ -270,7 +283,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 else
                     $class->values['#'.$foreign['field1']] = $local['alias'];
 
-                $this->parent->parallel[] = $class;
+                $this->parent->children[] = $class;
             }
         }
     }
@@ -303,24 +316,20 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             return $class;
 
         if ($relation['type'] == 'has_and_belongs_to_many'){
-            $ids = self::table($foreign['table1'])->
-                select($foreign['field3'])->
-                where($foreign['field1'].' = ?d', $id)->
-                fetch_col();
+            $ids = self::table($foreign['table1'], array($foreign['field1'] => $id));
+            $ids->with($foreign['field3']);
 
-            return $class->where_between($name.'.'.$foreign['field2'], $ids);
+            return $class->_where_between($name.'.'.$foreign['field2'], $ids->fetch_column());
         }
-
-        $class->where($foreign['field'].' = ?d', $id);
 
         if ($relation['type'] == 'has_one'){
             $class->id = $id;
         } elseif ($relation['type'] == 'belongs_to'){
             $class->id = -1;
-            $class->limit = 1;
+            $class->limit(1);
         }
 
-        return $class;
+        return $class->where(array($foreign['field'] => $id));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
