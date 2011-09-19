@@ -363,7 +363,7 @@ class SQL extends SQL_Vars implements Countable {
             $this->query->joinLeft($v[0], $v[1], $v[2]);
 
         foreach ($this->query->getPart('columns') as $v)
-            if ($found = $v[0] == $this->alias)
+            if ($found = ($v[0] == $this->alias and is_string($v[1])))
                 break;
 
         if (!$found)
