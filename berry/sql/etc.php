@@ -38,7 +38,7 @@ abstract class SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function init($dsn){
+    static function init($dsn){
         if (isset($dsn['database'])){
             self::$connection = self::_connect($dsn);
             return;
