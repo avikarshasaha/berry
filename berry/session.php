@@ -7,14 +7,23 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Session {
+class Session extends SQL_Etc {
     protected static $config;
     protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function init(){        $class = new self;
-        ini_set('session.save_handler', 'user');
+    static function init($config = array()){
+        self::$config = array_merge(array(
+            'table' => 'sessions',
+            'check' => array(
+                'ip' => false,
+                'user_agent' => true
+            )
+        ), $config);
+        $class = new self;
+
+        ini_set('session.save_handler', 'user');
         session_set_save_handler(
             array($class, 'open'),
             array($class, 'close'),
@@ -28,7 +37,7 @@ class Session {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function open($path, $name){        self::$config = b::config('session');
+    static function open($path, $name){
         return true;
     }
 
@@ -46,59 +55,67 @@ class Session {
 
         if (in_array($value, $array))
             self::gc(ini_get('session.gc_maxlifetime'));
-        return true;
+
+        return true;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function read($id){        self::_cache($id);
-        if (self::$cache[$id] === false)
+    static function read($id){
+        self::_cache($id);
+
+        if (self::$cache[$id] === false)
             return false;
-        return self::$cache[$id]['data'];
+
+        return self::$cache[$id]['data'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function write($id, $data){        self::_cache($id);
+    static function write($id, $data){
+        self::_cache($id);
 
         if (self::$cache[$id] === false or self::$cache[$id]['data'] == $data)
             return false;
 
-        $table = sql::table(self::$config['table'], $id);
+        $table = sql::table(self::$config['table'], array('id' => $id));
 
-        if (!$table->exists()){
+        if (!$table->exists())
             $table = sql::table(self::$config['table']);
-            $table->id = $id;
-        }
 
+        $table->id = $id;
         $table->data = $data;
         $table->ip = $_SERVER['REMOTE_ADDR'];
         $table->user_agent = $_SERVER['HTTP_USER_AGENT'];
 
-        return ($table->save() !== null);
+        return $table->save();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function destroy($id){        unset(self::$cache[$id]);
-        return (sql::table(self::$config['table'], $id)->delete() !== null);
+    static function destroy($id){
+        unset(self::$cache[$id]);
+        return sql::table(self::$config['table'], array('id' => $id))->delete();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function gc($lifetime){        $table = sql::table(self::$config['table']);
+    static function gc($lifetime){
+        $table = sql::table(self::$config['table']);
         $table->where('timestamp < ?d', (time() - $lifetime));
         $table->limit(25);
 
-        return ($table->delete() !== null);
+        return $table->delete();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static protected function _cache($id){        if (isset(self::$cache[$id]))
+    static protected function _cache($id){
+        if (isset(self::$cache[$id]))
             return;
-        $table = sql::table(self::$config['table'], $id);
-        $table->select('data', 'ip', 'user_agent', 'timestamp');
+
+        $table = sql::table(self::$config['table'], array('id' => $id));
+        $table->id = $id;
 
         if (self::$cache[$id] = $table->fetch_row()){
             $ip = (self::$config['check']['ip'] and self::$cache[$id]['ip'] != $_SERVER['REMOTE_ADDR']);
@@ -106,7 +123,9 @@ class Session {
 
             if ($ip or $user_agent)
                 self::$cache[$id] = false;
-        }    }
+        }
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
-}
+
+}
