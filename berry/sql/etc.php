@@ -53,6 +53,32 @@ abstract class SQL_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    static function using($key = ''){
+        static $last;
+
+        if (!$last)
+            $last = key(self::$connections);
+
+        if (!$key or (!$dsn = self::$connections[$key]))
+            return $last;
+
+        if (is_object($dsn['link'])){
+            Zend_Db_Table::setDefaultAdapter($dsn['link']);
+
+            self::$connection = $dsn;
+        } elseif (is_array($dsn)){
+            self::$connection = self::_connect($dsn);
+            self::$connections[$key] = self::$connection;
+        }
+
+        $current = $last;
+        $last = $key;
+
+        return $current;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     static function table($table, $id = 0){
         if (
             $class = $table and
@@ -91,7 +117,7 @@ abstract class SQL_Etc {
 
     protected static function _connect($array){
         $array = array_merge(array(
-            'driver' => 'PDO_MySQL',
+            'driver' => 'MySQL',
             'charset' => 'utf8',
             'options' => array(
                 Zend_Db::CASE_FOLDING => Zend_Db::CASE_LOWER
@@ -109,6 +135,11 @@ abstract class SQL_Etc {
             $array['port'] = substr($array['host'], ($pos + 1));
             $array['host'] = substr($array['host'], 0, $pos);
         }
+
+        if (in_array(strtolower($array['driver']), array(
+            'ibm', 'mssql', 'mysql', 'oci', 'pgsql', 'sqlite'
+        )))
+            $array['driver'] = 'PDO_'.$array['driver'];
 
         $array['database'] = str_replace(array('.', '/'), '_', $array['database']);
         $array['link'] = Zend_Db::factory($array['driver'], $array);
