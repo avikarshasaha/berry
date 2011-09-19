@@ -132,7 +132,7 @@ class B {
                     $path = pathinfo($file);
 
                     if ($path['extension'] == 'ini')
-                        $array = parse_ini_file($file, true);
+                        $array = self::_parse_ini_file($file);
                     elseif ($func = self::$cache['config'][$path['extension']]['get'])
                         $array = $func($file);
 
@@ -222,6 +222,59 @@ class B {
         }
 
         return (bool)file_put_contents($file, $data);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected static function _parse_ini_file($filename){
+        $result = array();
+        $array = &$result;
+        $map = array(
+            'yes' => true, 'no' => false,
+            'on' => true, 'off' => false,
+            'true' => true, 'false' => false,
+            'none' => false
+        );
+
+        foreach (file($filename) as $line){
+            $line = trim($line);
+
+            if (!$line or $line[0] == ';' or $line[0] == '#')
+                continue;
+
+            if ($line[0].substr($line, -1) == '[]'){
+                $line = substr($line, 1, -1);
+                $result[$line] = array();
+                $array = &$result[$line];
+
+                continue;
+            }
+
+            if (self::len($tmp = explode('=', $line, 2)) == 1){
+                $key = '[]';
+                $value = trim($tmp[0]);
+            } else {
+                $key = trim($tmp[0]);
+                $value = trim($tmp[1]);
+            }
+
+            if (in_array($value[0].substr($value, -1), array('""', "''"))){
+                $value = substr($value, 1, -1);
+            } elseif (isset($map[strtolower($value)])){
+                $value = $map[strtolower($value)];
+            }
+
+            if (substr($key, -2) == '[]'){
+                if (!$key = substr($key, 0, -2))
+                    $array[] = $value;
+                else
+                    $array[$key][] = $value;
+            } else {
+                $array[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
