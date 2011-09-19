@@ -11,7 +11,8 @@ class Mail {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function send($to, $params, $tags = array()){        $params = array_merge(array(
+    static function send($to, $params, $tags = array()){
+        $params = array_merge(array(
             'type'   => b::config('mail.type'),
             'attach' => array()
         ), (is_array($params) ? $params : self::bender($params)));
@@ -19,40 +20,49 @@ class Mail {
         $tags = arr::merge(array('config' => b::config(), 'q' => b::q()), $tags);
         $params['subject'] = str::format($params['subject'], $tags);
 
-        $mail = new Nomad_MimeMail;
-        $mail->debug_status = 'no';
-        $mail->set_subject($params['subject']);
-        $mail->set_charset('utf-8');
+        $mail = new Zend_Mail(b::config('mail.charset'));
+        $mail->setSubject($params['subject']);
 
         if (preg_match('/(.*)(?>\s<([^>]*)>)/', $to, $match))
-            $mail->set_to($match[2], $match[1]);
+            $mail->addTo($match[2], $match[1]);
         else
-            $mail->set_to($to);
+            $mail->addTo($to);
 
         if (preg_match('/(.*)(?>\s<([^>]*)>)/', b::config('mail.sender'), $match))
-            $mail->set_from($match[2], $match[1]);
+            $mail->setFrom($match[2], $match[1]);
         else
-            $mail->set_from(b::config('mail.sender'));
+            $mail->setFrom(b::config('mail.sender'));
 
-        if (is_array($params['message'])){            if ($params['message']['text'])
-                $mail->set_text(str::format($params['message']['text'], $tags));
-            if ($params['message']['html'])
-                $mail->set_html(str::format($params['message']['html'], $tags));
+        if (is_array($params['message'])){
+            if ($params['message']['text'])
+                $mail->setBodyText(str::format($params['message']['text'], $tags));
+
+            if ($params['message']['html'])
+                $mail->setBodyHtml(str::format($params['message']['html'], $tags));
         } elseif ($params['type'] == 'text/html'){
-            $mail->set_html(str::format($params['message'], $tags));
+            $mail->setBodyHtml(str::format($params['message'], $tags));
         } else {
-            $mail->set_text(str::format($params['message'], $tags));
+            $mail->setBodyText(str::format($params['message'], $tags));
         }
 
-        if (b::config('mail.smtp.on')){
-            $mail->set_smtp_host(b::config('mail.smtp.host'), b::config('mail.smtp.port'));
-            $mail->set_smtp_auth(b::config('mail.smtp.user'), b::config('mail.smtp.password'));
+        foreach ((array)$params['attach'] as $filename){
+            $attach = $mail->createAttachment(file_get_contents($filename));
+            $attach->filename = basename($filename);
         }
 
-        foreach ((array)$params['attach'] as $filename)
-            $mail->add_attachment($filename, basename($filename));
+        try {
+            if (b::config('mail.smtp')){
+                $config = b::config('mail.smtp');
+                $config['auth'] = 'login';
 
-        return $mail->send();
+                $transport = new Zend_Mail_Transport_Smtp(b::config('mail.smtp.host'), $config);
+            }
+
+            $mail->send($transport);
+
+            return true;
+        } catch (Exception $e){
+        }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
