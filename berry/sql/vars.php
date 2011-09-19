@@ -214,9 +214,6 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         $key = self::_hash();
 
         if (is_array($value) or $value instanceof SQL){
-            if ($name === null)
-                $name = max(array_keys($this->children));
-
             if ($class = self::_get($name)){
                 $values = (is_array($value) ? $value : $value->values);
 
