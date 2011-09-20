@@ -152,7 +152,13 @@ abstract class SQL_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _name($field){
+        if (!is_string($field))
+            return $field;
+
         $field = trim($field);
+
+        if (is_numeric($field) or $field[0].substr($field, -1) == '()')
+            return $field;
 
         return (strpos($field, '.') ? '' : $this->alias.'.').$field;
     }
@@ -325,6 +331,7 @@ abstract class SQL_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _where_between($field, $ids){
+        $field = $this->_name($field);
         $len = b::len($ids);
 
         if ($len == 1)
