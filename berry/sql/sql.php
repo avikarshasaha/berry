@@ -49,7 +49,7 @@ class SQL extends SQL_Vars implements Countable {
             $this->_where_between($this->primary_key, $ids);
         }
 
-        return self::$connection['link']->query($this->raw_query ? $this->raw_query : $this)->fetchAll();
+        return self::_query()->fetchAll();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,8 +143,9 @@ class SQL extends SQL_Vars implements Countable {
 
     function fetch_row(){
         $query = clone $this->query;
+        $query->limit(1);
 
-        return $query->limit(1)->query()->fetch();
+        return self::_query($query)->fetch();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -155,6 +156,10 @@ class SQL extends SQL_Vars implements Countable {
 
         $array1 = $array2 = self::fetch();
         self::_fetch_column($array2, 0, $number1);
+
+        if (!$array2)
+            return array();
+
         $result = array();
 
         foreach ($array2 as $k => $v)
@@ -196,7 +201,7 @@ class SQL extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch_cell($number = 0){
-        return self::query()->fetchColumn($number);
+        return self::_query()->fetchColumn($number);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -295,6 +300,51 @@ class SQL extends SQL_Vars implements Countable {
 
     static function find($where = null, $placeholders = array()){
         return self::table(get_called_class())->_find('where', $where, $placeholders);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _find($func, $where = null, $placeholders = array()){
+        if (is_numeric($where)){
+            $this->query->{$func}($this->_name($this->primary_key).' = ?', $where);
+
+            if ($func == 'where')
+                $this->id = $where;
+        }
+
+        if (is_string($where))
+            $this->query->{$func}($this->_name($where), $placeholders);
+
+        if (is_array($where) and is_numeric($where[0]))
+            $where = array($this->primary_key => $where);
+
+        if (is_array($where))
+            foreach ($where as $k => $v){
+                if (is_int($k) and is_array($v)){
+                    if (!is_array($v[0])){
+                        self::_find($func, $v);
+                        continue;
+                    }
+
+                    foreach ($v as $k2 => $v2)
+                        foreach ($v2 as $k3 => $v3){
+                            $tmp  = $this->_name($k3);
+                            $tmp .= (strpos($v3, '?') ? $v3 : ' = ?');
+                            $v[$k2] = (is_array($v[$k2]) ? '' : $v[$k2].' and ').self::_quote($tmp, $v3);
+                        }
+
+                    $this->query->{$func}('('.join(') or (', $v).')');
+                } elseif (is_int($k)){
+                    $this->query->{$func}($v);
+                } else {
+                    if (!strpos($k, '?'))
+                        $k .= (is_array($v) ? ' in (?)' : ' = ?');
+
+                    $this->query->{$func}($this->_name($k), $v);
+                }
+            }
+
+        return $this;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -541,52 +591,6 @@ class SQL extends SQL_Vars implements Countable {
 
         foreach ((array)$key as $v)
             $this->query->reset($map[$v] ? $map[$v] : $v);
-
-        return $this;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    protected function _find($func, $where = null, $placeholders = array()){
-        if (is_numeric($where)){
-            $this->query->{$func}($this->_name($this->primary_key).' = ?', $where);
-
-            if ($func == 'where')
-                $this->id = $where;
-        }
-
-        if (is_string($where))
-            $this->query->{$func}($this->_name($where), $placeholders);
-
-        if (is_array($where) and is_numeric($where[0]))
-            $where = array($this->primary_key => $where);
-
-        if (is_array($where))
-            foreach ($where as $k => $v){
-                if (is_int($k) and is_array($v)){
-                    if (isset($v[0])){
-                        $result = array();
-
-                        foreach ($v as $k2 => $v2)
-                            foreach ($v2 as $k3 => $v3){
-                                $tmp = $this->_name($k3).(strpos($v3, '?') ? $v3 : ' = ?');
-                                $result[] = self::_quote($tmp, $v3);
-                            }
-
-                        $this->query->{$func}(join(' or ', $result));
-                    } else {
-                        foreach ($v as $k2 => $v2)
-                            $this->query->{$func}($this->_name($k2).(strpos($v2, '?') ? $v2 : ' = ?'), $v);
-                    }
-                } elseif (is_int($k)){
-                    $this->query->{$func}($v);
-                } else {
-                    if (!strpos($k, '?'))
-                        $k .= (is_array($v) ? ' in (?)' : ' = ?');
-
-                    $this->query->{$func}($this->_name($k), $v);
-                }
-            }
 
         return $this;
     }

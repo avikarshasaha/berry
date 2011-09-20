@@ -173,7 +173,24 @@ abstract class SQL_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected function _quote($string, $value){
-        return self::$connection['link']->quoteInto($string, $value);
+        if (!is_array($value))
+            return self::$connection['link']->quoteInto($string, $value);
+
+        while ($pos = strpos($string, '?')){
+            $tmp = substr($string, 0, ++$pos);
+            $tmp = self::$connection['link']->quoteInto($tmp, array_shift($value));
+            $string = $tmp.substr($string, $pos);
+        }
+
+        return $string;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    protected function _query($query = null){
+        $query = ($query ? $query : $this);
+
+        return self::$connection['link']->query($this->raw_query ? $this->raw_query : $query);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
