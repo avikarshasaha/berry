@@ -27,7 +27,7 @@ abstract class Piles_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function char($char){
-        return '%char['.ord($char).']';
+        return '&piles::char['.ord($char).'];';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,14 +168,18 @@ abstract class Piles_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _var($name){
+    protected static function _var($name, $params = null){
         $var = str_replace('\.', self::char('.'), $name);
-        $var = explode('.', $var);
+        $var = array_reverse(explode('.', $var));
         $funcs = array();
 
         foreach ($var as $k => $v)
             if (b::function_exists($func = 'piles_func_'.$v)){
-                $funcs[] = sprintf('b::call(`%s`, %%s)', $func);
+                $tmp = (array)$params[join('.', array_reverse($var))];
+                $tmp = str_replace('%', '%%', var_export($tmp, true));
+                $tmp = str_replace(self::char("'"), "'", $tmp);
+
+                array_unshift($funcs, sprintf('b::call(`%s`, %%s, %s)', $func, $tmp));
                 unset($var[$k]);
             }
 
@@ -192,15 +196,18 @@ abstract class Piles_Etc {
         foreach ($funcs as $v)
             $var = sprintf($v, $var);
 
-        return $var;
+        return self::_vars($var, true);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected static function _vars($output){
+    protected static function _vars($output, $quoted = false){
         if (preg_match_all('/\${([^}]*)}/sU', $output, $match))
-            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
-                $output = str_replace($match[0][$i], self::_var($match[1][$i]), $output);
+            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
+                $var = self::_var($match[1][$i]);
+                $var = ($quoted ? "'.".$var.".'" : $var);
+                $output = str_replace($match[0][$i], $var, $output);
+            }
 
         return $output;
     }

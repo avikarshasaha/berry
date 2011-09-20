@@ -101,22 +101,49 @@ class Piles extends Piles_Etc {
 
         for ($i = 1, $c = b::len($token); $i < $c; $i++){
             if ($token[$i] == '$' and $token[$i + 1] == '{' and array_search('}', $token)){
-                $tmp = 0;
+                $deep = 0;
                 $var = '';
+                $params = array();
 
                 for ($j = $i; $j < $c; $j++){
-                    if (
-                        $var and $token[$j + 1] == '{' and
-                        ($token[$j] == '$' or (is_array($token[$j]) and $token[$j][1][0] == '$'))
-                    )
-                        $tmp++;
-                    elseif ($token[$j] == '}' and !$tmp--)
+                    if ($var and $token[$j] == '$' and $token[$j + 1] == '{')
+                        $deep++;
+                    elseif ($token[$j] == '}' and !$deep--)
                         break;
+
+                    if ($var and $token[$j] == '('){
+                        $deep2 = 0;
+                        $tmp = '';
+
+                        for ($z = ($j + 1); $z < $c; $z++){
+                            if ($token[$z] == '(')
+                                $deep2++;
+
+                            if ($token[$z] == ',' or ($token[$z] == ')' and !$deep2--)){
+                                if (in_array($tmp[0].substr($tmp, -1), array('""', "''", '``')))
+                                    $tmp = substr($tmp, 1, -1);
+
+                                $params[substr($var, 2)][] = str_replace(self::char("'"), "'", $tmp);
+                                $tmp = '';
+
+                                if ($token[$z] == ','){
+                                    continue;
+                                } elseif ($token[$z] == ')'){
+                                    $j = $z;
+                                    continue 2;
+                                }
+                            } elseif ($token[$z - 1] == ',' and self::_empty($token[$z])){
+                                continue;
+                            }
+
+                            $tmp .= (is_array($token[$z]) ? $token[$z][1] : $token[$z]);
+                        }
+                    }
 
                     $var .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                 }
 
-                $tags[sprintf($mask, '$', $i)] = self::_var(substr($var, 2));
+                $tags[sprintf($mask, '$', $i)] = self::_var(substr($var, 2), $params);
                 $skip = ($j - $i);
             } elseif ($opened){
                 if ($token[$i] == '>'){
@@ -212,25 +239,8 @@ class Piles extends Piles_Etc {
                             )){
                                 $method = '';
 
-                                if (
-                                    is_array($token[$j - 1]) and self::_empty($token[$j - 1]) and
-                                    in_array($token[$j - 2][1], array('::', '->')) and
-                                    is_array($token[$j - 3]) and self::_empty($token[$j - 3])
-                                ){
-                                    $method = $token[$j - 4][1].$token[$j - 3][1].$token[$j - 2][1].$token[$j - 1][1];
-                                } elseif (
-                                    is_array($token[$j - 2]) and self::_empty($token[$j - 2]) and
-                                    in_array($token[$j - 3][1], array('::', '->'))
-                                ){
-                                    $method = $token[$j - 4][1].$token[$j - 3][1].$token[$j - 2][1];
-                                } elseif (
-                                    is_array($token[$j - 1]) and self::_empty($token[$j - 1]) and
-                                    in_array($token[$j - 2][1], array('::', '->'))
-                                ){
-                                    $method = $token[$j - 3][1].$token[$j - 2][1].$token[$j - 1][1];
-                                } elseif (in_array($token[$j - 1][1], array('::', '->'))){
+                                if (in_array($token[$j - 1][1], array('::', '->')))
                                     $method = $token[$j - 2][1].$token[$j - 1][1];
-                                }
 
                                 $token[$j][1] = '`'.$token[$j][1].'`';
 
