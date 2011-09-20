@@ -7,40 +7,54 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function type_a($value){    return (array)$value;}
+function piles_var_q($string){
+    return b::call('*b::q', explode('.', $string, 3));
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_b($value){
+function piles_var_config($string){
+    return ($string ? b::config($string) : b::config());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function piles_var_lang($string){
+    return ($string ? b::lang($string) : b::lang());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function piles_func_to_array($value){
+    return (array)$value;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function piles_func_to_bool($value){
     return ($value ? 1 : 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_e($value){
-    return mysql_real_escape_string($value);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function type_f($value){
+function piles_func_to_float($value){
     return (float)$value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_i($value){
+function piles_func_to_int($value){
     return (int)$value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_s($value){
+function piles_func_to_s($value){
     return str::unhtml($value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function type_u($value){
-    return urlencode($value);
+function piles_func_to_html($value){
+    return str::html($value);
 }

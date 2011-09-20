@@ -32,17 +32,20 @@ class Piles extends Piles_Etc {
             if (is_file($path = file::path($file.'.phtml'))){
                 $this->file = array($name, $path);
                 break;
-            }    }
+            }
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function render($_ = array()){        if (is_array($_))
+    function render($_ = array()){
+        if (is_array($_))
             extract($_);
 
         self::$cache[0] = md5($this->file[0]);
         self::$cache[1] = microtime(true);
 
-        if (isset($this->file[1])){            if (!$this->file[2] = cache::get_path(
+        if (isset($this->file[1])){
+            if (!$this->file[2] = cache::get_path(
                 'piles/'.$this->file[0].'.php', array('file' => $this->file[1])
             )){
                 $this->output = file_get_contents($this->file[1]);
@@ -51,19 +54,24 @@ class Piles extends Piles_Etc {
 
             ob_start();
                 include $this->file[2];
-            $result = ob_get_clean();        } else {            $this->output = $this->file[0];
+            $result = ob_get_clean();
+        } else {
+            $this->output = $this->file[0];
 
             if (!isset(self::$cache['render'][self::$cache[0]]))
                 self::$cache['render'][self::$cache[0]] = self::parse();
-            ob_start();
+
+            ob_start();
                 $eval = eval(self::$cache['render'][self::$cache[0]]);
             $result = ob_get_clean();
 
             if ($eval === false)
-                throw new Piles_Except($result, trim($this->output));        }
+                throw new Piles_Except($result, trim($this->output));
+        }
 
         self::$cache['stat'] += (microtime(true) - self::$cache[1]);
-        return $result;    }
+        return $result;
+    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -92,18 +100,7 @@ class Piles extends Piles_Etc {
         $mask  = '%s:%d';
 
         for ($i = 1, $c = b::len($token); $i < $c; $i++){
-            $is_var = ($token[$i] == '$' or (is_array($token[$i]) and $token[$i][1][0] == '$'));
-
-            if (
-                $is_var and is_array($token[$i + 1]) and
-                $token[$i + 1][1][0] == '{' and ($pos = strpos($token[$i + 1][1], '}'))
-            ){
-                $var = (is_array($token[$i]) ? $token[$i][1] : $token[$i]);
-                $var = self::_var($var.substr($token[$i + 1][1], 0, $pos));
-                $tags[sprintf($mask, '$', $i)] = $var;
-                $tags[] = substr($token[$i + 1][1], ($pos + 1));
-                $skip = 1;
-            } elseif ($is_var and $token[$i + 1] == '{' and array_search('}', $token)){
+            if ($token[$i] == '$' and $token[$i + 1] == '{' and array_search('}', $token)){
                 $tmp = 0;
                 $var = '';
 
@@ -119,7 +116,7 @@ class Piles extends Piles_Etc {
                     $var .= (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                 }
 
-                $tags[sprintf($mask, '$', $i)] = self::_var($var);;
+                $tags[sprintf($mask, '$', $i)] = self::_var(substr($var, 2));
                 $skip = ($j - $i);
             } elseif ($opened){
                 if ($token[$i] == '>'){
@@ -127,17 +124,24 @@ class Piles extends Piles_Etc {
                 } elseif ($token[$i] == '/' and $token[$i + 1] == '>'){
                     $opened = false;
                     $skip = 1;
-                } elseif (is_array($token[$i]) and !self::_empty($token[$i])){                    $attr = array();
-                    for ($j = $i; $j < $c; $j++){
+                } elseif (is_array($token[$i]) and !self::_empty($token[$i])){
+                    $attr = array();
+
+                    for ($j = $i; $j < $c; $j++){
                         if (is_array($token[$j]) and self::_empty($token[$j])){
                             break;
-                        } elseif ($token[$j] == '='){                            if ($token[$j + 1] == '"'){                                for ($j2 = ($j + 2); $j2 < $c; $j2++){
+                        } elseif ($token[$j] == '='){
+                            if ($token[$j + 1] == '"'){
+                                for ($j2 = ($j + 2); $j2 < $c; $j2++){
                                     if (($tmp = (is_array($token[$j2]) ? $token[$j2][1] : $token[$j2])) == '"')
                                         break;
-                                    $attr['value'] .= $tmp;                                }
+
+                                    $attr['value'] .= $tmp;
+                                }
 
                                 $j = $j2;
-                            } else {                                $attr['value'] = $token[$j + 1][1];
+                            } else {
+                                $attr['value'] = $token[$j + 1][1];
                                 $j += 1;
                             }
 
@@ -165,7 +169,8 @@ class Piles extends Piles_Etc {
                             $attr['#key'] .= $token[$j];
                         } elseif ($count = substr_count($token[$j][1], '_')){
                             $attr['key'] = $attr['#key'] = $token[$j][1];
-                        } else {                            $tmp = (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
+                        } else {
+                            $tmp = (is_array($token[$j]) ? $token[$j][1] : $token[$j]);
                             $attr['key'] .= $tmp;
                             $attr['#key'] .= $tmp;
                         }
@@ -318,14 +323,16 @@ class Piles extends Piles_Etc {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function parse($output = null){        $inside = ($output !== null);
+    function parse($output = null){
+        $inside = ($output !== null);
         $output = ($inside ? $output : $this->output);
         $tags = (is_array($output) ? $output : self::tokenize($output));
 
         if (!is_array($tags))
             return;
 
-        if (end($tags) == ';'){            array_pop($tags);
+        if (end($tags) == ';'){
+            array_pop($tags);
             $tags[] = self::char(';');
         }
 
@@ -362,7 +369,8 @@ class Piles extends Piles_Etc {
                 } else {
                     $attr = '';
 
-                    foreach ($v as $k2 => $v2){                        $v2 = (substr($v2, -1) == ';' ? substr($v2, 0, -1) : $v2);
+                    foreach ($v as $k2 => $v2){
+                        $v2 = (substr($v2, -1) == ';' ? substr($v2, 0, -1) : $v2);
                         $attr .= '`'.$k2.'` => '.(!$v2 ? '``' : $v2).",\r\n";
                     }
 
@@ -380,7 +388,9 @@ class Piles extends Piles_Etc {
                 $echo = false;
             }
 
-        if ($inside){            if (substr($result, 0, 5) == 'echo ' or substr($result, 0, 6) == ' echo ')                $result = substr($result, 5);
+        if ($inside){
+            if (substr($result, 0, 5) == 'echo ' or substr($result, 0, 6) == ' echo ')
+                $result = substr($result, 5);
 
             $result = str_replace('`; ', '`. ', $result);
             $result = str_replace(' ;echo ', ' .', $result);
@@ -394,7 +404,7 @@ class Piles extends Piles_Etc {
         $result = preg_replace('/%char\[(\d+)\]/e', "chr('\\1')", $result);
 
         return $result;
-    }
+    }
 ////////////////////////////////////////////////////////////////////////////////
 
 }

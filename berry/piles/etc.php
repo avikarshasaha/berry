@@ -7,17 +7,21 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class Piles_Etc {    protected $filter, $file, $output;    protected static $cache = array();
+abstract class Piles_Etc {
+    protected $filter, $file, $output;
+    protected static $cache = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function show($string = '', $_ = array(), $filter = null){        $class = new Piles($string, $filter);
+    static function show($string = '', $_ = array(), $filter = null){
+        $class = new Piles($string, $filter);
         return $class->render($_);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function stat(){        return (float)self::$cache['stat'];
+    static function stat(){
+        return (float)self::$cache['stat'];
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,7 +151,8 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    protected function call($attr = array()){        $escape = ($this->filter and !isset($this->filter[$attr['#tag']]));
+    protected function call($attr = array()){
+        $escape = ($this->filter and !isset($this->filter[$attr['#tag']]));
 
         if ($this->filter and !$escape)
             foreach ($attr as $k => $v){
@@ -164,47 +169,38 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected static function _var($name){
-        $var = explode('{', str_replace("'", "\'", $name), 2);
-        $var[0] = substr($var[0], 1);
-        $var[2] = self::varname($var[1]);
+        $var = str_replace('\.', self::char('.'), $name);
+        $var = explode('.', $var);
+        $funcs = array();
 
-        $func = reset(explode('.', str_replace('\.', self::char('.'), $var[1])));
-        $func = strtr($func, array(
-            self::char('#') => '_octothorp_',
+        foreach ($var as $k => $v)
+            if (b::function_exists($func = 'piles_func_'.$v)){
+                $funcs[] = sprintf('b::call(`%s`, %%s)', $func);
+                unset($var[$k]);
+            }
 
-            '*' => '_asterisk_',
-            '/' => '_slash_',
-            '+' => '_plus_',
-            '-' => '_minus_',
+        if (b::function_exists($func = 'piles_var_'.$var[0])){
+            array_unshift($funcs, sprintf('b::call(`%s`, `%%s`, get_defined_vars())', $func));
+            unset($var[0]);
 
-            '$' => '_dollar_',
-            '%' => '_percent_',
-            '@' => '_at_',
-
-            '&' => '_ampersand_',
-            '~' => '_tilde_',
-            '^' => '_caret_'
-        ));
-
-        if (b::function_exists($func = 'var_'.$func)){
-            $tmp = explode('.', $var[1]);
-            unset($tmp[0]);
-
-            $var[2] = 'b::call(`'.$func.'`, `'.str_replace("'", "\'", join('.', $tmp)).'`, get_defined_vars())';
+            $var = join('.', $var);
+        } else {
+            $var = join('.', $var);
+            $var = self::varname($var);
         }
 
-        if ($var[0] and b::function_exists($func = 'type_'.$var[0]))
-            $var[2] = 'b::call(`'.$func.'`, '.$var[2].')';
+        foreach ($funcs as $v)
+            $var = sprintf($v, $var);
 
-        return $var[2];
+        return $var;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     protected static function _vars($output){
-        if (preg_match_all('/(\$|\$\w+){([^}]*)}/sU', $output, $match))
+        if (preg_match_all('/\${([^}]*)}/sU', $output, $match))
             for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
-                $output = str_replace($match[0][$i], self::_var($match[1][$i].'{'.$match[2][$i]), $output);
+                $output = str_replace($match[0][$i], self::_var($match[1][$i]), $output);
 
         return $output;
     }
@@ -213,7 +209,7 @@ abstract class Piles_Etc {    protected $filter, $file, $output;    protected 
 
     protected static function _empty($token){
         return ($token[0] == T_WHITESPACE);
-    }
+    }
 ////////////////////////////////////////////////////////////////////////////////
 
 }
