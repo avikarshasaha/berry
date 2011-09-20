@@ -40,6 +40,21 @@ class SQL extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function fetch(){
+        if (
+            $this->multiple and !$this->part('group') and
+            ($this->part('limit') or $this->part('where'))
+        ){
+            $class = clone $this;
+            $class->reset('columns', 'group');
+            $class->with($class->primary_key)->group();
+
+            if (!$ids = $class->fetch_column())
+                return array();
+
+            $this->reset('where', 'limit', 'offset');
+            $this->_where_between($this->primary_key, $ids);
+        }
+
         return self::query()->fetchAll();
     }
 
@@ -194,9 +209,9 @@ class SQL extends SQL_Vars implements Countable {
 
     function count(){
         $query = self::table($this->table)->with('count(*)');
-        $query->_find('where', $this->query->getPart('where'));
-        $query->_find('having', $this->query->getPart('having'));
-        $query->group($this->query->getPart('group'));
+        $query->_find('where', $this->part('where'));
+        $query->_find('having', $this->part('having'));
+        $query->group($this->part('group'));
 
         return array_sum($query->fetch_column());
     }
@@ -310,7 +325,7 @@ class SQL extends SQL_Vars implements Countable {
             $select = func_get_args();
 
         if (!$this->with)
-            $this->query->reset('columns');
+            $this->reset('columns');
 
         $this->with = true;
         $join = array();
@@ -361,7 +376,7 @@ class SQL extends SQL_Vars implements Countable {
         foreach ($join as $v)
             $this->query->joinLeft($v[0], $v[1], $v[2]);
 
-        foreach ($this->query->getPart('columns') as $v)
+        foreach ($this->part('columns') as $v)
             if ($found = ($v[0] == $this->alias and is_string($v[1])))
                 break;
 
@@ -381,7 +396,7 @@ class SQL extends SQL_Vars implements Countable {
             $table[$k] = '('.$v.')';
 
         $class = self::table('sql');
-        $class->query->reset('columns')->reset('from');
+        $class->reset('columns', 'from');
         $class->query->union($table);
 
         return $class;
@@ -448,7 +463,7 @@ class SQL extends SQL_Vars implements Countable {
         if ($values){
             $this->values = array();
 
-            if ($where = $this->query->getPart('where')){
+            if ($where = $this->part('where')){
                 $where = join(' ', $where);
                 $where = str_replace($this->alias.'.', '', $where);
                 $result[$this->alias][] = (bool)self::$connection['link']->update($this->table, $values, $where);
@@ -492,7 +507,7 @@ class SQL extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function delete(){
-        $where = join(' ', $this->query->getPart('where'));
+        $where = join(' ', $this->part('where'));
         $where = str_replace($this->alias.'.', '', $where);
 
         return self::$connection['link']->delete($this->table, $where);
