@@ -264,7 +264,7 @@ class SQL_Element extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function limit($limit = 0, $offset = 0){
-        if (is_numeric($limit) and is_numeric($offset))
+        if ($limit > 0 and is_numeric($offset))
             $this->scope = $this->_scope = array_slice($this->scope, $offset, $limit);
 
         return $this;

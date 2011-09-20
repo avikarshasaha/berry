@@ -70,16 +70,16 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if (!isset($this->iterator)){
             $class = self::table($this->table)->with('count(*)');
 
-            foreach ($this->query->getPart('where') as $v)
+            foreach ($this->part('where') as $v)
                 $class->query->where($v);
 
-            foreach ($this->query->getPart('having') as $v)
+            foreach ($this->part('having') as $v)
                 $class->query->having($v);
 
-            foreach ($this->query->getPart('group') as $v)
+            foreach ($this->part('group') as $v)
                 $class->query->group($v);
 
-            if (!$this->query->getPart('group'))
+            if (!$this->part('group'))
                 $class->group();
 
             if ($len = array_sum($class->fetch_column()))
@@ -121,7 +121,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         $key = self::_hash();
 
         if ($this->with and !isset(self::$cache[$key])){
-            $this->query->columns($this->_name($this->primary_key));
+            $this->with($this->primary_key);
             self::$cache[$key] = new SQL_Element($this);
         }
 
@@ -134,14 +134,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if ($name === null){
             $key = ($this->children ? (max(array_keys($this->children)) + 1) : 0);
 
-            if ($this->query->getPart('where') and $key < ($count = b::len($this)))
+            if ($this->part('where') and $key < ($count = b::len($this)))
                 $key = $count;
 
             $class = clone $this;
-            $class->query = clone $this->query;
             $class->children = array();
 
-            $class->query->reset('where');
+            $class->reset('where');
 
             return $this->children[$key] = $class;
         }
@@ -158,14 +157,13 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 
         if (is_int($name)){
             if (!isset($this->children[$name])){
-                if ($this->parent and !$this->query->getPart('where'))
+                if ($this->parent and !$this->part('where'))
                     return;
 
                 $class = clone $this;
-                $class->query = clone $this->query;
                 $class->children = array();
 
-                $class->query->reset('group');
+                $class->reset('group');
                 $class->with($class->primary_key)->group();
 
                 $array = $class->fetch_column();
@@ -173,8 +171,11 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 if (!$class->id = $array[$name])
                     return;
 
-                $class->query->reset('group')->group($this->query->getPart('group'));
                 $class->with('*')->where($class->id);
+                $class->reset('group');
+
+                foreach ($this->part('group') as $v)
+                    $class->group($v);
 
                 $this->children[$name] = $class;
             }
@@ -203,7 +204,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         }
 
         if (!isset($this->children[$this->alias]))
-            $this->children[$this->alias] = new SQL_Element($this->query->getPart('where') ? $this->fetch_array() : null);
+            $this->children[$this->alias] = new SQL_Element($this->part('where') ? $this->fetch_array() : null);
 
         return $this->children[$this->alias][$name];
     }

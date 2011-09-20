@@ -242,7 +242,8 @@ class SQL extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function limit($limit = 0, $offset = 0){
-        $this->query->limit($limit, $offset);
+        if ($limit > 0)
+            $this->query->limit($limit, $offset);
 
         return $this;
     }
@@ -250,9 +251,7 @@ class SQL extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function page($limit = 0, $page = 0){
-        $this->query->limitPage($page, $limit);
-
-        return $this;
+        return self::limit($limit, ($page * $limit - $limit));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -501,6 +500,34 @@ class SQL extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function part($key, $plain = false){
+        $map = array(
+            'limit' => 'limitcount',
+            'offset' => 'limitoffset'
+        );
+
+        return $this->query->getPart($map[$key] ? $map[$key] : $key);
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function reset($key){
+        if (!is_array($key))
+            $key = func_get_args();
+
+        $map = array(
+            'limit' => 'limitcount',
+            'offset' => 'limitoffset'
+        );
+
+        foreach ((array)$key as $v)
+            $this->query->reset($map[$v] ? $map[$v] : $v);
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     protected function _find($func, $where = null, $placeholders = array()){
         if (is_numeric($where)){
             $this->query->{$func}($this->_name($this->primary_key).' = ?', $where);
@@ -543,6 +570,12 @@ class SQL extends SQL_Vars implements Countable {
             }
 
         return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function __clone(){
+        $this->query = clone $this->query;
     }
 
 ////////////////////////////////////////////////////////////////////////////////
