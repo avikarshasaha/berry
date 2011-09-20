@@ -33,12 +33,6 @@ class SQL extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function query(){
-        return $this->query->query();
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     function fetch(){
         if (
             $this->multiple and !$this->part('group') and
@@ -55,7 +49,7 @@ class SQL extends SQL_Vars implements Countable {
             $this->_where_between($this->primary_key, $ids);
         }
 
-        return self::query()->fetchAll();
+        return self::$connection['link']->query($this->raw_query ? $this->raw_query : $this)->fetchAll();
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -515,8 +509,17 @@ class SQL extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+    function query($query = ''){
+        $this->raw_query = $query;
+
+        return $this;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+
     function part($key, $plain = false){
         $map = array(
+            'sort' => 'order',
             'limit' => 'limitcount',
             'offset' => 'limitoffset'
         );
@@ -531,6 +534,7 @@ class SQL extends SQL_Vars implements Countable {
             $key = func_get_args();
 
         $map = array(
+            'sort' => 'order',
             'limit' => 'limitcount',
             'offset' => 'limitoffset'
         );

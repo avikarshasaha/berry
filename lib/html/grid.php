@@ -34,8 +34,8 @@ class HTML_Grid extends SQL_Etc {
         $data->page($_GET['limit'], $_GET['page']);
 
         $class = clone $data;
-        $class->reset('order', 'limit', 'offset');
-        $class->query->having('1) procedure analyse(');
+        $class->reset('sort', 'limit', 'offset');
+        $class->query($class.' procedure analyse()');
 
         foreach ($class->fetch() as $row){
             $type = $row['optimal_fieldtype'];

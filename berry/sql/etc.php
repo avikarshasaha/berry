@@ -28,6 +28,7 @@ abstract class SQL_Etc {
 
     protected $iterator;
     protected $query;
+    protected $raw_query;
 
     protected $parent;
     protected $children = array();
