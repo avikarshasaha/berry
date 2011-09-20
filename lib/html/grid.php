@@ -25,21 +25,19 @@ class HTML_Grid extends SQL_Etc {
             $_GET['sort'] = '-'.$data->primary_key;
 
         if (!is_numeric($_GET['limit']))
-            $_GET['limit'] = $data->limit;
+            $_GET['limit'] = $data->part('limit');
 
         if (!is_numeric($_GET['page']))
             $_GET['page'] = 1;
 
         $data->sort($_GET['sort']);
-        $data->limit($_GET['limit']);
-        $data->page($_GET['page']);
+        $data->page($_GET['limit'], $_GET['page']);
 
         $class = clone $data;
-        $class->order_by = array();
-        $class->limit = $class->offset = 0;
-        $query = sql::query($class->build('select').' procedure analyse()');
+        $class->reset('order', 'limit', 'offset');
+        $class->query->having('1) procedure analyse(');
 
-        foreach ($query->fetch() as $row){
+        foreach ($class->fetch() as $row){
             $type = $row['optimal_fieldtype'];
 
             if (substr($type, 0, 4) != 'ENUM')
