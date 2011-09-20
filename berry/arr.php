@@ -87,24 +87,6 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function tree($array, $level = 0, $result = array()){
-        foreach ($array as $k => $items){
-            $tmp = $items;
-            unset($tmp['childNodes']);
-            $result[$k] = array_merge($tmp, array((($pos = strpos($key = key($tmp), '.')) ? substr($key, 0, $pos + 1) : '').'#level' => $level));
-
-            if (array_key_exists('childNodes', $items) and $items['childNodes']){
-                $level++;
-                $result = self::tree($items['childNodes'], $level, $result);
-                $level--;
-            }
-        }
-
-        return $result;
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function json($value){
         $json = json_encode($value);
         $json = str_replace('\"', '¬', $json);
