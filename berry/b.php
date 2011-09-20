@@ -484,9 +484,14 @@ class B {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function router($array){
-        $q = self::q();
-        array_shift($q);
+    static function router($key, $value = null){
+        static $found;
+
+        if ($found)
+            return;
+
+        $array = (is_array($key) ? $key : array($key => $value));
+        $q = explode('/', self::$query);
 
         for ($i = self::len($q); $i >= -1; $i--)
             if (
@@ -533,7 +538,7 @@ class B {
                 }
 
                 echo $class;
-                return true;
+                return $found = true;
             }
     }
 
