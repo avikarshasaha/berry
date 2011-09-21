@@ -8,17 +8,12 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 class B {
+    const VERSION = '1.0-dev';
+
     static $path;
     static $lang;
     static $query;
     protected static $cache = array();
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function version($what = ''){
-        $version = array('name' => 'Holly', 'id' => '1.0.dev');
-        return ($what ? $version[$what] : $version);
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
