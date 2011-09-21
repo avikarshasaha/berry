@@ -7,7 +7,7 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-abstract class Piles_Etc {
+abstract class Piles_Etc extends Object {
     protected $filter, $file, $output;
     protected static $cache = array();
 
@@ -53,11 +53,10 @@ abstract class Piles_Etc {
         $var = str_replace('\.', self::char('.'), $var);
         $var = explode('.', $var);
 
-        if ($vars[$var[0]]){
-            $ns = '$'.$vars[$var[0]];
-            unset($var[0]);
-        } elseif (!$ns){
-            $ns = '$'.$var[0];
+        if ($vars[$var[0]] or !$ns){
+            $ns = ($vars[$var[0]] ? $vars[$var[0]] : $var[0]);
+            $ns = '$ {\''.str_replace("'", self::char("'"), $var[0]).'\'}';
+
             unset($var[0]);
         }
 

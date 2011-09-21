@@ -38,8 +38,7 @@ class Piles extends Piles_Etc {
 ////////////////////////////////////////////////////////////////////////////////
 
     function render($_ = array()){
-        if (is_array($_))
-            extract($_);
+        extract($_ = array_merge($this->scope, $_));
 
         self::$cache[0] = md5($this->file[0]);
         self::$cache[1] = microtime(true);
@@ -49,7 +48,7 @@ class Piles extends Piles_Etc {
                 'piles/'.$this->file[0].'.php', array('file' => $this->file[1])
             )){
                 $this->output = file_get_contents($this->file[1]);
-                $this->file[2] = cache::set('<?php '.self::parse());
+                $this->file[2] = cache::set('<?php unset($this); '.self::parse());
             }
 
             ob_start();
@@ -415,6 +414,17 @@ class Piles extends Piles_Etc {
 
         return $result;
     }
+
+////////////////////////////////////////////////////////////////////////////////
+
+    function __toString(){
+        try {
+            return self::render();
+        } catch (Piles_Except $e){
+            return (string)$e;
+        }
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 
 }
