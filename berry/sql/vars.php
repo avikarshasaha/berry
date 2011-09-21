@@ -120,6 +120,11 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
     protected function _get($name){
         $key = self::_hash();
 
+        if (is_int($name) and $name < 0){
+            self::rewind();
+            $name = (b::len($this->iterator) + $name);
+        }
+
         if ($this->with and !isset(self::$cache[$key])){
             $this->with($this->primary_key);
             self::$cache[$key] = new SQL_Element($this);
