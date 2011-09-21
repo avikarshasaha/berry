@@ -38,23 +38,6 @@ function attr_check_for($attr){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function attr_check_re($attr){
-	$attr = array_merge(array(
-	    'check_type' => 'e'
-	), $attr);
-
-	$_SESSION['attr']['check'][piles::name2var($attr['name'])] = array(
-	    $attr['check_re'],
-	    str::format($attr['check_need'], $attr),
-	    $attr['check_type']
-	);
-
-    unset($attr['check_re'], $attr['check_need'], $attr['check_type']);
-	return $attr;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 function attr_period_stop($attr){
 	if (date::time($attr['period_stop']) <= time())
 	    $attr['#skip'] = true;
