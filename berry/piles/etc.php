@@ -172,6 +172,7 @@ abstract class Piles_Etc {
         $var = str_replace('\.', self::char('.'), $name);
         $var = array_reverse(explode('.', $var));
         $funcs = array();
+        $mask = 'b::call(`%s`, %%s, %s, get_defined_vars())';
 
         foreach ($var as $k => $v)
             if (b::function_exists($func = 'method_'.$v)){
@@ -179,12 +180,12 @@ abstract class Piles_Etc {
                 $tmp = str_replace('%', '%%', var_export($tmp, true));
                 $tmp = str_replace(self::char("'"), "'", $tmp);
 
-                array_unshift($funcs, sprintf('b::call(`%s`, %%s, %s)', $func, $tmp));
+                array_unshift($funcs, sprintf($mask, $func, $tmp));
                 unset($var[$k]);
             }
 
         if (b::function_exists($func = 'var_'.$var[0])){
-            array_unshift($funcs, sprintf('b::call(`%s`, `%%s`, get_defined_vars())', $func));
+            array_unshift($funcs, sprintf($mask, $func));
             unset($var[0]);
 
             $var = array_reverse($var);
