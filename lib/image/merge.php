@@ -19,7 +19,7 @@ class Image_Merge {
 ////////////////////////////////////////////////////////////////////////////////
 
     protected static function color($color, $im = null){        $color = strtoupper(substr($color, 1));
-        $len = b::len($color);
+        $len = strlen($color);
 
         if ($len == 3)
             $color = $color[0].$color[0].$color[1].$color[1].$color[2].$color[2];
@@ -39,11 +39,11 @@ class Image_Merge {
         $string = str_replace('px', '', strtolower($string));
         $array = arr::trim(explode(' ', $string));
 
-        if (reset($array) === '' or ($len = b::len($array)) == 3)
+        if (reset($array) === '' or ($len = count($array)) == 3)
             return array();
 
         $array = ($len == 1 ? array($array[0], $array[0]) : $array);
-        $array = (b::len($array) == 2 ? array($array[0], $array[1], $array[0], $array[1]) : $array);
+        $array = (count($array) == 2 ? array($array[0], $array[1], $array[0], $array[1]) : $array);
 
         foreach ($array as $k => $v)
             if (substr($v, -1) == '%'){

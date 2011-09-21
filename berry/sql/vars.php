@@ -40,7 +40,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
             $this[$offset] instanceof SQl or
             $this[$offset] instanceof SQl_Element
         )
-            return (b::len($this[$offset]) > 0);
+            return (count($this[$offset]) > 0);
 
         return ($this[$offset] !== null);
     }
@@ -121,7 +121,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if ($name === null){
             $key = ($this->children ? (max(array_keys($this->children)) + 1) : 0);
 
-            if ($this->part('where') and $key < ($count = b::len($this)))
+            if ($this->part('where') and $key < ($count = count($this)))
                 $key = $count;
 
             $class = clone $this;

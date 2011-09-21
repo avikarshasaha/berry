@@ -351,7 +351,7 @@ abstract class SQL_Etc {
 
     protected function _where_between($field, $ids){
         $field = $this->_name($field);
-        $len = b::len($ids);
+        $len = count($ids);
 
         if ($len == 1)
             return $this->where(array($field => $ids[0]));
@@ -369,7 +369,7 @@ abstract class SQL_Etc {
                 $i -= 1;
             }
 
-        if (b::len($seq) > 2){
+        if (count($seq) > 2){
             $ids = array_diff($ids, $seq);
             $tmp = $seq;
             $seq = array(array());
@@ -386,7 +386,7 @@ abstract class SQL_Etc {
             foreach ($seq as $k => $v)
                 if (!$v){
                     unset($seq[$k]);
-                } elseif (b::len($v) <= 2){
+                } elseif (count($v) <= 2){
                     unset($seq[$k]);
                     $ids = array_merge($ids, $v);
                 } else {

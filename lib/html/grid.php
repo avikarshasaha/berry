@@ -48,7 +48,7 @@ class HTML_Grid extends SQL_Etc {
             $type = substr($type, 5);
             $type = substr($type, 0, strrpos($type, ')'));
 
-            if (substr($name, 0, ($len = b::len($data->alias) + 1)) == $data->alias.'.')
+            if (substr($name, 0, ($len = strlen($data->alias) + 1)) == $data->alias.'.')
                 $name = substr($name, $len);
 
             foreach (token_get_all('<?php '.$type) as $k => $v)
@@ -90,7 +90,7 @@ class HTML_Grid extends SQL_Etc {
                     $this->data->find(array($k.' '.$op.' ?' => $cond));
                 }
 
-                if (($v = $this->enum[$k]) and b::len($v) > 1){
+                if (($v = $this->enum[$k]) and count($v) > 1){
                     array_unshift($v, ' ');
                     $result .= '<th>'.html::dropdown('f['.$k.']', $v).'</th>';
                 } elseif ($v){
@@ -135,7 +135,7 @@ class HTML_Grid extends SQL_Etc {
 
             if (
                 $k[0] == '#' or $this->data->relations[$k] or
-                ($this->enum[$k] and b::len($this->enum[$k]) < 2)
+                ($this->enum[$k] and count($this->enum[$k]) < 2)
             )
                 $result .= '<th class="'.$class.'">'.$v[0].'</th>';
             else
@@ -176,12 +176,12 @@ class HTML_Grid extends SQL_Etc {
 
     function pager($pager = 'simple'){
         $pager = b::call('tag_pager'.($pager ? '_'.$pager : ''), array(
-            'count' => b::len($this->data),
+            'count' => count($this->data),
             'limit' => $_GET['limit'],
             'page' => $_GET['page']
         ));
 
-        return '<tr class="pager"><td colspan="'.b::len($this->fields).'">'.$pager.'</td></tr>';
+        return '<tr class="pager"><td colspan="'.count($this->fields).'">'.$pager.'</td></tr>';
     }
 
 ////////////////////////////////////////////////////////////////////////////////

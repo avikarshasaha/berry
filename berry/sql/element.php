@@ -192,7 +192,7 @@ class SQL_Element extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function count(){
-        return b::len($this->scope);
+        return count($this->scope);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +228,7 @@ class SQL_Element extends SQL_Vars implements Countable {
             $args[] = constant('SORT_'.$order);
         }
 
-        for ($i = 0, $c = b::len($args); $i < $c; $i++)
+        for ($i = 0, $c = count($args); $i < $c; $i++)
             $result[] = '$args['.$i.']';
 
         $result = 'array_multisort('.join(', ', $result).', $args['.$c.'])';

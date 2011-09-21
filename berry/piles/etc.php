@@ -206,7 +206,7 @@ abstract class Piles_Etc {
 
     protected static function _vars($output, $quoted = false){
         if (preg_match_all('/\${([^}]*)}/sU', $output, $match))
-            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
+            for ($i = 0, $c = count($match[0]); $i < $c; $i++){
                 $var = self::_var($match[1][$i]);
                 $var = ($quoted ? "'.".$var.".'" : $var);
                 $output = str_replace($match[0][$i], $var, $output);

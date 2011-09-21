@@ -37,7 +37,7 @@ function tag_pager_simple($attr){
     if (!$array = _tag_pager($attr))
         return;
 
-    if (($len = b::len($array['pages'])) > $attr['limit']){
+    if (($len = count($array['pages'])) > $attr['limit']){
         $tmp = (array_key_exists('offset', $attr) ? ($attr['offset'] / $attr['limit'] + 1) : $attr['page']);
         $limit = 7;
         $offset = (($tmp - 4) > 1 ? ($tmp - 4) : 0);

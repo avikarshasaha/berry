@@ -45,7 +45,7 @@ class Request {
             list($key, $check) = array('', $key);
 
         if ($key){
-            $len = (b::len($key) + 1);
+            $len = (strlen($key) + 1);
             
             foreach ($check as $k => $v)
                 if (!isset($check[$key.'.'.$k]) and substr($k, 0, $len) != $key.'.'){
@@ -228,7 +228,7 @@ class Request {
 
         if ($key){
             $data = b::l(strtolower($method).'.'.$key);
-            $len = (b::len($key) + 1);
+            $len = (strlen($key) + 1);
 
             foreach ($check as $k => $v)
                 if (!isset($check[$key.'.'.$k]) and substr($k, 0, $len) != $key.'.'){
@@ -297,7 +297,7 @@ class Request {
             $accept = explode(';', trim($accept));
             $result[$accept[0]] = array('q' => 1);
             
-            for ($i = 1, $c = b::len($accept); $i < $c; $i++){
+            for ($i = 1, $c = count($accept); $i < $c; $i++){
                 list($k, $v) = explode('=', $accept[$i], 2);                
                 $result[$accept[0]][$k] = $v;
             }

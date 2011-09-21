@@ -5,7 +5,7 @@ class hight {
     // Hight | hight@inbox.ru
     // http://hight.fatal.ru/captcha/index.php?id=code
     function __construct($len, $symbols){
-        $slen = (b::len($symbols) - 1);
+        $slen = (strlen($symbols) - 1);
 
         for ($i = 0; $i < $len; $i++)
             $captcha_key_array[] = $symbols[mt_rand(0, $slen)];

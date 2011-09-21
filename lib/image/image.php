@@ -117,7 +117,7 @@ class Image extends Image_Merge {
                     $font = $v;
             }
 
-        foreach (explode("\n", $text) as $v){            $width[] = (b::len($v) * imagefontwidth($size));
+        foreach (explode("\n", $text) as $v){            $width[] = (strlen($v) * imagefontwidth($size));
             $height[] = imagefontheight($size);
 
             $ims[] = $im = imagecreatetruecolor(end($width), end($height));

@@ -47,7 +47,7 @@ class Check {
         }
 
         if (preg_match_all('/(!?\w+)(\((.*?)\))?(\s+)?/is', $re, $match))
-            for ($i = 0, $c = b::len($match[0]); $i < $c; $i++){
+            for ($i = 0, $c = count($match[0]); $i < $c; $i++){
                 $func = strtolower($match[1][$i]);
                 $args = array($value, self::_params($match[3][$i]), $name, $array, $data);
 
@@ -159,7 +159,7 @@ class Check {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_string($value, $params = array()){
-        $len = b::len($value);
+        $len = strlen($value);
 
         if ($params)
             return ($len >= $params[0] and $len <= $params[1]);
@@ -196,7 +196,7 @@ class Check {
 
     static function is_unique($value, $params = array()){
         $tmp = explode('.', $params[0]);
-        list($table, $field) = (b::len($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
+        list($table, $field) = (count($tmp) == 3 ? array($tmp[0].'.'.$tmp[1], $tmp[2]) : $tmp);
 
         $class = sql::table($table);
         $class->where('lower(?f) = ?', $field, strtolower($value));
@@ -210,14 +210,14 @@ class Check {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_phone($value, $params = array()){
-        return in_array(b::len(preg_replace('/\D/', '', $value)), ($params ? $params : array(7, 10, 11)));
+        return in_array(strlen(preg_replace('/\D/', '', $value)), ($params ? $params : array(7, 10, 11)));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     static function is_isbn($value){
         $number = strtolower(str_replace('-', '', $value));
-        $len = b::len($number);
+        $len = strlen($number);
         $sum = 0;
 
         if ($len == 10 and preg_match('/\d+-\d+-\d+-(\d{1}|x)/', $value)){
@@ -244,7 +244,7 @@ class Check {
         if (!is_numeric($number))
             return;
 
-        for ($i = 1, $c = b::len($number); $i < $c; $i += 2)
+        for ($i = 1, $c = count($number); $i < $c; $i += 2)
             $sum += ($number[$i] * 3 + $number[$i + 1]);
 
         $mod = ($sum % 10);
@@ -304,7 +304,7 @@ class Check {
         $tmp = preg_replace('/^([^\.]*)(\.)?/', '\\1.size\\2', $name);
         $tmp = $array[$tmp];
 
-        if (b::len($params) == 2)
+        if (count($params) == 2)
             return ($tmp >= int::bytes($params[0]) and $tmp <= int::bytes($params[1]));
         elseif ($params)
             return ($tmp <= int::bytes($params[0]));
@@ -317,7 +317,7 @@ class Check {
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[0];
 
-        if (b::len($params) == 2)
+        if (count($params) == 2)
             return ($tmp >= $params[0] and $tmp <= $params[1]);
         elseif ($params)
             return ($tmp <= $params[0]);
@@ -330,7 +330,7 @@ class Check {
         $tmp = getimagesize($array[$tmp]);
         $tmp = $tmp[1];
 
-        if (b::len($params) == 2)
+        if (count($params) == 2)
             return ($tmp >= $params[0] and $tmp <= $params[1]);
         elseif ($params)
             return ($tmp <= $params[0]);

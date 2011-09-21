@@ -47,7 +47,7 @@ function typo_ru($content, $skip = array()){    $skip = array_merge(array('code
     );
 
     if (preg_match_all('/<('.join('|', $skip).')( ([^>]*))?>(.*?)<\/\\1>/is', $content, $skip))
-        for ($i = 0, $c = b::len($skip[0]); $i < $c; $i++)
+        for ($i = 0, $c = count($skip[0]); $i < $c; $i++)
             $content = str_replace($skip[0][$i], '<!--typo_ru['.$i.']-->', $content);
 
     $content = '<span>'.$content.'</span>';
@@ -59,7 +59,7 @@ function typo_ru($content, $skip = array()){    $skip = array_merge(array('code
     $content = preg_replace('/([>(\s\W])(")([^"]*)([^\s"(])(")/', '\\1«\\3\\4»', $content);
 
     if (preg_match_all('/"(.*)"/U', $content, $match)){
-        for ($i = 0, $c = b::len($match[0]); $i < $c; $i++)
+        for ($i = 0, $c = count($match[0]); $i < $c; $i++)
             $match[2][$i] = '«'.str_replace(array('«', '»'), array('„', '“'), $match[1][$i]).'»';
 
         $content = str_replace($match[0], $match[2], $content);

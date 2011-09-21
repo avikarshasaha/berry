@@ -20,7 +20,7 @@ class Str {///////////////////////////////////////////////////////////////////
 
     static function format($string, $array = array()){        $string = str_replace('\%', piles::char('%'), $string);
 
-        if (is_array($array) and b::len($array)){
+        if (is_array($array) and count($array)){
             $array = arr::flat($array);
             $func = create_function('$match', 'return trim($match[1]);');
 

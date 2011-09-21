@@ -99,7 +99,7 @@ class Piles extends Piles_Etc {
         $token = @token_get_all('<?php '.$output);
         $mask  = '%s:%d';
 
-        for ($i = 1, $c = b::len($token); $i < $c; $i++){
+        for ($i = 1, $c = count($token); $i < $c; $i++){
             if ($token[$i] == '$' and $token[$i + 1] == '{' and array_search('}', $token)){
                 $deep = 0;
                 $var = '';
@@ -245,7 +245,7 @@ class Piles extends Piles_Etc {
                                 $token[$j][1] = '`'.$token[$j][1].'`';
 
                                 if ($method){
-                                    $tmp = substr($tmp, 0, -b::len($method));
+                                    $tmp = substr($tmp, 0, -strlen($method));
                                     $method = str_replace(' ', '', $method);
                                     $method = explode((strpos($method, '::') ? '::' : '->'), $method);
                                     $method[0] = ($method[0][0] != '$' ? '`'.$method[0].'`' : $method[0]);

@@ -10,7 +10,7 @@
 function attr_if($attr){    $token = token_get_all('<?php '.$attr['if']);
     $then = preg_split('/<else( ([^>]*))?\/>/i', $attr['#text'], 2);
 
-    for ($i = 1, $c = b::len($token); $i < $c; $i++){        if (is_array($token[$i]) and $token[$i][0] == T_STRING)
+    for ($i = 1, $c = count($token); $i < $c; $i++){        if (is_array($token[$i]) and $token[$i][0] == T_STRING)
             $result .= '"'.$token[$i][1].'"';
         else
             $result .= (is_array($token[$i]) ? $token[$i][1] : $token[$i]);
@@ -97,7 +97,7 @@ function attr_oddeven($attr){	static $i = 0;
 	$oddeven = explode(' ', $attr['oddeven']);
     $attr['class'] .= ($attr['class'] ? $attr['class'].' ' : '').$oddeven[$i++];
 
-    if ($i == b::len($oddeven))
+    if ($i == count($oddeven))
         $i = 0;
 
     unset($attr['oddeven']);
@@ -134,7 +134,7 @@ function attr_router($attr){    $group = piles::attr_group('router', $attr);
 ////////////////////////////////////////////////////////////////////////////////
 
 function attr_mailto($attr){
-	for ($i = 0, $c = b::len($attr['mailto']); $i < $c; $i++)
+	for ($i = 0, $c = count($attr['mailto']); $i < $c; $i++)
 	    $result .= '&#'.ord($attr['mailto'][$i]).';';
 
     $attr['href'] = '&#109;&#97;&#105;&#108;&#116;&#111;&#58;'.$result;

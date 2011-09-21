@@ -118,10 +118,10 @@ class Arr {
         if ($num == 1)
             return $array[array_rand($array)];
 
-        $keys = array_rand($array, min($num, b::len($array)));
+        $keys = array_rand($array, min($num, count($array)));
         $result = array();
 
-        for ($i = 0, $c = b::len($keys); $i < $c; $i++){            $key = $keys[$i];
+        for ($i = 0, $c = count($keys); $i < $c; $i++){            $key = $keys[$i];
             $result[$key] = $array[$key];
         }
 

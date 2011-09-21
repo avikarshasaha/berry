@@ -24,13 +24,13 @@ class B {
 
     static function init($config = array()){
         if ($_SERVER['QUERY_STRING'])
-            $uri = substr($_SERVER['REQUEST_URI'], 0, -self::len($_SERVER['QUERY_STRING']));
+            $uri = substr($_SERVER['REQUEST_URI'], 0, -strlen($_SERVER['QUERY_STRING']));
         else
             $uri = $_SERVER['REQUEST_URI'];
 
         $uri = trim(preg_replace('/\/+/', '/', $uri), '/');
         $uri = parse_url($uri);
-        $len = self::len(dirname($_SERVER['PHP_SELF']));
+        $len = strlen(dirname($_SERVER['PHP_SELF']));
         $query = substr($uri['path'], ($len - 1));
 
         $config = array_merge(array(
@@ -54,7 +54,7 @@ class B {
     static function q($i = '', $c = '', $s = '/'){
         if (!isset(self::$cache['q'][self::$query])){
             $url = parse_url(str::clean($_SERVER['REQUEST_URI']));
-            $len = self::len(dirname($_SERVER['PHP_SELF']));
+            $len = strlen(dirname($_SERVER['PHP_SELF']));
 
             $host  = 'http'.($_SERVER['HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME'];
             $host .= '/'.substr($url['path'], 0, ($len - 1));
@@ -73,7 +73,7 @@ class B {
             $result = join($s, array_slice($q, $i, 1));
         elseif (is_numeric($i) and is_numeric($c) and $c >= 0)
             $result = join($s, array_slice($q, $i, (
-                ($c ? $c : self::len($q)) + ($i ? 0 : 1)
+                ($c ? $c : count($q)) + ($i ? 0 : 1)
             )));
         elseif (is_numeric($i) and is_numeric($c) and $c < 0)
             $result = join($s, array_slice($q, $i, $c));
@@ -96,12 +96,6 @@ class B {
             if ($func = create_function('$def', 'return '.$var.' = $def;'))
                 return $func($args[1]);
         }
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function len($mixed){
-        return ((is_array($mixed) or is_object($mixed)) ? sizeof($mixed) : strlen($mixed));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -167,7 +161,7 @@ class B {
 
         $array = explode('.', str_replace('\.', piles::char('.'), $args[0]));
 
-        for ($i = 0, $c = self::len($array); $i < $c; $i++){
+        for ($i = 0, $c = count($array); $i < $c; $i++){
             $section = join('.', $array);
             $var = piles::varname($section, '$config');
             $tmp = 'if (is_array('.$var.') and isset('.$var.'["#file"])) return '.$var.';';
@@ -195,7 +189,7 @@ class B {
 
         unset($data['#file']);
 
-        if ($section = (substr($args[0], self::len($section) + 1)))
+        if ($section = (substr($args[0], strlen($section) + 1)))
             $set = arr::merge($data, arr::assoc(array($section => $args[1])));
         else
             $set = $args[1];
@@ -250,7 +244,7 @@ class B {
                 continue;
             }
 
-            if (self::len($tmp = explode('=', $line, 2)) == 1){
+            if (count($tmp = explode('=', $line, 2)) == 1){
                 $key = '[]';
                 $value = trim($tmp[0]);
             } else {
@@ -493,7 +487,7 @@ class B {
         $array = (is_array($key) ? $key : array($key => $value));
         $q = explode('/', self::$query);
 
-        for ($i = self::len($q); $i >= -1; $i--)
+        for ($i = count($q); $i >= -1; $i--)
             if (
                 ($class = $array[self::q(1, $i)]) or
                 ($i == -1 and $class = $array['home'])
@@ -517,11 +511,11 @@ class B {
                 }
 
                 try {
-                    $len = max(0, (b::len($q) - 1));
+                    $len = max(0, (count($q) - 1));
                     new ReflectionParameter(array($class, $method), $len);
                 } catch (ReflectionException $e){
                     if ($method[0] != '_')
-                        $method = '_'.$method.'_'.b::len($q);
+                        $method = '_'.$method.'_'.count($q);
                 }
 
                 ob_start();
@@ -598,7 +592,7 @@ class B {
                     $array[$k] = trim($v);
 
             if ($array){
-                $file = substr($file, (self::len($dir) + 1));
+                $file = substr($file, (strlen($dir) + 1));
                 $result[$file.': '.$class] = array_values($array);
             }
         }

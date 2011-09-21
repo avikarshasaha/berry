@@ -34,7 +34,7 @@ class Date {
     static function time($timestamp = 0){
         if (!$timestamp)
             $timestamp = time();
-        elseif (!is_numeric($timestamp) or b::len($timestamp) < 10)
+        elseif (!is_numeric($timestamp) or strlen($timestamp) < 10)
             $timestamp = strtotime($timestamp);
 
         return $timestamp;
@@ -44,7 +44,7 @@ class Date {
 
     // http://php.net/datetime/#78025
     static function ago($second, $len = 3, $plural = array()){
-        if (b::len($second) == 10 or !is_numeric($second))
+        if (strlen($second) == 10 or !is_numeric($second))
             $second = (time() - self::time($second));
 
         $plural = array_merge(b::lang('date.ago'), array('separator' => ','), $plural);
@@ -65,14 +65,14 @@ class Date {
                 $array[] = int::plural($durations, $plural[$k]);
             }
 
-        if (b::len($array) > 1){
-            if (b::len($array) == 2){
+        if (count($array) > 1){
+            if (count($array) == 2){
                 $result = $array[0].($len != 1 ? ' '.$plural['and'].' '.$array[1] : '');
-            } elseif (b::len($array) <= $len){
+            } elseif (count($array) <= $len){
                 $end = array_pop($array);
                 $result = join($plural['separator'].' ', $array).' '.$plural['and'].' '.$end;
             } else {
-                if ($len = b::len($result = array_slice($array, 0, $len - 1)))
+                if ($len = count($result = array_slice($array, 0, $len - 1)))
                     $result = join($plural['separator'].' ', $result).' '.$plural['and'].' '.$array[$len];
                 else
                     $result = $array[$len];

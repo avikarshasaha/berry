@@ -62,7 +62,7 @@ function tag_toc($attr){
     $string = '<a name="%s"></a><a href="#%s">%s</a>';
 
     if (preg_match_all('/<ref>(.*?)<\/ref>/i', $attr['#text'], $match)){
-        for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){
+        for ($i = 0, $c = count($match[1]); $i < $c; $i++){
             $id = 'ref-'.($i + 1);
             $ref[] = sprintf($string, $id, '_'.$id, '↑').' '.$match[1][$i];
             $attr['#text'] = str_replace($match[0][$i], sprintf($string, '_'.$id, $id, '<sup>[?]</sup>'), $attr['#text']);
@@ -77,7 +77,7 @@ function tag_toc($attr){
     $last = 0;
     $string = '';
     if (preg_match_all('/<h(\d+)( (.*?))?>(.*)<\/h\\1>/i', $attr['#text'], $match)){
-        for ($i = 0, $c = b::len($match[1]); $i < $c; $i++){
+        for ($i = 0, $c = count($match[1]); $i < $c; $i++){
         	preg_match('/ id=("|\')(.*?)\\1/', $match[2][$i], $id);
 
         	if (!$last)
