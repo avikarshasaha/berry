@@ -56,8 +56,11 @@ class Object implements ArrayAccess, Countable, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     function offsetGet($offset){
+        if (!isset($this->scope[$offset]))
+            $this->scope[$offset] = array();
+
         if (is_array($this->scope[$offset]))
-            $this->scope[$offset] = new $this($this->scope[$offset]);
+            $this->scope[$offset] = new self($this->scope[$offset]);
 
         return $this->scope[$offset];
     }
