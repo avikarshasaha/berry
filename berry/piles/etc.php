@@ -173,15 +173,17 @@ abstract class Piles_Etc extends Object {
         $funcs = array();
         $mask = 'b::call(`%s`, %%s, %s, get_defined_vars())';
 
-        foreach ($var as $k => $v)
-            if (b::function_exists($func = 'method_'.$v)){
-                $tmp = (array)$params[join('.', array_reverse($var))];
-                $tmp = str_replace('%', '%%', var_export($tmp, true));
-                $tmp = str_replace(self::char("'"), "'", $tmp);
+        foreach ($var as $k => $v){
+            if (!b::function_exists($func = 'method_'.$v))
+                break;
 
-                array_unshift($funcs, sprintf($mask, $func, $tmp));
-                unset($var[$k]);
-            }
+            $tmp = (array)$params[join('.', array_reverse($var))];
+            $tmp = str_replace('%', '%%', var_export($tmp, true));
+            $tmp = str_replace(self::char("'"), "'", $tmp);
+
+            array_unshift($funcs, sprintf($mask, $func, $tmp));
+            unset($var[$k]);
+        }
 
         if (b::function_exists($func = 'var_'.$var[0])){
             array_unshift($funcs, sprintf($mask, $func));
