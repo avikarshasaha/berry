@@ -210,6 +210,9 @@ class SQL extends SQL_Vars implements Countable {
         if (isset($this->count))
             return $this->count;
 
+        if ($this->raw_query)
+            return $this->count = self::$connection['link']->query($this->raw_query)->rowCount();
+
         $query = clone $this->query;
         $query->reset('columns')->columns('count(*)')->reset('order');
 

@@ -107,7 +107,7 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
         if (is_int($name) and $name < 0)
             $name = ($this->count() + $name);
 
-        if ($this->with and !isset(self::$cache[$key])){
+        if (($this->with or $this->raw_query) and !isset(self::$cache[$key])){
             $this->with($this->primary_key);
             self::$cache[$key] = new SQL_Element($this);
         }
