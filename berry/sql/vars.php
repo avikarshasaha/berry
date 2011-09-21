@@ -67,26 +67,10 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
 ////////////////////////////////////////////////////////////////////////////////
 
     function rewind(){
-        if (!isset($this->iterator)){
-            $class = self::table($this->table)->with('count(*)');
-
-            foreach ($this->part('where') as $v)
-                $class->query->where($v);
-
-            foreach ($this->part('having') as $v)
-                $class->query->having($v);
-
-            foreach ($this->part('group') as $v)
-                $class->query->group($v);
-
-            if (!$this->part('group'))
-                $class->group();
-
-            if ($len = array_sum($class->fetch_column()))
-                $this->iterator = range(0, ($len - 1));
-            else
-                $this->iterator = array();
-        }
+        if ($count = $this->count())
+            $this->iterator = range(0, ($count - 1));
+        else
+            $this->iterator = array();
 
         return reset($this->iterator);
     }
@@ -120,10 +104,8 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
     protected function _get($name){
         $key = self::_hash();
 
-        if (is_int($name) and $name < 0){
-            self::rewind();
-            $name = (b::len($this->iterator) + $name);
-        }
+        if (is_int($name) and $name < 0)
+            $name = ($this->count() + $name);
 
         if ($this->with and !isset(self::$cache[$key])){
             $this->with($this->primary_key);
@@ -179,8 +161,8 @@ abstract class SQL_Vars extends SQL_Etc implements ArrayAccess, Iterator {
                 $class->with('*')->where($class->id);
                 $class->reset('group');
 
-                foreach ($this->part('group') as $v)
-                    $class->group($v);
+                if ($this->part('group'))
+                    $class->group(join(', ', $this->part('group')));
 
                 $this->children[$name] = $class;
             }

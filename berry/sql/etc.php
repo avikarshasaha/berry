@@ -26,6 +26,7 @@ abstract class SQL_Etc {
     protected $relations = array();
     protected $multiple = array();
 
+    protected $count;
     protected $iterator;
     protected $query;
     protected $raw_query;

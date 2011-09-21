@@ -207,12 +207,24 @@ class SQL extends SQL_Vars implements Countable {
 ////////////////////////////////////////////////////////////////////////////////
 
     function count(){
-        $query = self::table($this->table)->with('count(*)');
-        $query->_find('where', $this->part('where'));
-        $query->_find('having', $this->part('having'));
-        $query->group($this->part('group'));
+        if (isset($this->count))
+            return $this->count;
 
-        return array_sum($query->fetch_column());
+        $query = clone $this->query;
+        $query->reset('columns')->columns('count(*)')->reset('order');
+
+        if ($part = $this->part('where'))
+            $query->where(join(' ', $part));
+
+        if ($part = $this->part('having'))
+            $query->having(join(' ', $part));
+
+        if ($part = $this->part('group'))
+            $query->group(join(', ', $part));
+        else
+            $query->group(self::_name($this->primary_key));
+
+        return $this->count = count(self::$connection['link']->fetchCol($query));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -453,6 +465,7 @@ class SQL extends SQL_Vars implements Countable {
 
         self::_check();
         self::_save($result);
+        unset($this->count);
 
         if (!array_key_exists($this->alias, $result))
             $result = array($this->alias => array(false)) + $result;
@@ -553,6 +566,8 @@ class SQL extends SQL_Vars implements Countable {
     function delete(){
         $where = join(' ', $this->part('where'));
         $where = str_replace($this->alias.'.', '', $where);
+
+        unset($this->count);
 
         return self::$connection['link']->delete($this->table, $where);
     }
