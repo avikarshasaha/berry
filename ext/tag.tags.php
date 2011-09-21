@@ -8,37 +8,40 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 function tag_msg($attr){
-	if ($attr['#text']){
-		html::msg($attr['id'], $attr['#text']);
-		return;
-	}
+	if (isset($attr['#text'])){
+        html::msg($attr['id'], $attr['#text']);
+        return;
+    }
 
-	if ($messages = html::msg($attr['id']))
+    if ($messages = html::msg($attr['id']))
         return piles::show('ext.tag.msg.'.$attr['id'], compact('messages'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 function tag_block($attr){
-	html::block($attr['id'], $attr['#text'], (is_numeric($attr['sort']) ? $attr['sort'] : 50));
+    if (!isset($attr['#text']))
+        return join('', html::block($attr['id']));
+
+    html::block($attr['id'], $attr['#text'], (is_numeric($attr['sort']) ? $attr['sort'] : 50));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 function tag_quote($attr){
-	$attr['class'] .= ($attr['class'] ? ' ' : '').'quote';
+    $attr['class'] .= ($attr['class'] ? ' ' : '').'quote';
 
-	if ($attr['cite']){
-	    $pos = strpos($attr['cite'], 'http://');
-	    $href = substr($attr['cite'], $pos);
-	    $text = substr($attr['cite'], 0, $pos);
-	    $text = ($text ? $text : $href);
+    if ($attr['cite']){
+        $pos = strpos($attr['cite'], 'http://');
+        $href = substr($attr['cite'], $pos);
+        $text = substr($attr['cite'], 0, $pos);
+        $text = ($text ? $text : $href);
 
-	    if (is_int($pos))
-	        $attr['cite'] = compact('href', 'text');
-	    else
-	    	unset($attr['cite']);
-	}
+        if (is_int($pos))
+            $attr['cite'] = compact('href', 'text');
+        else
+            unset($attr['cite']);
+    }
 
     return piles::show('ext.tag.quote', compact('attr'));
 }
@@ -46,13 +49,13 @@ function tag_quote($attr){
 ////////////////////////////////////////////////////////////////////////////////
 
 function tag_group($attr){
-	static $group = array();
+    static $group = array();
 
-	if (isset($group[$attr['id']]))
-	    return;
+    if (isset($group[$attr['id']]))
+        return;
 
-	$group[$attr['id']] = true;
-	return $attr['#text'];
+    $group[$attr['id']] = true;
+    return $attr['#text'];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,19 +81,19 @@ function tag_toc($attr){
     $string = '';
     if (preg_match_all('/<h(\d+)( (.*?))?>(.*)<\/h\\1>/i', $attr['#text'], $match)){
         for ($i = 0, $c = count($match[1]); $i < $c; $i++){
-        	preg_match('/ id=("|\')(.*?)\\1/', $match[2][$i], $id);
+            preg_match('/ id=("|\')(.*?)\\1/', $match[2][$i], $id);
 
-        	if (!$last)
-        	    $string = 'h'.$match[1][$i];
+            if (!$last)
+                $string = 'h'.$match[1][$i];
             elseif ($last < $match[1][$i])
                 $string .= '.h'.$match[1][$i];
             elseif ($last > $match[1][$i])
                 $string = substr($string, 0, strrpos($string, '.')).'-h'.$match[1][$i];
 
-        	$id = ($id[2] ? $id[2] : 'toc-'.($i + 1));
-        	$result[$string][] = '<a href="#'.$id.'">'.$match[4][$i].'</a>';
-        	$attr['#text'] = str_replace($match[0][$i], '<a name="'.$id.'"></a> '.$match[0][$i], $attr['#text']);
-        	$last = $match[1][$i];
+            $id = ($id[2] ? $id[2] : 'toc-'.($i + 1));
+            $result[$string][] = '<a href="#'.$id.'">'.$match[4][$i].'</a>';
+            $attr['#text'] = str_replace($match[0][$i], '<a name="'.$id.'"></a> '.$match[0][$i], $attr['#text']);
+            $last = $match[1][$i];
         }
 
         if ($result){
@@ -104,7 +107,7 @@ function tag_toc($attr){
         }
     }
 
-	return str::format($attr['#text'], compact('toc', 'ref'));
+    return str::format($attr['#text'], compact('toc', 'ref'));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
