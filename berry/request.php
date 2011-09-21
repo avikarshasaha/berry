@@ -188,9 +188,6 @@ class Request {
         
         foreach ($_SERVER as $k => $v)
             if (substr($k, 0, 5) == 'HTTP_'){
-                //$k = array_map('ucfirst', array_map('strtolower', explode('_', $k)));
-                //array_shift($k);
-                //$result[join('-', $k)] = $v;
                 $k = str_replace('_', ' ', strtolower(substr($k, 5)));
                 $k = str_replace(' ', '-', ucwords($k));
                 $result[$k] = $v;
