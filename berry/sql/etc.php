@@ -143,7 +143,7 @@ abstract class SQL_Etc {
         )))
             $array['driver'] = 'PDO_'.$array['driver'];
 
-        $array['database'] = str_replace(array('.', '/'), '_', $array['database']);
+        $array['database'] = preg_replace('/\W/', '_', $array['database']);
         $array['link'] = Zend_Db::factory($array['driver'], $array);
 
         Zend_Db_Table::setDefaultAdapter($array['link']);
