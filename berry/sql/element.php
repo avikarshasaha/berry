@@ -88,7 +88,7 @@ class SQL_Element extends SQL_Vars implements Countable {
 
     protected function _get($name){
         if (!isset($this->scope[$name]) and $this->o->relations[$name])
-            $this->scope[$name] = array();
+            $this->scope[$name] = $this->o->_object($name);
 
         if (is_array($this->scope[$name])){
             $this->scope[$name] = new self($this->scope[$name]);
