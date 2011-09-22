@@ -90,16 +90,13 @@ class SQL_Element extends SQL_Vars implements Countable {
         if (!isset($this->scope[$name]) and $this->o->relations[$name])
             $this->scope[$name] = $this->o->_object($name);
 
+        if (is_int($name))
+            $this->o->values = $this->_scope[$name];
+
         if (is_array($this->scope[$name])){
             $this->scope[$name] = new self($this->scope[$name]);
             $this->scope[$name]->o = $this->o;
-
-            if ($this->o->relations[$name])
-                $this->scope[$name]->o = self::table($name);
         }
-
-        if (is_int($name))
-            $this->o->values = $this->_scope[$name];
 
         return $this->scope[$name];
     }
