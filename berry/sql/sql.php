@@ -577,8 +577,13 @@ class SQL extends SQL_Vars implements Countable {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function query($query = '', $placeholders = array()){
-        $this->raw_query = self::_quote($query, $placeholders);
+    function query($query, $placeholders = array()){
+        $query = self::_quote($query, $placeholders);
+
+        if (!$this instanceof self)
+            return self::$connection['link']->query($query);
+
+        $this->raw_query = $query;
 
         return $this;
     }
