@@ -353,7 +353,9 @@ abstract class SQL_Etc {
         $field = $this->_name($field);
         $len = count($ids);
 
-        if ($len == 1)
+        if ($len < 1)
+            return $this;
+        elseif ($len == 1)
             return $this->where(array($field => $ids[0]));
 
         sort($ids);
