@@ -239,7 +239,10 @@ class B {
                 continue;
             }
 
-            if (count($tmp = explode('=', $line, 2)) == 1){
+            if (in_array($line[0].substr($line, -1), array('""', "''"))){
+                $key = '[]';
+                $value = $line;
+            } elseif (count($tmp = explode('=', $line, 2)) == 1){
                 $key = '[]';
                 $value = trim($tmp[0]);
             } else {
