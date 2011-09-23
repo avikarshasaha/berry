@@ -466,6 +466,9 @@ class SQL extends SQL_Vars implements Countable {
     function save($full = false){
         $result = array();
 
+        if ($this->with)
+            return ($full ? array($this->alias => array(null)) : null);
+
         self::_check();
         self::_save($result);
         unset($this->count);
