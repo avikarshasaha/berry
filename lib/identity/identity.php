@@ -7,27 +7,30 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class IDentity {
+class IDentity {    
     protected $config = array();
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($config){
         $this->config = $config;
-        $this->config['base_url'] = self::_scheme(parse_url($config['url'], PHP_URL_HOST));
+        $this->config['base_url'] = 'http://'.parse_url($config['url'], PHP_URL_HOST);
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function auth($provider){
-        $provider = strtolower($provider);
-        $provider = (strpos($provider, '@') ? $provider : self::_scheme($provider));
+    function auth($identity){
+        $identity = strtolower($identity);
+        $identity = (strpos($identity, '@') ? $identity : self::_scheme($identity));
 
         if ($_GET['oauth_token'] or $_GET['session'] or $_GET['openid_identity'])
             return;
 
-        if ($provider == 'twitter.com'){
-            include_once dirname(__file__).'/twitteroauth/twitteroauth.php';
+        if (
+            strpos($identity, 'http://twitter.com') === 0 or
+            strpos($identity, 'http://www.twitter.com') === 0
+        ){
+            include_once 'TwitterOAuth.php';
 
             $config = $this->config['twitter'];
             $twitter = new TwitterOAuth($config['key'], $config['secret']);
@@ -42,8 +45,11 @@ class IDentity {
             return $redirect;
         }
 
-        if ($provider == 'facebook.com'){
-            include_once dirname(__file__).'/facebook/facebook.php';
+        if (
+            strpos($identity, 'http://facebook.com') === 0 or
+            strpos($identity, 'http://www.facebook.com') === 0        
+        ){
+            include_once 'facebook.php';
 
             $config = $this->config['facebook'];
             $facebook = new Facebook(array(
@@ -57,35 +63,26 @@ class IDentity {
                 'req_perms' => ($this->config['mail'] ? 'email' : null)
             ));
         }
-
-        global $_Services_Yadis_ns_map;
-        global $__Services_Yadis_defaultParser;
-        global $__Services_Yadis_xml_extensions;
-
-        $__Services_Yadis_xml_extensions = array('dom' => 'Services_Yadis_dom', 'domxml' => 'Services_Yadis_domxml');
-
-        include_once dirname(__file__).'/dope_openid/dope_openid.php';
-
-        $openid = new Dope_OpenID(self::provider($provider));
-
-        if (!$endpoint = $openid->getOpenIDEndpoint())
-            throw new IDentity_Except($provider, 404);
-
-        $openid->setTrustRoot($this->config['base_url']);
-        $openid->setReturnURL($this->config['url']);
-        $openid->setOptionalInfo(array(
-            'fullname', 'firstname', 'lastname', 'nickname',
-            ((!strpos($provider, '@') and $this->config['mail']) ? 'email' : null)
-        ));
-
-        $redirect = str_replace('%2540', '@', $openid->getRedirectURL());
-
-        $_SESSION['IDentity']['openid'] = array(
-            'identity' => $provider,
-            'provider' => $endpoint
+        
+        include_once 'LightOpenID.php';
+        
+        $openid = new LightOpenID($this->config['base_url']);
+        $openid->identity = $identity;
+        $openid->returnUrl = $this->config['url'];
+        $openid->optional = array(
+            'namePerson', 'namePerson/first', 'namePerson/last', 'namePerson/friendly',
+            ((!strpos($identity, '@') and $this->config['mail']) ? 'contact/email' : null)
         );
+        
+        try {
+            $redirect = $openid->authUrl();
 
-        if ($provider == 'mail.ru' or strpos($provider, '@mail.ru')){
+            $_SESSION['IDentity']['openid'] = $identity;
+        } catch (ErrorException $e){
+            throw new IDentity_Except($identity, 404);
+        }
+        
+        if ($identity == 'http://mail.ru' or strpos($identity, '@mail.ru')){
             $pos1 = strpos($redirect, 'openid.identity');
             $pos2 = strpos($redirect, '&', $pos1);
             $tmp1 = substr($redirect, 0, $pos1);
@@ -108,7 +105,7 @@ class IDentity {
         $storage = $_SESSION['IDentity'];
 
         if ($_GET['oauth_token']){
-            include_once dirname(__file__).'/twitteroauth/twitteroauth.php';
+            include_once 'TwitterOAuth.php';
 
             //unset($_SESSION['IDentity']['twitter']);
 
@@ -135,7 +132,7 @@ class IDentity {
         }
 
         if ($_GET['session']){
-            include_once dirname(__file__).'/facebook/facebook.php';
+            include_once 'facebook.php';
 
             //unset($_SESSION['IDentity']['facebook']);
 
@@ -149,7 +146,7 @@ class IDentity {
             try {
                 $data = $facebook->api('/me');
             } catch (FacebookApiException $e){
-                throw new IDentity_Except('http://facebook.com', 403);
+                throw new IDentity_Except('http://www.facebook.com', 403);
             }
 
             if (!$data['aid'] = $data['username'])
@@ -161,41 +158,37 @@ class IDentity {
                 'name' => $data['name'],
                 'mail' => $data['email'],
                 'identity' => $data['link'],
-                'provider' => 'http://facebook.com'
+                'provider' => 'http://www.facebook.com'
             );
         }
-
+        
         if ($_GET['openid_identity']){
-            global $_Services_Yadis_ns_map;
-            global $__Services_Yadis_defaultParser;
-            global $__Services_Yadis_xml_extensions;
-
-            $__Services_Yadis_xml_extensions = array('dom' => 'Services_Yadis_dom', 'domxml' => 'Services_Yadis_domxml');
-
-            include_once dirname(__file__).'/dope_openid/dope_openid.php';
-
+            include_once 'LightOpenID.php';
+            
             //unset($_SESSION['IDentity']['openid']);
 
-            $storage = $storage['openid'];
-            $openid = new Dope_OpenID($_GET['openid_identity']);
-            $data = $openid->filterUserInfo($_GET);
+            $identity = $storage['openid'];            
+            $openid = new LightOpenID($this->config['url']);           
+            $data = $openid->getAttributes();
 
-            if (!$openid->validateWithServer())
-                throw new IDentity_Except($storage['identity'], 403);
+            if (!$openid->validate())
+                throw new IDentity_Except($identity, 403);
+                
+            if ($data['namePerson'])
+                $data['name'] = $data['namePerson'];
+            elseif ($data['namePerson/first'] or $data['namePerson/last'])
+                $data['name'] = trim($data['namePerson/first'].' '.$data['namePerson/last']);
 
-            if ($data['fullname'])
-                $data['name'] = $data['fullname'];
-            elseif ($data['firstname'] or $data['lastname'])
-                $data['name'] = trim($data['firstname'].' '.$data['lastname']);
-
-            if (!$data['aid'] = $data['nickname'])
+            if (!$data['aid'] = $data['namePerson/friendly'])
                 $data['aid'] = str::translit($data['name'], ' ');
 
-            if (strpos($storage['identity'], '@'))
-                $data['email'] = $storage['identity'];
+            if (strpos($identity, '@'))
+                $data['email'] = $identity;
+            elseif ($data['contact/email'])
+                $data['email'] = $data['contact/email'];
 
-            if (strpos($storage['provider'], 'http://www.livejournal.com') === 0){
-                $udata = simplexml_load_file($storage['identity'].'/data/atom');
+            if (strpos($openid->data['openid_op_endpoint'], 'http://www.livejournal.com') === 0){
+                $udata = simplexml_load_file($identity.'/data/atom');
 
                 $data['name'] = (string)$udata->author->name;
 
@@ -211,8 +204,8 @@ class IDentity {
                 'aid' => $data['aid'],
                 'name' => $data['name'],
                 'mail' => $data['email'],
-                'identity' => $storage['identity'],
-                'provider' => self::_scheme(parse_url($storage['provider'], PHP_URL_HOST))
+                'identity' => $identity,
+                'provider' => 'http://'.parse_url($openid->data['openid_op_endpoint'], PHP_URL_HOST)
             );
         }
     }
