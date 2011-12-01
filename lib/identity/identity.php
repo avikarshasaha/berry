@@ -14,12 +14,14 @@ class IDentity {
 
     function __construct($config){
         $this->config = $config;
+        $this->config['base_url'] = self::_scheme(parse_url($config['url'], PHP_URL_HOST));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function auth($provider){
         $provider = strtolower($provider);
+        $provider = (strpos($provider, '@') ? $provider : self::_scheme($provider));
 
         if ($_GET['oauth_token'] or $_GET['session'] or $_GET['openid_identity'])
             return;
@@ -29,7 +31,7 @@ class IDentity {
 
             $config = $this->config['twitter'];
             $twitter = new TwitterOAuth($config['key'], $config['secret']);
-            $request = $twitter->getRequestToken($this->config['next']);
+            $request = $twitter->getRequestToken($this->config['url']);
             $redirect = $twitter->getAuthorizeURL($request['oauth_token']);
 
             $_SESSION['IDentity']['twitter'] = array(
@@ -50,8 +52,8 @@ class IDentity {
             ));
 
             return $facebook->getLoginUrl(array(
-                'next' => $this->config['next'],
-                'cancel_url' => $this->config['next'].(strpos($this->config['next'], '?') ? '&' : '?').'openid_mode=cancel',
+                'next' => $this->config['url'],
+                'cancel_url' => $this->config['url'].(strpos($this->config['url'], '?') ? '&' : '?').'openid_mode=cancel',
                 'req_perms' => ($this->config['mail'] ? 'email' : null)
             ));
         }
@@ -67,10 +69,10 @@ class IDentity {
         $openid = new Dope_OpenID(self::provider($provider));
 
         if (!$endpoint = $openid->getOpenIDEndpoint())
-            throw new IDentity_Except(404);
+            throw new IDentity_Except($provider, 404);
 
-        $openid->setTrustRoot($this->config['url']);
-        $openid->setReturnURL($this->config['next']);
+        $openid->setTrustRoot($this->config['base_url']);
+        $openid->setReturnURL($this->config['url']);
         $openid->setOptionalInfo(array(
             'fullname', 'firstname', 'lastname', 'nickname',
             ((!strpos($provider, '@') and $this->config['mail']) ? 'email' : null)
@@ -79,7 +81,7 @@ class IDentity {
         $redirect = str_replace('%2540', '@', $openid->getRedirectURL());
 
         $_SESSION['IDentity']['openid'] = array(
-            'identity' => (strpos($provider, '@') ? $provider : self::_scheme($provider)),
+            'identity' => $provider,
             'provider' => $endpoint
         );
 
@@ -119,7 +121,7 @@ class IDentity {
             $data = $twitter->getAccessToken($_GET['oauth_verifier']);
 
             if ($twitter->http_code != 200)
-                throw new IDentity_Except($twitter->http_code);
+                throw new IDentity_Except('http://twitter.com', $twitter->http_code);
 
             $udata = simplexml_load_file('http://twitter.com/users/'.$data['screen_name']);
 
@@ -147,7 +149,7 @@ class IDentity {
             try {
                 $data = $facebook->api('/me');
             } catch (FacebookApiException $e){
-                throw new IDentity_Except(403);
+                throw new IDentity_Except('http://facebook.com', 403);
             }
 
             if (!$data['aid'] = $data['username'])
@@ -159,7 +161,7 @@ class IDentity {
                 'name' => $data['name'],
                 'mail' => $data['email'],
                 'identity' => $data['link'],
-                'provider' => 'http://www.facebook.com'
+                'provider' => 'http://facebook.com'
             );
         }
 
@@ -179,7 +181,7 @@ class IDentity {
             $data = $openid->filterUserInfo($_GET);
 
             if (!$openid->validateWithServer())
-                throw new IDentity_Except(403);
+                throw new IDentity_Except($storage['identity'], 403);
 
             if ($data['fullname'])
                 $data['name'] = $data['fullname'];
@@ -194,9 +196,9 @@ class IDentity {
 
             if (strpos($storage['provider'], 'http://www.livejournal.com') === 0){
                 $udata = simplexml_load_file($storage['identity'].'/data/atom');
-                
+
                 $data['name'] = (string)$udata->author->name;
-                
+
                 $udata = $udata->xpath('//lj:journal');
                 $udata = $udata[0]->attributes();
 

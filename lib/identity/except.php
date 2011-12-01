@@ -11,13 +11,14 @@ class IDentity_Except extends Except {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    function __construct($code){
+    function __construct($string, $code){
+        $this->string = $string;
         $this->code = $code;    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
     function __toString(){
-        return '<h1>Status: '.$this->code.'</h1>';
+        return '<h1>'.$this->string.': '.$this->code.'</h1>';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
