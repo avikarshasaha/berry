@@ -67,9 +67,9 @@ class IDentity {
         include_once 'LightOpenID.php';
         
         $openid = new LightOpenID($this->config['base_url']);
-        $openid->identity = $identity;
+        $openid->identity = self::provider($identity);
         $openid->returnUrl = $this->config['url'];
-        $openid->optional = array(
+        $openid->required = array(
             'namePerson', 'namePerson/first', 'namePerson/last', 'namePerson/friendly',
             ((!strpos($identity, '@') and $this->config['mail']) ? 'contact/email' : null)
         );
@@ -168,7 +168,7 @@ class IDentity {
             //unset($_SESSION['IDentity']['openid']);
 
             $identity = $storage['openid'];            
-            $openid = new LightOpenID($this->config['url']);           
+            $openid = new LightOpenID($this->config['base_url']);           
             $data = $openid->getAttributes();
 
             if (!$openid->validate())
