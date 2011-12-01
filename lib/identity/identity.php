@@ -30,7 +30,7 @@ class IDentity {
             strpos($identity, 'http://twitter.com') === 0 or
             strpos($identity, 'http://www.twitter.com') === 0
         ){
-            include_once 'TwitterOAuth.php';
+            include_once 'twitteroauth.php';
 
             $config = $this->config['twitter'];
             $twitter = new TwitterOAuth($config['key'], $config['secret']);
@@ -105,7 +105,7 @@ class IDentity {
         $storage = $_SESSION['IDentity'];
 
         if ($_GET['oauth_token']){
-            include_once 'TwitterOAuth.php';
+            include_once 'twitteroauth.php';
 
             //unset($_SESSION['IDentity']['twitter']);
 
