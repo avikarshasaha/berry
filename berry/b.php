@@ -218,6 +218,7 @@ class B {
     protected static function _parse_ini_file($filename){
         $result = array();
         $array = &$result;
+        $concat = '';
         $map = array(
             'yes' => true, 'no' => false,
             'on' => true, 'off' => false,
@@ -230,6 +231,14 @@ class B {
 
             if (!$line or $line[0] == ';' or $line[0] == '#')
                 continue;
+                
+            if (substr($line, -1) == '\\'){                
+                $concat .= trim(substr($line, 0, -1))."\r\n";
+                continue;
+            } elseif ($concat){
+                $line = $concat.$line;
+                $concat = '';
+            }
 
             if ($line[0].substr($line, -1) == '[]'){
                 $line = substr($line, 1, -1);
