@@ -110,7 +110,7 @@ class Request {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function redirect($location = '', $status = 303){
+    static function redirect($location = '', $status = 302){
         if (!$location){
             $location = b::q(0, 0);
         } elseif (!strpos($location, '://')){
@@ -134,7 +134,7 @@ class Request {
         $status = (substr(PHP_SAPI, 0, 3) == 'cgi' ? 'Status:' : $_SERVER['SERVER_PROTOCOL']);
         $header = b::config('request.status.'.$code);
 
-        header($status.' '.trim($code.' '.$header), true);
+        header($status.' '.trim($code.' '.$header));
     }
 
 ////////////////////////////////////////////////////////////////////////////////
