@@ -37,7 +37,7 @@ class Image_Merge {
 
     protected static function csslike($string, $width = 0, $height = 0){
         $string = str_replace('px', '', strtolower($string));
-        $array = arr::trim(explode(' ', $string));
+        $array = array_map('trim', explode(' ', $string));
 
         if (reset($array) === '' or ($len = count($array)) == 3)
             return array();

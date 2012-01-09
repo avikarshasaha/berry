@@ -11,33 +11,6 @@ class Arr {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function html($item){
-        if (is_array($item))
-            return array_map(array('self', 'html'), $item);
-        else
-            return str::html($item);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function unhtml($item){
-        if (is_array($item))
-            return array_map(array('self', 'unhtml'), $item);
-        else
-            return str::unhtml($item);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
-    static function trim($item){
-        if (is_array($item))
-            return array_map(array('self', 'trim'), $item);
-        else
-            return trim($item);
-    }
-
-////////////////////////////////////////////////////////////////////////////////
-
     static function export($filename, $array, $name = ''){
         $contents .= "<?php\r\n";
         $contents .= ($name ? '$'.$name.' =' : 'return').' ';
