@@ -13,7 +13,7 @@ function tag_pager($attr){
     ), $attr);
 
     if ($array = _tag_pager($attr))
-        return piles::show('ext.tag.pager.index', $array);
+        return piles::show('ext.tag_pager.index', $array);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@ function tag_pager_blocks($attr){
     ), $attr);
 
     if ($array = _tag_pager($attr))
-        return piles::show('ext.tag.pager.blocks', $array);
+        return piles::show('ext.tag_pager.blocks', $array);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ function tag_pager_simple($attr){
         $array['pages'] = array(1 => $array['pages']);
     }
 
-    return piles::show('ext.tag.pager.simple', $array);
+    return piles::show('ext.tag_pager.simple', $array);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -7,18 +7,13 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function tag_onplace($attr){
-    $_SESSION['tag']['onplace'] = $attr;
-    $attr['#text'] = preg_replace('/<!--(.*?)-->/s', '', $attr['#text']);
-    return piles::show(piles::fill('span', array_merge($attr, array('id' => 'ajax[onplace]'))));
-}
+function attr_mailto($attr){
+	for ($i = 0, $c = count($attr['mailto']); $i < $c; $i++)
+	    $result .= '&#'.ord($attr['mailto'][$i]).';';
 
-////////////////////////////////////////////////////////////////////////////////
+    $attr['href'] = '&#109;&#97;&#105;&#108;&#116;&#111;&#58;'.$result;
+    $attr['#text'] = ((!$attr['#text'] or $attr['#text'] == $attr['mailto']) ? $result : $attr['#text']);
 
-function onplace($data){
-    if ($attr = $_SESSION['tag']['onplace']){        if ($_SESSION['attr']['check'])
-            check::is_valid($_SESSION['attr']['check'], $data);
-        $attr['#text'] = strtr($attr['#text'], array('<!--' => '', '-->'  => ''));
-        return piles::show(tag_onplace($attr));
-    }
+    unset($attr['mailto']);
+	return $attr;
 }

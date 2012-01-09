@@ -7,59 +7,6 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-function tag_msg($attr){
-	if (isset($attr['#text'])){
-        html::msg($attr['id'], $attr['#text']);
-        return;
-    }
-
-    if ($messages = html::msg($attr['id']))
-        return piles::show('ext.tag.msg.'.$attr['id'], compact('messages'));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function tag_block($attr){
-    if (!isset($attr['#text']))
-        return join('', html::block($attr['id']));
-
-    html::block($attr['id'], $attr['#text'], (is_numeric($attr['sort']) ? $attr['sort'] : 50));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function tag_quote($attr){
-    $attr['class'] .= ($attr['class'] ? ' ' : '').'quote';
-
-    if ($attr['cite']){
-        $pos = strpos($attr['cite'], 'http://');
-        $href = substr($attr['cite'], $pos);
-        $text = substr($attr['cite'], 0, $pos);
-        $text = ($text ? $text : $href);
-
-        if (is_int($pos))
-            $attr['cite'] = compact('href', 'text');
-        else
-            unset($attr['cite']);
-    }
-
-    return piles::show('ext.tag.quote', compact('attr'));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function tag_group($attr){
-    static $group = array();
-
-    if (isset($group[$attr['id']]))
-        return;
-
-    $group[$attr['id']] = true;
-    return $attr['#text'];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 function tag_toc($attr){
     $ref = '';
     $string = '<a name="%s"></a><a href="#%s">%s</a>';
@@ -120,17 +67,4 @@ function _tag_toc($items, $tag){
             $result .= '<li>'.$item.'</li>';
 
     return $result;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-function tag_typo($attr){
-    $attr = array_merge(array(
-        'lang' => b::$lang
-    ), $attr);
-
-    if (b::function_exists($func = 'typo_'.$attr['lang']))
-        $attr['#text'] = b::call($func, $attr['#text']);
-
-    return $attr['#text'];
 }

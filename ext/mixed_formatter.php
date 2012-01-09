@@ -23,12 +23,24 @@ function formatter_br($text){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function formatter_text($text){
-    return str::unhtml($text);
+function formatter_html($text){
+    return str::html($text);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 function formatter_markdown($text){
     return new Markdown($text);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function formatter_urls($text){
+    if (preg_match_all('/(<|&lt;)((\w+):\/\/.*)(>|&gt;)/i', $text, $m))
+        for ($i = 0, $c = count($m[0]); $i < $c; $i++){
+            $url = $m[2][$i];
+            $text = str_replace($m[0][$i], sprintf('<a href="%s" rel="nofollow">%s</a>', $url, $url), $text);
+        }
+
+    return $text;
 }
