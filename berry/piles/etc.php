@@ -171,7 +171,6 @@ abstract class Piles_Etc extends Object {
         $var = str_replace('\.', self::char('.'), $name);
         $var = array_reverse(explode('.', $var));
         $funcs = array();
-        $mask = 'b::call(`%s`, %%s, %s, get_defined_vars())';
 
         foreach ($var as $k => $v){
             if (!b::function_exists($func = 'method_'.$v))
@@ -181,13 +180,13 @@ abstract class Piles_Etc extends Object {
             $tmp = str_replace('%', '%%', var_export($tmp, true));
             $tmp = str_replace(self::char("'"), "'", $tmp);
 
-            array_unshift($funcs, sprintf($mask, $func, $tmp));
+            array_unshift($funcs, sprintf('b::call(`%s`, %%s, %s, get_defined_vars())', $func, $tmp));
             unset($var[$k]);
         }
 
-        if (b::function_exists($func = 'var_'.$var[0])){
-            array_unshift($funcs, sprintf($mask, $func));
-            unset($var[0]);
+        if (b::function_exists($func = 'var_'.end($var))){
+            array_unshift($funcs, sprintf('b::call(`%s`, `%%s`, get_defined_vars())', $func));
+            array_pop($var);
 
             $var = array_reverse($var);
             $var = join('.', $var);
@@ -221,6 +220,7 @@ abstract class Piles_Etc extends Object {
     protected static function _empty($token){
         return ($token[0] == T_WHITESPACE);
     }
+
 ////////////////////////////////////////////////////////////////////////////////
 
 }
