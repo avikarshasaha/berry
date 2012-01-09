@@ -7,7 +7,8 @@
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Piles_Except extends Except {
+class Piles_Except extends Except {
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct($message, $string){
@@ -34,7 +35,7 @@ class Piles_Except extends Except {
             $result .= '<a name="'.$k.'"></a>'.$k;
             $result .= '</td>';
             $result .= '<td style="background: #'.$bg[1].'; padding: 5px;">';
-            $result .= '<pre>'.str::unhtml($v).'</pre>';
+            $result .= '<pre>'.str::plain($v).'</pre>';
             $result .= '</td>';
             $result .= '</tr>';
         }

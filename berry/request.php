@@ -149,7 +149,7 @@ class Request {
         if ($cap)
             return self::_user_agent();
 
-        return str::unhtml($_SERVER['HTTP_USER_AGENT']);
+        return str::plain($_SERVER['HTTP_USER_AGENT']);
     }
 
 ////////////////////////////////////////////////////////////////////////////////

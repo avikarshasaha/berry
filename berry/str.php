@@ -39,7 +39,7 @@ class Str {///////////////////////////////////////////////////////////////////
             }
 
             if (strpos($string, '%call:') !== false and strpos($string, '%/call:') !== false)
-                $string = preg_replace('/\%call:([\w\:]+)(.*?)\%\/call:\\1/se', "call_user_func_array(array('b', 'call'), arr::trim(explode(',', '\\1, \\2')))", $string);
+                $string = preg_replace('/\%call:([\w\:]+)(.*?)\%\/call:\\1/se', "call_user_func_array(array('b', 'call'), array_map('trim', explode(',', '\\1, \\2')))", $string);
         }
 
         return str_replace(piles::char('%'), '\%', $string);;
@@ -47,7 +47,7 @@ class Str {///////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    static function unhtml($string, $quote_style = ENT_QUOTES){
+    static function plain($string, $quote_style = ENT_QUOTES){
         return htmlspecialchars($string, $quote_style);
     }
 
