@@ -11,14 +11,17 @@ function attr_repeat($attr){
     try {
         $tag = $attr;
         unset($tag['repeat']);
-        $tag = piles::fill($tag['#tag'], $tag);
-        
-        if (!is_array($attr['repeat'])){
-            $attr['#skip'] = piles::show($tag);  
-        } else {
-            foreach ($attr['repeat'] as $k => $v)
-                $attr['#skip'] .= piles::show($tag, compact('k', 'v'));
-        }
+
+        $html .= '<? foreach ($array as $k => $v){ ?>';
+        $html .= piles::fill($tag['#tag'], $tag);
+        $html .= '<? } ?>';
+
+        if (is_array($attr['repeat']))
+            $attr['#skip'] = piles::show($html, array(
+                'array' => $attr['repeat']
+            ));
+        else
+            $attr['#skip'] = '';
     } catch (Piles_Except $e){
         $attr['#skip'] = $e;
     }
