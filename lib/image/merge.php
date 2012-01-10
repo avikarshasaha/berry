@@ -4,10 +4,11 @@
     <http://berry.goodgirl.ru/>                            | ~ )\
     <http://berry.goodgirl.ru/license/>                    /__/\ \____
                                                            /   \_/    \
-    Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
+    Лёха zloy и красивый <http://lexa.cutenews.ru/>       / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
-class Image_Merge {
+class Image_Merge {
+
 ////////////////////////////////////////////////////////////////////////////////
 
     function __construct(&$im1, $im2){        $this->im1 = &$im1;
