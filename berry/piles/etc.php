@@ -27,7 +27,7 @@ abstract class Piles_Etc extends Object {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function char($char){
-        return '&piles::char['.ord($char).'];';
+        return '(pileschar:'.ord($char).')';
     }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +104,7 @@ abstract class Piles_Etc extends Object {
             list($tag, $attr, $escape) = array($tag['#tag'], $tag, $attr);
 
         foreach ($attr as $k => $v)
-            if (is_array($v)){
+            if (is_array($v) and !$attr['#tag']){
                 foreach ($v as $k2 => $v2)
                     $attr[$k.'_'.$k2] = $v2;
 
@@ -119,7 +119,7 @@ abstract class Piles_Etc extends Object {
             return ($attr['#skip'] === true ? '' : $attr['#skip']);
 
         foreach ($attr as $k => $v)
-            if ($k[0] != '#'){
+            if ($k[0] != '#' and !is_array($v)){
                 $quote  = (strpos($v, '"') !== false ? "'" : '"');
                 $attrs .= ' '.(isset($attr['#'.$k]) ? $attr['#'.$k] : $k).'='.$quote.$v.$quote;
             }

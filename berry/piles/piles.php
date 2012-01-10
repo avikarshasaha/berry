@@ -84,8 +84,10 @@ class Piles extends Piles_Etc {
             '<?=' => '<?php echo ',
             '?>'  => '<?',
             '< '  => '\< ',
+
             '`'   => '\`' ,
             "'"   => "\'",
+            ';'   => '\;' ,
 
             '<script>'  => '\<script>',
             '<script '  => '\<script ',
@@ -340,11 +342,6 @@ class Piles extends Piles_Etc {
         if (!is_array($tags))
             return;
 
-        if (end($tags) == ';'){
-            array_pop($tags);
-            $tags[] = self::char(';');
-        }
-
         foreach ($tags as $k => $v)
             if (is_int($k)){
                 if ($this->filter and $v[0] == '<')
@@ -410,7 +407,7 @@ class Piles extends Piles_Etc {
 
         $result = str_replace(self::char("'"), "\'", $result);
         $result = str_replace('`', "'", $result);
-        $result = preg_replace('/&piles::char\[(\d+)\];/e', "chr('\\1')", $result);
+        $result = preg_replace('/\(pileschar:(\d+)\)/e', "chr('\\1')", $result);
 
         return $result;
     }
