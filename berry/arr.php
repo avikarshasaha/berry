@@ -1,8 +1,8 @@
 <?php                                                      /* `,
                                                            ,\, #
     B E R R Y                                              |/  ?
-    <http://goodgirl.ru/berry>                             | ~ )\
-    <http://goodgirl.ru/berry/license>                     /__/\ \____
+    <http://berry.goodgirl.ru/>                            | ~ )\
+    <http://berry.goodgirl.ru/license/>                    /__/\ \____
                                                            /   \_/    \
     Лёха zloy и красивый <http://lexa.cutenews.ru>        / <_ ____,_-/\ __
 ---------------------------------------------------------/___/_____  \--'\|/----
@@ -104,11 +104,11 @@ class Arr {
 ////////////////////////////////////////////////////////////////////////////////
 
     static function object($array, $class = 'stdClass'){
-		$object = new $class;
+        $object = new $class;
 
-		foreach ($array as $k => $v)            $object->{$k} = (is_array($v) ? self::object($v, $class) : $v);
+        foreach ($array as $k => $v)            $object->{$k} = (is_array($v) ? self::object($v, $class) : $v);
 
-		return $object;
+        return $object;
     }
 
 ////////////////////////////////////////////////////////////////////////////////

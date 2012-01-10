@@ -496,4 +496,3 @@ function show($data, $func = "print_r", $return_str = false){
 }
 
 }
-?>
