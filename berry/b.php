@@ -23,6 +23,9 @@ class B {
         else
             $uri = $_SERVER['REQUEST_URI'];
 
+        if ($_SERVER['HTTP_ACCEPT_LANGUAGE'])
+            $lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
+
         $uri = trim(preg_replace('/\/+/', '/', $uri), '/');
         $uri = parse_url($uri);
         $len = strlen(dirname($_SERVER['PHP_SELF']));
@@ -30,7 +33,7 @@ class B {
 
         $config = array_merge(array(
             'path' => '.',
-            'lang' => strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2)),
+            'lang' => ($lang ? strtolower($lang) : 'en'),
             'query' => ($query ? trim($query, '/') : 'home'),
             'config' => array()
         ), $config);
