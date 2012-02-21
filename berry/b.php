@@ -518,8 +518,8 @@ class B {
                 }
 
                 try {
-                    $len = max(0, (count($q) - 1));
-                    new ReflectionParameter(array($class, $method), $len);
+                    if (($len = count($q)) > 0)
+                        new ReflectionParameter(array($class, $method), ($len - 1));
                 } catch (ReflectionException $e){
                     if ($method[0] != '_')
                         $method = '_'.$method.'_'.count($q);
