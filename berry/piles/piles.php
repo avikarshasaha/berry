@@ -407,7 +407,7 @@ class Piles extends Piles_Etc {
 
         $result = str_replace(self::char("'"), "\'", $result);
         $result = str_replace('`', "'", $result);
-        $result = preg_replace('/\(pileschar:(\d+)\)/e', "chr('\\1')", $result);
+        $result = preg_replace('/%pileschar:(\d+)%/e', "chr('\\1')", $result);
 
         return $result;
     }
