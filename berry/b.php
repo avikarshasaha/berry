@@ -44,6 +44,9 @@ class B {
         self::$query = $config['query'];
         self::$cache['config'] = $config['config'];
 
+        if (strpos(__file__, 'phar://') === 0)
+            self::$path = $config['path'].';phar://berry.phar';
+
         spl_autoload_register(array('self', 'autoload'));
     }
 
@@ -234,8 +237,8 @@ class B {
 
             if (!$line or $line[0] == ';' or $line[0] == '#')
                 continue;
-                
-            if (substr($line, -1) == '\\'){                
+
+            if (substr($line, -1) == '\\'){
                 $concat .= trim(substr($line, 0, -1))."\r\n";
                 continue;
             } elseif ($concat){
@@ -329,8 +332,13 @@ class B {
             if (!$call = cache::get('b/call.php', array('file' => $dirs))){
                 $files = array();
 
-                foreach ($dirs as $dir)
-                    $files = array_merge($files, file::glob($dir.'/*.php'));
+                foreach ($dirs as $dir){
+                    if (!is_dir($dir))
+                        continue;
+
+                    foreach (file::dir($dir, '/.+\.php$/') as $file => $object)
+                        $files[] = $file;
+                }
 
                 foreach ($files as $k => $v)
                     foreach (token_get_all(file_get_contents($v)) as $token){
