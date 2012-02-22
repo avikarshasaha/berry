@@ -1,7 +1,0 @@
-<IfModule mod_rewrite.c>
-    RewriteEngine on
-
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule . ../home/%{REQUEST_URI} [QSA,L]
-    RewriteRule \.(php|phtml|ini|eml|log|tmp)$ ../home/%{REQUEST_URI} [QSA,L]
-</IfModule>
