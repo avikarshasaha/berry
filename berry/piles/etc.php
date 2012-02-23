@@ -178,7 +178,6 @@ abstract class Piles_Etc extends Object {
 
             $tmp = (array)$params[join('.', array_reverse($var))];
             $tmp = str_replace('%', '%%', var_export($tmp, true));
-            $tmp = str_replace(self::char("'"), "'", $tmp);
 
             array_unshift($funcs, sprintf('b::call(`%s`, %%s, %s, get_defined_vars())', $func, $tmp));
             unset($var[$k]);

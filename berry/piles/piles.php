@@ -86,7 +86,7 @@ class Piles extends Piles_Etc {
             '< '  => '\< ',
 
             '`'   => '\`' ,
-            "'"   => "\'",
+            //"'"   => "\'",
             ';'   => '\;' ,
 
             '<script>'  => '\<script>',
@@ -124,7 +124,7 @@ class Piles extends Piles_Etc {
                                 if (in_array($tmp[0].substr($tmp, -1), array('""', "''", '``')))
                                     $tmp = substr($tmp, 1, -1);
 
-                                $params[substr($var, 2)][] = str_replace(self::char("'"), "'", $tmp);
+                                $params[substr($var, 2)][] = $tmp;
                                 $tmp = '';
 
                                 if ($token[$z] == ','){
@@ -347,11 +347,12 @@ class Piles extends Piles_Etc {
                 if ($this->filter and $v[0] == '<')
                     $v = '&lt;'.substr($v, 1);
 
+                $v = str_replace("'", "\'", $v);
                 $result .= self::_vars(!$echo ? 'echo `'.$v : $v);
                 $echo = true;
             } elseif ($k[0] == '$'){
                 if ($this->filter and !isset($this->filter[$k[0]]))
-                    $result .= (!$echo ? 'echo `' : '').str_replace("'", self::char("'"), $v);
+                    $result .= (!$echo ? 'echo `' : '').$v;
                 else
                     $result .= self::_vars(!$echo ? 'echo '.$v.'.`' : '`.'.$v.'.`');
 
@@ -361,7 +362,6 @@ class Piles extends Piles_Etc {
                     $result .= '&lt;? '.$v.'?>';
                     $echo = true;
                 } else {
-                    $v = str_replace(self::char("'"), "'", $v);
                     $result .= self::_vars(($echo ? '`;' : '').$v.';');
                     $echo = false;
                 }
@@ -376,7 +376,11 @@ class Piles extends Piles_Etc {
                     $attr = '';
 
                     foreach ($v as $k2 => $v2){
+                        $k2 = str_replace("'", "\'", $k2);
+
                         $v2 = (substr($v2, -1) == ';' ? substr($v2, 0, -1) : $v2);
+                        $v2 = str_replace("'", "\'", $v2);
+
                         $attr .= '`'.$k2.'` => '.(!$v2 ? '``' : $v2).",\r\n";
                     }
 
@@ -386,6 +390,7 @@ class Piles extends Piles_Etc {
                     } else {
                         $attr .= "`#text` => ob_get_clean()\r\n";
                         $attr = 'array('."\r\n".$attr.')';
+
                         $scope[$tag][$num] = 'echo self::call('.$attr.');';
                         $result .= 'ob_start();';
                     }
@@ -405,7 +410,6 @@ class Piles extends Piles_Etc {
         if ($result and substr($result, -1) != ';')
             $result .= '`'.(!$inside ? ';' : '');
 
-        $result = str_replace(self::char("'"), "\'", $result);
         $result = str_replace('`', "'", $result);
         $result = preg_replace('/%pileschar:(\d+)%/e', "chr('\\1')", $result);
 
