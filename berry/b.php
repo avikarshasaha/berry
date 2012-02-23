@@ -529,9 +529,17 @@ class B {
                 }
 
                 try {
-                    if (($len = count($q)) > 0)
-                        new ReflectionParameter(array($class, $method), ($len - 1));
-                } catch (ReflectionException $e){
+                    $reflection = new ReflectionMethod($class, $method);
+                    $req_params = $reflection->getNumberOfRequiredParameters();
+                    $num_params = $reflection->getNumberOfParameters();
+                    $count = count($q);
+
+                    if (
+                        $count > $num_params or
+                        ($req_params and $count < $req_params)
+                    )
+                        throw new Exception;
+                } catch (Exception $e){
                     if ($method[0] != '_')
                         $method = '_'.$method.'_'.count($q);
                 }
