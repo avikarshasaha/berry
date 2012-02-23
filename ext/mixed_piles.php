@@ -58,3 +58,9 @@ function method_to_s($value){
 function method_to_html($value){
     return str::html($value);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+function method_len($value){
+    return (is_scalar($value) ? strlen($value) : count($value));
+}
