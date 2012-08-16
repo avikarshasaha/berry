@@ -447,7 +447,7 @@ class B {
         foreach ($paths as $path)
             foreach ($files as $file)
                 if (
-                    is_file($tmp = $path.'/berry/'.$file.'.php') or
+                    is_file($tmp = $path.'/src/'.$file.'.php') or
                     is_file($tmp = $path.'/lib/'.$file.'.php') or
                     is_file($tmp = $path.'/'.$file.'.php')
                 ){
