@@ -210,7 +210,7 @@ class Piles extends Piles_Etc {
                     $attr['key'] = strtolower($attr['key']);
                     $tags[$key] += array(
                         $attr['key'] => $attr['value'],
-                        '#'.$attr['key'] => '`'.$attr['#key'].'`'
+                        '#'.$attr['key'] => '`'.$v2 = str_replace("'", "\'", $attr['#key']).'`'
                     );
                     $skip = ($j - $i);
                 } elseif (!is_array($token[$i]) and $token[$i + 1] == '='){
@@ -379,7 +379,7 @@ class Piles extends Piles_Etc {
                         $k2 = str_replace("'", "\'", $k2);
 
                         $v2 = (substr($v2, -1) == ';' ? substr($v2, 0, -1) : $v2);
-                        $v2 = str_replace("'", "\'", $v2);
+                        //$v2 = str_replace("'", "\'", $v2);
 
                         $attr .= '`'.$k2.'` => '.(!$v2 ? '``' : $v2).",\r\n";
                     }
