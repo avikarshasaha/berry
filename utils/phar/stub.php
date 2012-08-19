@@ -8,7 +8,7 @@
 ---------------------------------------------------------/___/_____  \--'\|/----
                                                                    \/|*/
 Phar::mapPhar('berry.phar');
-include 'phar://berry.phar/berry/b.php';
+include 'phar://berry.phar/src/b.php';
 
 if (php_sapi_name() == 'cli'){
     printf('Berry Framework version %s', b::VERSION);
