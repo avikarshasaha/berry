@@ -11,7 +11,7 @@ Phar::mapPhar('berry.phar');
 include 'phar://berry.phar/src/b.php';
 
 if (php_sapi_name() == 'cli'){
-    printf('Berry Framework version %s', b::VERSION);
+    printf("Berry Framework version %s\r\n\r\n", b::VERSION);
     exit;
 }
 

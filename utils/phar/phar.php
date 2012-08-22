@@ -10,6 +10,16 @@
 try {
     $phar = new Phar('berry.phar');
     $phar->setStub(file_get_contents('stub.php'));
+    $sign = phar::getSupportedSignatures();
+
+    if (in_array(phar::SHA512, $sign))
+        $phar->setSignatureAlgorithm(phar::SHA512);
+    elseif (in_array(phar::SHA256, $sign))
+        $phar->setSignatureAlgorithm(phar::SHA256);
+    elseif (in_array(phar::SHA1, $sign))
+        $phar->setSignatureAlgorithm(phar::SHA1);
+    elseif (in_array(phar::MD5, $sign))
+        $phar->setSignatureAlgorithm(phar::MD5);
 
     foreach (glob('../../*.txt') as $file1){
         $file2 = basename($file1);
@@ -34,6 +44,9 @@ try {
 
         }
     }
+    
+    //if (phar::canCompress(phar::GZ))
+        //$phar->compress(Phar::GZ, '.phar.gz');
 } catch (Exception $e){
     echo $e->getMessage();
 }
