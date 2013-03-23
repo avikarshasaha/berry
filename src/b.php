@@ -44,8 +44,10 @@ class B {
         self::$query = $config['query'];
         self::$cache['config'] = $config['config'];
 
-        if (strpos(__file__, 'phar://') === 0)
-            self::$path = $config['path'].';phar://berry.phar';
+        if (strpos(__file__, 'phar://') === 0){
+            is_dir('./tmp') or mkdir('./tmp');
+            self::$path = $config['path'].';'.substr(__file__, 0, -10);
+        }
 
         spl_autoload_register(array('self', 'autoload'));
     }
